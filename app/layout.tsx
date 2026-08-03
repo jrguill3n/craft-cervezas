@@ -1,10 +1,28 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
+import { Anton, Archivo } from 'next/font/google'
 import './globals.css'
 
+const archivo = Archivo({
+  subsets: ['latin'],
+  variable: '--font-archivo',
+  display: 'swap',
+})
+
+const anton = Anton({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-anton',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: {
+    default: 'Craft Cervezas — Nos mueve la cerveza',
+    template: '%s — Craft Cervezas',
+  },
+  description:
+    'Cerveza artesanal independiente, buena comida y mejores encuentros. Tres barras en Guadalajara: Providencia, Americana y Chapalita.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -26,11 +44,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
-  ],
+  colorScheme: 'light',
+  themeColor: '#F3EFE7',
 }
 
 export default function RootLayout({
@@ -39,8 +54,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="es" className={`bg-background ${archivo.variable} ${anton.variable}`}>
+      <body className="font-sans antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
