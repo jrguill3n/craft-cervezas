@@ -1,32 +1,34 @@
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 /**
- * MARCADOR PROVISIONAL — no es el logotipo de Craft Cervezas.
+ * Logotipo oficial de Craft.
  *
- * El logotipo oficial de Craft Cervezas aún no está disponible en el proyecto.
- * Deliberadamente se muestra sólo el nombre como texto plano, sin recrear ni
- * aproximar ningún lockup, y sin usar el logotipo de la marca hermana.
- *
- * Al recibir el archivo definitivo, sustituir el contenido de este componente
- * por la imagen: respetar el tamaño mínimo digital de 160 x 100 px del manual,
- * sin deformar, recolorear ni añadir efectos.
+ * Wordmark horizontal (1464 x 196 px, proporción 7.47:1) recortado al límite
+ * del trazo, con fondo transparente. Se usa sin deformar, recolorear ni añadir
+ * efectos: la variante "blanco" va sobre negro y la "negro" sobre crema.
  */
+const LOGO_RATIO = 1464 / 196
+
 export function CraftWordmark({
   className,
-  size = 'md',
+  variant = 'blanco',
+  width = 200,
+  priority = false,
 }: {
   className?: string
-  size?: 'md' | 'lg'
+  variant?: 'blanco' | 'negro'
+  width?: number
+  priority?: boolean
 }) {
   return (
-    <span
-      className={cn(
-        'block w-fit font-sans font-medium tracking-tight text-foreground',
-        size === 'md' ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl',
-        className,
-      )}
-    >
-      Craft Cervezas
-    </span>
+    <Image
+      src={`/brand/craft-logo-${variant}.png`}
+      alt="Craft"
+      width={width}
+      height={Math.round(width / LOGO_RATIO)}
+      className={cn('block h-auto', className)}
+      priority={priority}
+    />
   )
 }

@@ -14,16 +14,14 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-foreground/20 bg-background">
-      {/* Alto reservado (md:min-h-[132px]) para alojar el logotipo definitivo
-          a su tamaño mínimo de 160 x 100 px sin alterar la retícula. */}
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 py-5 md:min-h-[132px] md:px-10">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 py-6 md:px-10 md:py-7">
         <Link
           href="/"
-          aria-label="Craft Cervezas, ir al inicio"
-          className="shrink-0 transition-opacity hover:opacity-80"
+          aria-label="Craft, ir al inicio"
+          className="shrink-0 transition-opacity hover:opacity-70"
           onClick={() => setOpen(false)}
         >
-          <CraftWordmark />
+          <CraftWordmark width={176} priority />
         </Link>
 
         <nav aria-label="Principal" className="hidden md:block">
