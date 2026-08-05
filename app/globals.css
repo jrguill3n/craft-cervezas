@@ -3,6 +3,10 @@
 @import 'shadcn/tailwind.css';
 
 @theme inline {
+  /* Tipografías del manual: VTC Bayard (display) y Agrandir (texto).
+     Ambas son comerciales; hasta contar con los archivos con licencia se usan
+     sustitutos cercanos: Anton por Bayard y Archivo por Agrandir.
+     Para cambiarlas basta sustituir las fuentes en app/layout.tsx. */
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-anton), 'Archivo Narrow', ui-sans-serif, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
@@ -41,7 +45,7 @@
 :root {
   color-scheme: dark;
 
-  /* Paleta oficial — Manual de identidad Craft Galaxy 2022 */
+  /* Paleta del sistema visual compartido (manual de identidad 2022) */
   --negro-emblema: #000000;
   --naranja-ipa: #ec7b51;
   --verde-ale: #152a30;

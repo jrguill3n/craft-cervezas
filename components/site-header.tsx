@@ -14,7 +14,9 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-foreground/20 bg-background">
-      <div className="mx-auto flex max-w-[1600px] items-start justify-between gap-6 px-5 py-6 md:px-10 md:py-8">
+      {/* Alto reservado (md:min-h-[132px]) para alojar el logotipo definitivo
+          a su tamaño mínimo de 160 x 100 px sin alterar la retícula. */}
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 py-5 md:min-h-[132px] md:px-10">
         <Link
           href="/"
           aria-label="Craft Cervezas, ir al inicio"

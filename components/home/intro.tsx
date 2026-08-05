@@ -1,3 +1,4 @@
+import { BrewIllustration } from '@/components/brew-illustration'
 import { intro } from '@/lib/craft-content'
 
 const markerColor: Record<string, string> = {
@@ -11,7 +12,10 @@ export function Intro() {
     <section className="border-b border-foreground/20">
       <div className="mx-auto max-w-[1600px] px-5 py-16 md:px-10 md:py-24">
         <div className="grid gap-10 md:grid-cols-12 md:gap-8">
-          <p className="label-xs text-accent md:col-span-3">{intro.eyebrow}</p>
+          <div className="md:col-span-3">
+            <p className="label-xs text-accent">{intro.eyebrow}</p>
+            <BrewIllustration width={260} className="mt-10 hidden opacity-90 md:block" />
+          </div>
 
           <div className="md:col-span-8 md:col-start-5">
             <h2 className="display-tight text-[clamp(2rem,4.4vw,3.75rem)] text-balance">

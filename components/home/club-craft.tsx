@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { BrewIllustration } from '@/components/brew-illustration'
 import { clubBenefits } from '@/lib/craft-content'
 
 export function ClubCraft() {
@@ -26,6 +27,11 @@ export function ClubCraft() {
               aria-hidden="true"
             />
           </Link>
+          <BrewIllustration
+            variant="negro"
+            width={240}
+            className="mt-14 hidden opacity-80 md:block"
+          />
         </div>
 
         <ul className="md:col-span-7 md:col-start-6">
