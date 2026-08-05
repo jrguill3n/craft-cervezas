@@ -129,10 +129,15 @@ export function InstagramCarousel({ posts }: { posts: InstagramPost[] }) {
                   ) : (
                     // Sin portada disponible: bloque tipográfico centrado que
                     // preserva la retícula y sigue llevando al post original.
+                    // Se muestra el shortcode real para que cada tarjeta sea
+                    // distinguible sin inventar contenido.
                     <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center transition-colors group-hover:bg-foreground/5">
                       <InstagramGlyph className="size-7 text-accent" />
                       <span className="label-xs text-foreground/70">
                         Publicación en Instagram
+                      </span>
+                      <span className="font-mono text-[0.7rem] tracking-wide text-muted-foreground">
+                        {post.id}
                       </span>
                     </div>
                   )}
