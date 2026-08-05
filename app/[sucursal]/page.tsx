@@ -19,7 +19,7 @@ export async function generateMetadata({
   const { sucursal } = await params
   const branch = getBranch(sucursal)
   if (!branch) return {}
-  return {
+  return { // branch is defined here
     title: branch.name,
     description: branch.description,
   }
@@ -31,8 +31,9 @@ export default async function BranchPage({
   params: Promise<{ sucursal: string }>
 }) {
   const { sucursal } = await params
-  const branch = getBranch(sucursal)
-  if (!branch) notFound()
+  const maybeBranch = getBranch(sucursal)
+  if (!maybeBranch) notFound()
+  const branch = maybeBranch!
 
   const [tapList, others] = await Promise.all([
     getPublishedTapList(sucursal),
