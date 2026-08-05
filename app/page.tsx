@@ -3,7 +3,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { Hero } from '@/components/home/hero'
 import { Intro } from '@/components/home/intro'
 import { ClubCraft } from '@/components/home/club-craft'
-import { EventsGrid } from '@/components/home/events-grid'
+import { InstagramFeed } from '@/components/home/instagram-feed'
 
 export default function HomePage() {
   return (
@@ -13,7 +13,7 @@ export default function HomePage() {
         <Hero />
         <Intro />
         <ClubCraft />
-        <EventsGrid />
+        <InstagramFeed />
       </main>
       <SiteFooter />
     </>

@@ -266,33 +266,16 @@ export const clubBenefits = [
   },
 ]
 
-export const events = [
-  {
-    date: '12 · SEP',
-    branch: 'Providencia',
-    title: 'Cata de barril: barleywine 2024',
-    detail: 'Ocho meses en barrica de bourbon. Cupo limitado a 24 lugares.',
-  },
-  {
-    date: '19 · SEP',
-    branch: 'Americana',
-    title: 'Colaboración con cervecería invitada',
-    detail: 'Presentamos un lote corto brassado a cuatro manos en el patio.',
-  },
-  {
-    date: '27 · SEP',
-    branch: 'Chapalita',
-    title: 'Mercado de barrio',
-    detail: 'Productores locales, cocina en vivo y llaves abiertas desde mediodía.',
-  },
-]
-
 export const contact = {
   email: 'hola@craftcervezas.mx',
   press: 'prensa@craftcervezas.mx',
   city: 'Guadalajara, Jalisco · México',
   socials: [
-    { label: 'Instagram', href: 'https://instagram.com', handle: '@craftcervezas' },
+    {
+      label: 'Instagram',
+      href: 'https://www.instagram.com/craftcervezas',
+      handle: '@craftcervezas',
+    },
     { label: 'Facebook', href: 'https://facebook.com', handle: '/craftcervezas' },
     { label: 'WhatsApp', href: 'https://wa.me/523312345601', handle: '33 1234 5601' },
   ],
