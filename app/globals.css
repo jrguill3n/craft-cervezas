@@ -26,6 +26,12 @@
   --color-foreground: var(--foreground);
   --color-background: var(--background);
 
+  /* Acentos de sección de la paleta oficial */
+  --color-malta: var(--amarillo-malta);
+  --color-lupulo: var(--verde-lupulo);
+  --color-hazy: var(--azul-hazy);
+  --color-ale: var(--verde-ale);
+
   --radius-sm: 0px;
   --radius-md: 0px;
   --radius-lg: 0px;
@@ -33,27 +39,37 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Craft palette: cream, ink, orange */
-  --background: oklch(0.958 0.008 84);
-  --foreground: oklch(0.16 0 0);
-  --card: oklch(0.958 0.008 84);
-  --card-foreground: oklch(0.16 0 0);
-  --popover: oklch(0.958 0.008 84);
-  --popover-foreground: oklch(0.16 0 0);
-  --primary: oklch(0.16 0 0);
-  --primary-foreground: oklch(0.958 0.008 84);
-  --secondary: oklch(0.93 0.01 84);
-  --secondary-foreground: oklch(0.16 0 0);
-  --muted: oklch(0.93 0.01 84);
-  --muted-foreground: oklch(0.45 0.008 84);
-  --accent: oklch(0.685 0.185 45);
-  --accent-foreground: oklch(0.98 0 0);
+  /* Paleta oficial — Manual de identidad Craft Galaxy 2022 */
+  --negro-emblema: #000000;
+  --naranja-ipa: #ec7b51;
+  --verde-ale: #152a30;
+  --azul-hazy: #cfdbed;
+  --verde-lupulo: #92d0a4;
+  --amarillo-malta: #efe46c;
+  /* Crema cálida de apoyo para texto y bloques de descanso */
+  --crema: #f4f0e8;
+
+  /* Negro: fondo y estructura. Crema: texto. Naranja: acción. */
+  --background: var(--negro-emblema);
+  --foreground: var(--crema);
+  --card: #0b0b0b;
+  --card-foreground: var(--crema);
+  --popover: #0b0b0b;
+  --popover-foreground: var(--crema);
+  --primary: var(--crema);
+  --primary-foreground: var(--negro-emblema);
+  --secondary: var(--verde-ale);
+  --secondary-foreground: var(--crema);
+  --muted: #121212;
+  --muted-foreground: #a7a29a;
+  --accent: var(--naranja-ipa);
+  --accent-foreground: var(--negro-emblema);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.16 0 0 / 18%);
-  --input: oklch(0.16 0 0 / 25%);
-  --ring: oklch(0.685 0.185 45);
+  --border: rgb(244 240 232 / 20%);
+  --input: rgb(244 240 232 / 28%);
+  --ring: var(--naranja-ipa);
   --radius: 0px;
 }
 

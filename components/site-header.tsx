@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { CraftLogo } from '@/components/craft-logo'
-import { navigation } from '@/lib/craft-content'
+import { branchNav, navigation, secondaryNav } from '@/lib/craft-content'
 import { cn } from '@/lib/utils'
 
 export function SiteHeader() {
@@ -63,18 +63,30 @@ export function SiteHeader() {
           aria-label="Principal móvil"
           className="border-t border-foreground/20 md:hidden"
         >
+          <p className="label-xs px-5 pt-5 pb-1 text-muted-foreground">Sucursales</p>
           <ul>
-            {navigation.map((item, i) => (
-              <li key={item.href} className={cn(i > 0 && 'border-t border-foreground/15')}>
+            {branchNav.map((item) => (
+              <li key={item.href}>
                 <Link
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className="flex items-baseline gap-4 px-5 py-4"
+                  className="display-tight block px-5 py-3 text-3xl"
                 >
-                  <span className="label-xs w-6 text-muted-foreground">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span className="display-tight text-3xl">{item.label}</span>
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <ul className="mt-4 border-t border-foreground/15">
+            {secondaryNav.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="label-xs block px-5 py-4 font-semibold"
+                >
+                  {item.label}
                 </Link>
               </li>
             ))}

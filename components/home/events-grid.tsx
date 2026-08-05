@@ -24,8 +24,8 @@ export function EventsGrid() {
               className="flex flex-col justify-between gap-8 border-b border-foreground/20 py-8 md:border-r md:border-b-0 md:px-6 md:last:border-r-0 md:first:pl-0"
             >
               <div>
-                <div className="label-xs flex items-center justify-between text-accent">
-                  <span>{event.date}</span>
+                <div className="label-xs flex items-center justify-between">
+                  <span className="text-malta">{event.date}</span>
                   <span className="text-muted-foreground">{event.branch}</span>
                 </div>
                 <h3 className="display-tight mt-6 text-3xl">{event.title}</h3>

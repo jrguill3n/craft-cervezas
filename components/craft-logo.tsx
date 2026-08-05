@@ -2,8 +2,8 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 /**
- * El logotipo original es blanco y no debe modificarse:
- * se presenta sobre una placa negra sólida (recurso gráfico de la retícula).
+ * Logotipo oficial blanco. Se usa tal cual sobre fondo negro,
+ * sin recolorear, deformar ni alterar sus proporciones.
  */
 const LOGO_RATIO = 570.7 / 355.37
 const ICON_RATIO = 360.51 / 238.49
@@ -16,21 +16,15 @@ export function CraftLogo({
   height?: number
 }) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center justify-center bg-foreground px-3 py-2.5',
-        className,
-      )}
-    >
-      <Image
-        src="/brand/craft-logo-blanco.svg"
-        alt="Craft Cervezas"
-        width={Math.round(height * LOGO_RATIO)}
-        height={height}
-        style={{ height, width: 'auto' }}
-        priority
-      />
-    </span>
+    <Image
+      src="/brand/craft-logo-blanco.svg"
+      alt="Craft Cervezas"
+      width={Math.round(height * LOGO_RATIO)}
+      height={height}
+      style={{ height, width: 'auto' }}
+      className={cn('block', className)}
+      priority
+    />
   )
 }
 

@@ -209,13 +209,44 @@ export const branches: Branch[] = [
   },
 ]
 
-export const navigation = [
-  { label: 'Providencia', href: '/providencia' },
-  { label: 'Americana', href: '/americana' },
-  { label: 'Chapalita', href: '/chapalita' },
+export const branchNav = branches.map((branch) => ({
+  label: branch.name,
+  href: `/${branch.slug}`,
+}))
+
+export const secondaryNav = [
   { label: 'Club Craft', href: '/club-craft' },
   { label: 'Contacto', href: '/#contacto' },
 ]
+
+export const navigation = [...branchNav, ...secondaryNav]
+
+/** Narrativa base tomada del manual de identidad. */
+export const intro = {
+  eyebrow: 'Defensores de lo craft',
+  statement: 'Nos apasiona la cerveza y compartirla dio motivo a un movimiento.',
+  body: 'Somos promotores del craft y nos resistimos a lo comercial sin calidad. Apostamos por las propuestas de productores independientes y ponemos a disposición de la comunidad una curaduría de cervezas de sabor.',
+  pillars: [
+    {
+      marker: 'malta',
+      title: 'Curaduría',
+      detail:
+        'Selección nacional e internacional de cervecerías independientes, revisada barril por barril.',
+    },
+    {
+      marker: 'lupulo',
+      title: 'Cultura cervecera',
+      detail:
+        'Información y contexto en la barra: de dónde viene cada cerveza y por qué vale la pena.',
+    },
+    {
+      marker: 'hazy',
+      title: 'Comunidad',
+      detail:
+        'Una invitación al descubrimiento, tanto para conocedores como para quien empieza.',
+    },
+  ],
+} as const
 
 export const clubBenefits = [
   {

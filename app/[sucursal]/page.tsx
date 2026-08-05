@@ -244,7 +244,9 @@ export default async function BranchPage({
                 >
                   <div className="mx-auto flex max-w-[1600px] items-baseline justify-between gap-6 px-5 py-8 md:px-10">
                     <div className="flex items-baseline gap-6">
-                      <span className="label-xs text-accent">{other.index}</span>
+                      <span className="label-xs text-accent group-hover:text-background/45">
+                        {other.index}
+                      </span>
                       <h3 className="display-tight text-[clamp(2.25rem,5vw,4rem)]">
                         {other.name}
                       </h3>

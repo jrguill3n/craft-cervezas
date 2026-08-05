@@ -1,21 +1,18 @@
 import Image from 'next/image'
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import { CraftIcon } from '@/components/craft-logo'
-import { branches } from '@/lib/craft-content'
+import { BranchFinder } from '@/components/home/branch-finder'
 
 export function Hero() {
   return (
     <section className="border-b border-foreground/20">
       <div className="mx-auto max-w-[1600px] md:grid md:grid-cols-12">
-        <div className="flex flex-col justify-between px-5 pt-10 pb-8 md:col-span-7 md:px-10 md:pt-16 md:pb-10">
+        <div className="flex flex-col px-5 pt-10 pb-12 md:col-span-7 md:px-10 md:pt-16 md:pb-16">
           <div className="label-xs flex items-center gap-4 text-muted-foreground">
             <span>Guadalajara · MX</span>
             <span className="h-px flex-1 bg-foreground/25" aria-hidden="true" />
             <span>Est. 2016</span>
           </div>
 
-          <div className="mt-12 md:mt-20">
+          <div className="mt-16 md:mt-auto md:pt-24">
             <h1 className="display-tight text-[clamp(3.5rem,11vw,8.5rem)]">
               Nos mueve
               <br />
@@ -28,29 +25,7 @@ export function Hero() {
               Cerveza independiente, buena comida y mejores encuentros.
             </p>
 
-            <Link
-              href="#sucursales"
-              className="label-xs group mt-10 inline-flex items-center gap-3 border-b-2 border-accent pb-2 font-semibold text-accent"
-            >
-              Elige tu Craft
-              <ArrowRight
-                className="size-4 transition-transform group-hover:translate-x-1"
-                aria-hidden="true"
-              />
-            </Link>
-          </div>
-
-          <div className="mt-14 flex items-end justify-between gap-6 border-t border-foreground/20 pt-5 md:mt-20">
-            <ul className="label-xs flex flex-wrap gap-x-8 gap-y-2 text-muted-foreground">
-              {branches.map((branch) => (
-                <li key={branch.slug}>
-                  <Link href={`/${branch.slug}`} className="hover:text-accent">
-                    {branch.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <CraftIcon width={52} className="hidden opacity-60 sm:block" />
+            <BranchFinder className="mt-10" />
           </div>
         </div>
 

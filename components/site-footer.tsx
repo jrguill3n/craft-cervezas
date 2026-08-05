@@ -1,10 +1,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { CraftIcon } from '@/components/craft-logo'
 import { branches, contact } from '@/lib/craft-content'
 
 export function SiteFooter() {
   return (
-    <footer id="contacto" className="bg-foreground text-background">
+    <footer id="contacto" className="border-t border-foreground/20 bg-background">
       <div className="mx-auto max-w-[1600px] px-5 py-16 md:px-10 md:py-24">
         <div className="grid gap-12 md:grid-cols-12 md:gap-8">
           <div className="md:col-span-4">
@@ -15,14 +16,14 @@ export function SiteFooter() {
               height={80}
               style={{ height: 80, width: 'auto' }}
             />
-            <p className="mt-8 max-w-xs text-sm leading-relaxed text-background/70">
+            <p className="mt-8 max-w-xs text-sm leading-relaxed text-foreground/70">
               Cerveza independiente, buena comida y mejores encuentros. Tres barras en
               Guadalajara.
             </p>
           </div>
 
           <div className="md:col-span-3">
-            <h2 className="label-xs text-background/50">Sucursales</h2>
+            <h2 className="label-xs text-muted-foreground">Sucursales</h2>
             <ul className="mt-5 flex flex-col gap-3">
               {branches.map((branch) => (
                 <li key={branch.slug}>
@@ -32,14 +33,14 @@ export function SiteFooter() {
                   >
                     {branch.name}
                   </Link>
-                  <p className="text-sm text-background/60">{branch.neighborhood}</p>
+                  <p className="text-sm text-muted-foreground">{branch.neighborhood}</p>
                 </li>
               ))}
             </ul>
           </div>
 
           <div className="md:col-span-3">
-            <h2 className="label-xs text-background/50">Redes</h2>
+            <h2 className="label-xs text-muted-foreground">Redes</h2>
             <ul className="mt-5 flex flex-col gap-3">
               {contact.socials.map((social) => (
                 <li key={social.label}>
@@ -51,14 +52,14 @@ export function SiteFooter() {
                   >
                     {social.label}
                   </a>
-                  <p className="text-sm text-background/60">{social.handle}</p>
+                  <p className="text-sm text-muted-foreground">{social.handle}</p>
                 </li>
               ))}
             </ul>
           </div>
 
           <div className="md:col-span-2">
-            <h2 className="label-xs text-background/50">Contacto</h2>
+            <h2 className="label-xs text-muted-foreground">Contacto</h2>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>
                 <a href={`mailto:${contact.email}`} className="hover:text-accent">
@@ -70,16 +71,17 @@ export function SiteFooter() {
                   {contact.press}
                 </a>
               </li>
-              <li className="text-background/60">{contact.city}</li>
+              <li className="text-muted-foreground">{contact.city}</li>
             </ul>
+            <CraftIcon variant="blanco" width={56} className="mt-10 opacity-50" />
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-3 border-t border-background/25 pt-6 md:flex-row md:items-center md:justify-between">
-          <p className="label-xs text-background/50">
+        <div className="mt-16 flex flex-col gap-3 border-t border-foreground/20 pt-6 md:flex-row md:items-center md:justify-between">
+          <p className="label-xs text-muted-foreground">
             © {new Date().getFullYear()} Craft Cervezas
           </p>
-          <p className="label-xs text-background/50">
+          <p className="label-xs text-muted-foreground">
             Bebe con responsabilidad · Venta exclusiva a mayores de 18 años
           </p>
         </div>

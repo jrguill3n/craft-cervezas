@@ -42,7 +42,7 @@ export default function ClubCraftPage() {
                   Una sola membresía para las tres barras. Sin plásticos, sin apps extra: tu
                   tarjeta vive en Apple Wallet y Google Wallet.
                 </p>
-                <CraftIcon width={64} className="mt-10 opacity-60" />
+                <CraftIcon variant="blanco" width={64} className="mt-10 opacity-50" />
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function ClubCraftPage() {
             <ol className="mt-10 grid gap-8 border-t border-background/25 pt-8 md:grid-cols-3">
               {steps.map((step) => (
                 <li key={step.index}>
-                  <span className="label-xs text-accent">{step.index}</span>
+                  <span className="label-xs text-background/45">{step.index}</span>
                   <h3 className="display-tight mt-4 text-2xl">{step.title}</h3>
                   <p className="mt-3 text-sm leading-relaxed text-background/70">
                     {step.detail}
@@ -104,7 +104,9 @@ export default function ClubCraftPage() {
                 >
                   <div className="mx-auto flex max-w-[1600px] items-baseline justify-between gap-6 px-5 py-8 md:px-10">
                     <div className="flex items-baseline gap-6">
-                      <span className="label-xs text-accent">{branch.index}</span>
+                      <span className="label-xs text-accent group-hover:text-background/45">
+                        {branch.index}
+                      </span>
                       <h3 className="display-tight text-[clamp(2.25rem,5vw,4rem)]">
                         {branch.name}
                       </h3>

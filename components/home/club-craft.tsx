@@ -37,7 +37,7 @@ export function ClubCraft() {
                 i === clubBenefits.length - 1 ? 'border-b' : ''
               }`}
             >
-              <span className="label-xs text-accent md:col-span-1">{benefit.index}</span>
+              <span className="label-xs text-background/45 md:col-span-1">{benefit.index}</span>
               <h3 className="display-tight text-3xl md:col-span-5 md:text-4xl">
                 {benefit.title}
               </h3>
@@ -50,7 +50,7 @@ export function ClubCraft() {
 
         <div className="flex items-center justify-between gap-6 md:col-span-7 md:col-start-6">
           <p className="label-xs text-background/50">Apple Wallet · Google Wallet</p>
-          <CraftIcon variant="blanco" width={56} className="opacity-70" />
+          <CraftIcon variant="negro" width={56} className="opacity-70" />
         </div>
       </div>
     </section>

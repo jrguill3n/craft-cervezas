@@ -1,7 +1,7 @@
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { Hero } from '@/components/home/hero'
-import { BranchSelector } from '@/components/home/branch-selector'
+import { Intro } from '@/components/home/intro'
 import { ClubCraft } from '@/components/home/club-craft'
 import { EventsGrid } from '@/components/home/events-grid'
 
@@ -11,9 +11,9 @@ export default function HomePage() {
       <SiteHeader />
       <main>
         <Hero />
-        <BranchSelector />
-        <EventsGrid />
+        <Intro />
         <ClubCraft />
+        <EventsGrid />
       </main>
       <SiteFooter />
     </>
