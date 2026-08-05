@@ -34,21 +34,42 @@ export async function createDraftTapList(locationId: string) {
 
 export async function publishTapList(tapListId: string) {
   const { supabase, user } = await requireAuth()
-  const { error } = await supabase
-    .from('tap_lists')
-    .update({ status: 'published', published_at: new Date().toISOString(), published_by: user.id })
-    .eq('id', tapListId)
+
+  // Atomic: archives any existing published list for this location before publishing
+  const { error } = await supabase.rpc('publish_tap_list', {
+    p_tap_list_id: tapListId,
+    p_user_id: user.id,
+  })
   if (error) throw new Error(error.message)
+
+  // Revalidate the public sucursal page
+  const { data: tl } = await supabase
+    .from('tap_lists')
+    .select('locations(slug)')
+    .eq('id', tapListId)
+    .single()
+  const slug = (tl?.locations as unknown as { slug: string } | null)?.slug
+  if (slug) revalidatePath(`/${slug}`, 'page')
   revalidatePath('/admin')
 }
 
 export async function unpublishTapList(tapListId: string) {
   const { supabase } = await requireAuth()
+
+  const { data: tl } = await supabase
+    .from('tap_lists')
+    .select('locations(slug)')
+    .eq('id', tapListId)
+    .single()
+
   const { error } = await supabase
     .from('tap_lists')
     .update({ status: 'draft', published_at: null, published_by: null })
     .eq('id', tapListId)
   if (error) throw new Error(error.message)
+
+  const slug = (tl?.locations as unknown as { slug: string } | null)?.slug
+  if (slug) revalidatePath(`/${slug}`, 'page')
   revalidatePath('/admin')
 }
 

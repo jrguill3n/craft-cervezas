@@ -6,6 +6,7 @@ import { ArrowUpRight, MessageCircle, Phone } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { branches, getBranch } from '@/lib/craft-content'
+import { getPublishedTapList } from '@/lib/tap-list'
 
 export function generateStaticParams() {
   return branches.map((branch) => ({ sucursal: branch.slug }))
@@ -34,7 +35,10 @@ export default async function BranchPage({
   const branch = getBranch(sucursal)
   if (!branch) notFound()
 
-  const others = branches.filter((item) => item.slug !== branch.slug)
+  const [tapList, others] = await Promise.all([
+    getPublishedTapList(sucursal),
+    Promise.resolve(branches.filter((item) => item.slug !== branch.slug)),
+  ])
 
   return (
     <>
@@ -97,32 +101,58 @@ export default async function BranchPage({
           <div className="mx-auto max-w-[1600px] px-5 py-14 md:px-10 md:py-20">
             <div className="flex items-baseline justify-between gap-6 border-b border-foreground/20 pb-5">
               <h2 className="display-tight text-4xl md:text-6xl">Tap list</h2>
-              <p className="label-xs text-muted-foreground">
-                {branch.taps.length} llaves activas
-              </p>
+              {tapList && (
+                <p className="label-xs text-muted-foreground">
+                  {tapList.tap_list_items.length} llave{tapList.tap_list_items.length !== 1 ? 's' : ''} activa{tapList.tap_list_items.length !== 1 ? 's' : ''}
+                </p>
+              )}
             </div>
 
-            <ul>
-              {branch.taps.map((tap, i) => (
-                <li
-                  key={tap.name}
-                  className="grid grid-cols-2 items-baseline gap-x-6 gap-y-2 border-b border-foreground/15 py-5 md:grid-cols-12"
-                >
-                  <span className="label-xs text-accent md:col-span-1">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <h3 className="display-tight col-span-2 text-2xl md:col-span-4 md:text-3xl">
-                    {tap.name}
-                  </h3>
-                  <p className="text-sm md:col-span-3">{tap.style}</p>
-                  <p className="text-sm text-muted-foreground md:col-span-2">{tap.origin}</p>
-                  <p className="label-xs text-right md:col-span-2">
-                    {tap.abv}
-                    {tap.ibu ? ` · ${tap.ibu} IBU` : ''}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            {tapList && tapList.tap_list_items.length > 0 ? (
+              <ul>
+                {tapList.tap_list_items.map((item, i) => (
+                  <li
+                    key={item.id}
+                    className="grid grid-cols-2 items-baseline gap-x-6 gap-y-2 border-b border-foreground/15 py-5 md:grid-cols-12"
+                  >
+                    <span className="label-xs text-accent md:col-span-1">
+                      {item.tap_number != null
+                        ? String(item.tap_number).padStart(2, '0')
+                        : String(i + 1).padStart(2, '0')}
+                    </span>
+                    <div className="col-span-2 md:col-span-4">
+                      <h3 className="display-tight text-2xl md:text-3xl">{item.beers.name}</h3>
+                      {item.badge && (
+                        <span className="label-xs mt-1 inline-block text-accent">
+                          {item.badge.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm md:col-span-3">{item.beers.style}</p>
+                    <p className="text-sm text-muted-foreground md:col-span-2">{item.beers.brewery}</p>
+                    <div className="md:col-span-2">
+                      <p className="label-xs text-right">{item.beers.abv}%{item.beers.ibu ? ` · ${item.beers.ibu} IBU` : ''}</p>
+                      {item.serving_options.length > 0 && (
+                        <ul className="mt-1 flex flex-wrap justify-end gap-x-3 gap-y-0.5">
+                          {item.serving_options
+                            .slice()
+                            .sort((a, b) => a.display_order - b.display_order)
+                            .map((opt) => (
+                              <li key={opt.id} className="label-xs text-muted-foreground">
+                                {opt.size} · ${opt.price.toFixed(0)}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="py-12 text-sm text-muted-foreground">
+                Tap list en actualización. Consulta con el bar.
+              </p>
+            )}
           </div>
         </section>
 
