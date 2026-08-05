@@ -64,7 +64,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
     })
   }
 
-  function handleAddBeer(beerId: string, tapNumber: string, badge: string) {
+  function handleAddBeer(beerId: string, tapNumber: string, badge: string, defaultPrice: string) {
     if (!tapList) return
     startTransition(async () => {
       const fd = new FormData()
@@ -72,6 +72,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       fd.set('beer_id', beerId)
       if (tapNumber) fd.set('tap_number', tapNumber)
       if (badge) fd.set('badge', badge)
+      if (defaultPrice) fd.set('default_price', defaultPrice)
       await addTapListItem(fd)
     })
   }
@@ -232,7 +233,6 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                       {/* ABV */}
                       <td className="hidden px-3 py-4 font-mono text-xs text-foreground/60 lg:table-cell">
                         {item.beers.abv}%
-                        {item.beers.ibu ? <span className="ml-1 text-foreground/35">· {item.beers.ibu} IBU</span> : null}
                       </td>
 
                       {/* Badge selector */}
@@ -323,8 +323,8 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       {showAddBeer && tapList && (
         <AddBeerModal
           beers={allBeers}
-          onAdd={(beerId, tapNumber, badge) => {
-            handleAddBeer(beerId, tapNumber, badge)
+          onAdd={(beerId, tapNumber, badge, defaultPrice) => {
+            handleAddBeer(beerId, tapNumber, badge, defaultPrice)
             setShowAddBeer(false)
           }}
           onClose={() => setShowAddBeer(false)}

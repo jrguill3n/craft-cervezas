@@ -131,7 +131,7 @@ export default async function BranchPage({
                     <p className="text-sm md:col-span-3">{item.beers.style}</p>
                     <p className="text-sm text-muted-foreground md:col-span-2">{item.beers.brewery}</p>
                     <div className="md:col-span-2">
-                      <p className="label-xs text-right">{item.beers.abv}%{item.beers.ibu ? ` · ${item.beers.ibu} IBU` : ''}</p>
+                      <p className="label-xs text-right">{item.beers.abv}%</p>
                       {item.serving_options.length > 0 && (
                         <ul className="mt-1 flex flex-wrap justify-end gap-x-3 gap-y-0.5">
                           {item.serving_options
@@ -139,7 +139,7 @@ export default async function BranchPage({
                             .sort((a, b) => a.display_order - b.display_order)
                             .map((opt) => (
                               <li key={opt.id} className="label-xs text-muted-foreground">
-                                {opt.size} · ${opt.price.toFixed(0)}
+                                {opt.size} · ${opt.price.toFixed(0)} MXN
                               </li>
                             ))}
                         </ul>

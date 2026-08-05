@@ -11,11 +11,11 @@ type FormState = {
   brewery: string
   style: string
   abv: string
-  ibu: string
+  price: string
   description: string
 }
 
-const EMPTY: FormState = { name: '', brewery: '', style: '', abv: '', ibu: '', description: '' }
+const EMPTY: FormState = { name: '', brewery: '', style: '', abv: '', price: '', description: '' }
 
 function beerToForm(b: BeerRow): FormState {
   return {
@@ -23,7 +23,7 @@ function beerToForm(b: BeerRow): FormState {
     brewery: b.brewery,
     style: b.style,
     abv: String(b.abv),
-    ibu: b.ibu != null ? String(b.ibu) : '',
+    price: '',          // loaded separately from serving_options at save time
     description: b.description ?? '',
   }
 }
@@ -68,6 +68,10 @@ export function BeersEditor({ beers }: Props) {
   function handleSave() {
     if (!form.name || !form.brewery || !form.style || !form.abv) {
       setError('Nombre, cervecería, estilo y ABV son obligatorios.')
+      return
+    }
+    if (!form.price || Number(form.price) <= 0) {
+      setError('El precio debe ser mayor a cero.')
       return
     }
     setError(null)
@@ -128,13 +132,13 @@ export function BeersEditor({ beers }: Props) {
                 ['brewery', 'CERVECERÍA', 'text', 'Ej. Craft'],
                 ['style', 'ESTILO', 'text', 'Ej. New England IPA'],
                 ['abv', 'ABV (%)', 'number', '5.5'],
-                ['ibu', 'IBU (opcional)', 'number', '45'],
               ] as [keyof FormState, string, string, string][]
             ).map(([field, label, type, placeholder]) => (
               <div key={field} className="flex flex-col gap-1">
                 <label className="label-xs text-foreground/60">{label}</label>
                 <input
                   type={type}
+                  inputMode={type === 'number' ? 'decimal' : undefined}
                   step={type === 'number' ? '0.1' : undefined}
                   min={type === 'number' ? '0' : undefined}
                   value={form[field]}
@@ -144,6 +148,28 @@ export function BeersEditor({ beers }: Props) {
                 />
               </div>
             ))}
+
+            {/* Price field with $ prefix */}
+            <div className="flex flex-col gap-1">
+              <label htmlFor="beer-price" className="label-xs text-foreground/60">
+                PRECIO (MXN)
+              </label>
+              <div className="flex items-center border border-foreground/20 focus-within:border-foreground">
+                <span className="select-none border-r border-foreground/20 px-3 py-2 text-sm text-foreground/40">
+                  $
+                </span>
+                <input
+                  id="beer-price"
+                  type="text"
+                  inputMode="decimal"
+                  required
+                  value={form.price}
+                  onChange={(e) => handleField('price', e.target.value)}
+                  placeholder="95.00"
+                  className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none"
+                />
+              </div>
+            </div>
           </div>
           <div className="mt-4 flex flex-col gap-1">
             <label className="label-xs text-foreground/60">DESCRIPCIÓN (opcional)</label>
@@ -181,15 +207,15 @@ export function BeersEditor({ beers }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-foreground/10 text-left">
-              {['NOMBRE', 'CERVECERÍA', 'ESTILO', 'ABV', 'IBU', ''].map((h) => (
+              {['NOMBRE', 'CERVECERÍA', 'ESTILO', 'ABV', ''].map((h) => (
                 <th key={h} className="label-xs pb-3 pr-6 text-muted-foreground">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-foreground/5">
-            {beers.length === 0 && (
+              {beers.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
                   Sin cervezas. Crea la primera.
                 </td>
               </tr>
@@ -200,7 +226,6 @@ export function BeersEditor({ beers }: Props) {
                 <td className="py-3 pr-6 text-xs text-foreground/70">{b.brewery}</td>
                 <td className="py-3 pr-6 text-xs text-foreground/70">{b.style}</td>
                 <td className="py-3 pr-6 font-mono text-xs text-foreground/70">{b.abv}%</td>
-                <td className="py-3 pr-6 font-mono text-xs text-foreground/50">{b.ibu ?? '—'}</td>
                 <td className="py-3 text-right">
                   <div className="flex items-center justify-end gap-4 opacity-0 transition-opacity group-hover:opacity-100">
                     <button

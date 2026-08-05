@@ -6,7 +6,7 @@ import type { BeerRow } from '@/lib/db-types'
 
 type Props = {
   beers: BeerRow[]
-  onAdd: (beerId: string, tapNumber: string, badge: string) => void
+  onAdd: (beerId: string, tapNumber: string, badge: string, defaultPrice: string) => void
   onClose: () => void
 }
 
@@ -22,6 +22,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
   const [beerId, setBeerId] = useState('')
   const [tapNumber, setTapNumber] = useState('')
   const [badge, setBadge] = useState('')
+  const [defaultPrice, setDefaultPrice] = useState('')
   const [query, setQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -47,7 +48,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!beerId) return
-    onAdd(beerId, tapNumber, badge)
+    onAdd(beerId, tapNumber, badge, defaultPrice)
   }
 
   return (
@@ -142,6 +143,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
                 <label className="label-xs text-foreground/50">TAP #</label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min="1"
                   max="99"
                   value={tapNumber}
@@ -161,6 +163,27 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* Price — creates default "Vaso" serving option automatically */}
+            <div className="mt-3 flex flex-col gap-1.5">
+              <label htmlFor="drawer-price" className="label-xs text-foreground/50">
+                PRECIO MXN (opcional — crea opción &quot;Vaso&quot; automáticamente)
+              </label>
+              <div className="flex items-center border border-foreground/20 focus-within:border-foreground">
+                <span className="select-none border-r border-foreground/20 px-3 py-2 text-sm text-foreground/40">
+                  $
+                </span>
+                <input
+                  id="drawer-price"
+                  type="text"
+                  inputMode="decimal"
+                  value={defaultPrice}
+                  onChange={(e) => setDefaultPrice(e.target.value)}
+                  placeholder="95.00"
+                  className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none"
+                />
               </div>
             </div>
 

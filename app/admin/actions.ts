@@ -81,6 +81,7 @@ export async function addTapListItem(formData: FormData) {
   const beerId = formData.get('beer_id') as string
   const tapNumber = formData.get('tap_number') ? Number(formData.get('tap_number')) : null
   const badge = (formData.get('badge') as string) || null
+  const defaultPrice = formData.get('default_price') ? Number(formData.get('default_price')) : null
 
   // Determine display_order
   const { count } = await supabase
@@ -100,6 +101,18 @@ export async function addTapListItem(formData: FormData) {
     .select()
     .single()
   if (error) throw new Error(error.message)
+
+  // Auto-create default serving option "Vaso" if a price was provided
+  if (defaultPrice && defaultPrice > 0) {
+    await supabase.from('serving_options').insert({
+      tap_list_item_id: data.id,
+      label: 'Vaso',
+      size: 'Vaso',
+      price: defaultPrice,
+      display_order: 1,
+    })
+  }
+
   revalidatePath('/admin')
   return data
 }
@@ -182,7 +195,6 @@ export async function createBeer(formData: FormData) {
       brewery: formData.get('brewery') as string,
       style: formData.get('style') as string,
       abv: Number(formData.get('abv')),
-      ibu: formData.get('ibu') ? Number(formData.get('ibu')) : null,
       description: (formData.get('description') as string) || null,
     })
     .select()
@@ -202,7 +214,6 @@ export async function updateBeer(id: string, formData: FormData) {
       brewery: formData.get('brewery') as string,
       style: formData.get('style') as string,
       abv: Number(formData.get('abv')),
-      ibu: formData.get('ibu') ? Number(formData.get('ibu')) : null,
       description: (formData.get('description') as string) || null,
     })
     .eq('id', id)
