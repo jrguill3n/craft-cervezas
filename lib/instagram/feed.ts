@@ -85,7 +85,22 @@ async function fetchFromGraphApi(accessToken: string): Promise<InstagramPost[]> 
   })
 
   if (!response.ok) {
-    throw new Error(`Graph API respondió ${response.status}`)
+    // El token de larga duración caduca a los 60 días. Cuando eso ocurre la API
+    // responde 400 con código 190, así que se distingue del resto de fallos
+    // para que el aviso en el registro sea accionable.
+    const detail = (await response.json().catch(() => null)) as {
+      error?: { code?: number; message?: string }
+    } | null
+    const code = detail?.error?.code
+
+    if (code === 190 || response.status === 401) {
+      throw new Error(
+        'INSTAGRAM_ACCESS_TOKEN caducado o revocado. Renuévalo con el endpoint ' +
+          'refresh_access_token (grant_type=ig_refresh_token) y actualiza la variable.',
+      )
+    }
+
+    throw new Error(`Graph API respondió ${response.status}: ${detail?.error?.message ?? ''}`)
   }
 
   const payload = (await response.json()) as { data?: GraphMedia[] }
