@@ -1,6 +1,5 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import { CraftIcon } from '@/components/craft-logo'
+import { CraftWordmark } from '@/components/craft-logo'
 import { branches, contact } from '@/lib/craft-content'
 
 export function SiteFooter() {
@@ -9,13 +8,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-[1600px] px-5 py-16 md:px-10 md:py-24">
         <div className="grid gap-12 md:grid-cols-12 md:gap-8">
           <div className="md:col-span-4">
-            <Image
-              src="/brand/craft-logo-blanco.svg"
-              alt="Craft Cervezas"
-              width={129}
-              height={80}
-              style={{ height: 80, width: 'auto' }}
-            />
+            <CraftWordmark size="lg" />
             <p className="mt-8 max-w-xs text-sm leading-relaxed text-foreground/70">
               Cerveza independiente, buena comida y mejores encuentros. Tres barras en
               Guadalajara.
@@ -73,7 +66,6 @@ export function SiteFooter() {
               </li>
               <li className="text-muted-foreground">{contact.city}</li>
             </ul>
-            <CraftIcon variant="blanco" width={56} className="mt-10 opacity-50" />
           </div>
         </div>
 

@@ -1,50 +1,38 @@
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 /**
- * Logotipo oficial blanco. Se usa tal cual sobre fondo negro,
- * sin recolorear, deformar ni alterar sus proporciones.
+ * Marca provisional de Craft Cervezas.
+ *
+ * Los archivos recibidos (logotipo blanco e isotipo de botella) corresponden a
+ * Craft Galaxy, por lo que NO se usan aquí. Hasta recibir el logotipo oficial de
+ * Craft Cervezas, la marca se compone tipográficamente con la fuente display.
+ *
+ * Al sustituirlo por el archivo definitivo: respetar el tamaño mínimo digital
+ * de 160 x 100 px indicado en el manual y no deformar ni recolorear la pieza.
  */
-const LOGO_RATIO = 570.7 / 355.37
-const ICON_RATIO = 360.51 / 238.49
-
-export function CraftLogo({
+export function CraftWordmark({
   className,
-  height = 40,
+  size = 'md',
 }: {
   className?: string
-  height?: number
+  /** `md` cumple el mínimo de 160 x 100 px del manual. `lg` para piezas amplias. */
+  size?: 'md' | 'lg'
 }) {
   return (
-    <Image
-      src="/brand/craft-logo-blanco.svg"
-      alt="Craft Cervezas"
-      width={Math.round(height * LOGO_RATIO)}
-      height={height}
-      style={{ height, width: 'auto' }}
-      className={cn('block', className)}
-      priority
-    />
-  )
-}
-
-export function CraftIcon({
-  className,
-  variant = 'negro',
-  width = 44,
-}: {
-  className?: string
-  variant?: 'negro' | 'blanco'
-  width?: number
-}) {
-  return (
-    <Image
-      src={`/brand/craft-icono-${variant}.svg`}
-      alt=""
-      aria-hidden="true"
-      width={width}
-      height={Math.round(width / ICON_RATIO)}
-      className={className}
-    />
+    <span
+      className={cn(
+        'display-tight block w-fit text-foreground',
+        size === 'md' ? 'text-[2.6rem] md:text-[2.9rem]' : 'text-[3.5rem] md:text-[4.25rem]',
+        className,
+      )}
+    >
+      <span className="sr-only">Craft Cervezas</span>
+      <span aria-hidden="true" className="block">
+        Craft
+      </span>
+      <span aria-hidden="true" className="block">
+        Cervezas
+      </span>
+    </span>
   )
 }

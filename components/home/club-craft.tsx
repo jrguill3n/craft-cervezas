@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { CraftIcon } from '@/components/craft-logo'
 import { clubBenefits } from '@/lib/craft-content'
 
 export function ClubCraft() {
@@ -48,10 +47,9 @@ export function ClubCraft() {
           ))}
         </ul>
 
-        <div className="flex items-center justify-between gap-6 md:col-span-7 md:col-start-6">
-          <p className="label-xs text-background/50">Apple Wallet · Google Wallet</p>
-          <CraftIcon variant="negro" width={56} className="opacity-70" />
-        </div>
+        <p className="label-xs text-background/50 md:col-span-7 md:col-start-6">
+          Apple Wallet · Google Wallet
+        </p>
       </div>
     </section>
   )

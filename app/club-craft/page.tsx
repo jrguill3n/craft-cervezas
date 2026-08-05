@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
-import { CraftIcon } from '@/components/craft-logo'
 import { branches, clubBenefits } from '@/lib/craft-content'
 
 export const metadata: Metadata = {
@@ -42,7 +41,6 @@ export default function ClubCraftPage() {
                   Una sola membresía para las tres barras. Sin plásticos, sin apps extra: tu
                   tarjeta vive en Apple Wallet y Google Wallet.
                 </p>
-                <CraftIcon variant="blanco" width={64} className="mt-10 opacity-50" />
               </div>
             </div>
           </div>

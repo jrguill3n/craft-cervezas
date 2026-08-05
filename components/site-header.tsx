@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
-import { CraftLogo } from '@/components/craft-logo'
+import { CraftWordmark } from '@/components/craft-logo'
 import { branchNav, navigation, secondaryNav } from '@/lib/craft-content'
 import { cn } from '@/lib/utils'
 
@@ -14,14 +14,14 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-foreground/20 bg-background">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 py-4 md:px-10">
+      <div className="mx-auto flex max-w-[1600px] items-start justify-between gap-6 px-5 py-6 md:px-10 md:py-8">
         <Link
           href="/"
           aria-label="Craft Cervezas, ir al inicio"
           className="shrink-0 transition-opacity hover:opacity-80"
           onClick={() => setOpen(false)}
         >
-          <CraftLogo height={44} />
+          <CraftWordmark />
         </Link>
 
         <nav aria-label="Principal" className="hidden md:block">
