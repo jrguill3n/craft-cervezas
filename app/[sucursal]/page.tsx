@@ -8,9 +8,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { branches, getBranch } from '@/lib/craft-content'
 import { getPublishedTapList } from '@/lib/tap-list'
 
-export function generateStaticParams() {
-  return branches.map((branch) => ({ sucursal: branch.slug }))
-}
+// Dynamic render so the Supabase tap list is always fresh
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({
   params,
