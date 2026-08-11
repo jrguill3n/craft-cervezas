@@ -8,6 +8,13 @@ import { SiteFooter } from '@/components/site-footer'
 import { branches, getBranch } from '@/lib/craft-content'
 import { getPublishedTapList } from '@/lib/tap-list'
 
+const TAP_BADGE_LABELS: Record<string, string> = {
+  new: 'NUEVO',
+  limited: 'LIMITADO',
+  guest: 'INVITADO',
+  house: 'CASA',
+}
+
 // Dynamic render so the Supabase tap list is always fresh
 export const dynamic = 'force-dynamic'
 
@@ -160,24 +167,59 @@ export default async function BranchPage({
                 {tapList.tap_list_items.map((item, i) => (
                   <li
                     key={item.id}
-                    className="grid grid-cols-2 items-baseline gap-x-6 gap-y-2 border-b border-foreground/15 py-5 md:grid-cols-12"
+                    className="border-b border-foreground/15 py-6 md:grid md:grid-cols-12 md:items-baseline md:gap-x-6 md:gap-y-2 md:py-5"
                   >
-                    <span className="label-xs text-accent md:col-span-1">
+                    {/* Mobile composition */}
+                    <div className="md:hidden">
+                      <div className="flex min-h-5 items-center justify-between gap-4">
+                        <span className="label-xs text-accent">
+                          TAP {item.tap_number != null
+                            ? String(item.tap_number).padStart(2, '0')
+                            : String(i + 1).padStart(2, '0')}
+                        </span>
+                        {item.badge && (
+                          <span className="label-xs border border-accent/40 px-2 py-1 text-accent">
+                            {TAP_BADGE_LABELS[item.badge] ?? item.badge.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="display-tight mt-4 text-[clamp(1.75rem,8vw,2.25rem)] leading-[0.95] text-balance">
+                        {item.beers.name}
+                      </h3>
+                      <p className="mt-2 text-sm text-muted-foreground">{item.beers.brewery}</p>
+                      <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_auto] items-end gap-4 border-t border-foreground/10 pt-4">
+                        <div className="min-w-0">
+                          <span className="label-xs text-foreground/35">ESTILO</span>
+                          <p className="mt-1 text-sm leading-tight text-foreground/85">{item.beers.style}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="label-xs text-foreground/35">ABV</span>
+                          <p className="mt-1 font-mono text-sm">{item.beers.abv}%</p>
+                        </div>
+                        <div className="min-w-20 text-right">
+                          <span className="label-xs text-foreground/35">PRECIO</span>
+                          <p className="mt-1 font-mono text-sm font-semibold text-accent">
+                            {item.serving_options.length > 0
+                              ? `$${Number(item.serving_options.slice().sort((a, b) => a.display_order - b.display_order)[0].price).toFixed(0)}`
+                              : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tablet and desktop composition */}
+                    <span className="label-xs hidden text-accent md:col-span-1 md:block">
                       {item.tap_number != null
                         ? String(item.tap_number).padStart(2, '0')
                         : String(i + 1).padStart(2, '0')}
                     </span>
-                    <div className="col-span-2 md:col-span-4">
-                      <h3 className="display-tight text-2xl md:text-3xl">{item.beers.name}</h3>
-                      {item.badge && (
-                        <span className="label-xs mt-1 inline-block text-accent">
-                          {item.badge.toUpperCase()}
-                        </span>
-                      )}
+                    <div className="hidden md:col-span-4 md:block">
+                      <h3 className="display-tight text-3xl">{item.beers.name}</h3>
+                      {item.badge && <span className="label-xs mt-1 inline-block text-accent">{TAP_BADGE_LABELS[item.badge] ?? item.badge.toUpperCase()}</span>}
                     </div>
-                    <p className="text-sm md:col-span-3">{item.beers.style}</p>
-                    <p className="text-sm text-muted-foreground md:col-span-2">{item.beers.brewery}</p>
-                    <div className="md:col-span-2">
+                    <p className="hidden text-sm md:col-span-3 md:block">{item.beers.style}</p>
+                    <p className="hidden text-sm text-muted-foreground md:col-span-2 md:block">{item.beers.brewery}</p>
+                    <div className="hidden md:col-span-2 md:block">
                       <p className="label-xs text-right">{item.beers.abv}%</p>
                       {item.serving_options.length > 0 && (
                         <p className="label-xs mt-1 text-right text-muted-foreground">
