@@ -327,6 +327,11 @@ export const contact = {
       href: 'https://www.instagram.com/craftcervezas',
       handle: '@craftcervezas',
     },
+    {
+      label: 'Spotify',
+      href: 'https://open.spotify.com/user/kxg3ka40qtwukq3l5dpwya9n3',
+      handle: 'Playlists de Craft',
+    },
     { label: 'Facebook', href: 'https://facebook.com', handle: '/craftcervezas' },
     { label: 'WhatsApp', href: 'https://wa.me/523312345601', handle: '33 1234 5601' },
   ],
