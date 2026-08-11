@@ -9,7 +9,7 @@ import type { TapListFull } from '@/lib/db-types'
 export async function getPublishedTapList(slug: string): Promise<TapListFull | null> {
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('tap_lists')
     .select(`
       *,
@@ -25,6 +25,11 @@ export async function getPublishedTapList(slug: string): Promise<TapListFull | n
     .order('published_at', { ascending: false })
     .limit(1)
     .maybeSingle()
+
+  if (error) {
+    console.error(`[tap-list] Could not load published list for ${slug}:`, error)
+    throw new Error(`No se pudo cargar el tap list publicado de ${slug}.`)
+  }
 
   if (!data) return null
 
@@ -42,11 +47,16 @@ export async function getPublishedTapList(slug: string): Promise<TapListFull | n
 export async function getAllPublishedTapLists(): Promise<TapListFull[]> {
   const supabase = await createClient()
 
-  const { data: locations } = await supabase
+  const { data: locations, error } = await supabase
     .from('locations')
     .select('slug')
     .eq('active', true)
     .order('name')
+
+  if (error) {
+    console.error('[tap-list] Could not load active locations:', error)
+    throw new Error('No se pudieron cargar las sucursales activas.')
+  }
 
   if (!locations?.length) return []
 

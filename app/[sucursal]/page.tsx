@@ -35,10 +35,15 @@ export default async function BranchPage({
   if (!maybeBranch) notFound()
   const branch = maybeBranch!
 
-  const [tapList, others] = await Promise.all([
-    getPublishedTapList(sucursal),
-    Promise.resolve(branches.filter((item) => item.slug !== branch.slug)),
-  ])
+  let tapList = null
+  let tapListError = false
+  try {
+    tapList = await getPublishedTapList(sucursal)
+  } catch (error) {
+    tapListError = true
+    console.error(`[branch-page] Tap list failed for ${sucursal}:`, error)
+  }
+  const others = branches.filter((item) => item.slug !== branch.slug)
 
   return (
     <>
@@ -149,8 +154,10 @@ export default async function BranchPage({
                 ))}
               </ul>
             ) : (
-              <p className="py-12 text-sm text-muted-foreground">
-                Tap list en actualización. Consulta con el bar.
+              <p className="py-12 text-sm text-muted-foreground" role={tapListError ? 'alert' : undefined}>
+                {tapListError
+                  ? 'No pudimos cargar el tap list en este momento. Intenta nuevamente o consulta con el bar.'
+                  : 'Tap list en actualización. Consulta con el bar.'}
               </p>
             )}
           </div>

@@ -22,11 +22,9 @@ async function requireAuth() {
 
 export async function createDraftTapList(locationId: string) {
   const { supabase } = await requireAuth()
-  const { data, error } = await supabase
-    .from('tap_lists')
-    .insert({ location_id: locationId, status: 'draft' })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('create_draft_tap_list', {
+    p_location_id: locationId,
+  })
   if (error) throw new Error(error.message)
   revalidatePath('/admin')
   return data
@@ -81,7 +79,27 @@ export async function addTapListItem(formData: FormData) {
   const beerId = formData.get('beer_id') as string
   const tapNumber = formData.get('tap_number') ? Number(formData.get('tap_number')) : null
   const badge = (formData.get('badge') as string) || null
-  const defaultPrice = formData.get('default_price') ? Number(formData.get('default_price')) : null
+
+  if (!tapListId || !beerId) throw new Error('Faltan datos para agregar la cerveza.')
+
+  const { data: beer, error: beerError } = await supabase
+    .from('beers')
+    .select('default_price')
+    .eq('id', beerId)
+    .single()
+  const defaultPrice = Number(beer?.default_price)
+  if (beerError || !defaultPrice || defaultPrice <= 0) {
+    throw new Error('Esta cerveza no tiene precio. Edítala antes de agregarla al tap list.')
+  }
+
+  const { data: editableList, error: listError } = await supabase
+    .from('tap_lists')
+    .select('status')
+    .eq('id', tapListId)
+    .single()
+  if (listError || editableList?.status !== 'draft') {
+    throw new Error('Solo se puede editar un borrador.')
+  }
 
   // Determine display_order
   const { count } = await supabase
@@ -103,14 +121,18 @@ export async function addTapListItem(formData: FormData) {
   if (error) throw new Error(error.message)
 
   // Auto-create default serving option "Vaso" if a price was provided
-  if (defaultPrice && defaultPrice > 0) {
-    await supabase.from('serving_options').insert({
+  if (defaultPrice > 0) {
+    const { error: priceError } = await supabase.from('serving_options').insert({
       tap_list_item_id: data.id,
       label: 'Vaso',
       size: 'Vaso',
       price: defaultPrice,
       display_order: 1,
     })
+    if (priceError) {
+      await supabase.from('tap_list_items').delete().eq('id', data.id)
+      throw new Error(priceError.message)
+    }
   }
 
   revalidatePath('/admin')
@@ -119,6 +141,7 @@ export async function addTapListItem(formData: FormData) {
 
 export async function removeTapListItem(itemId: string) {
   const { supabase } = await requireAuth()
+  await assertDraftItem(supabase, itemId)
   const { error } = await supabase.from('tap_list_items').delete().eq('id', itemId)
   if (error) throw new Error(error.message)
   revalidatePath('/admin')
@@ -126,6 +149,7 @@ export async function removeTapListItem(itemId: string) {
 
 export async function updateItemAvailability(itemId: string, status: 'available' | 'unavailable') {
   const { supabase } = await requireAuth()
+  await assertDraftItem(supabase, itemId)
   const { error } = await supabase
     .from('tap_list_items')
     .update({ availability_status: status })
@@ -136,6 +160,7 @@ export async function updateItemAvailability(itemId: string, status: 'available'
 
 export async function updateItemBadge(itemId: string, badge: string | null) {
   const { supabase } = await requireAuth()
+  await assertDraftItem(supabase, itemId)
   const { error } = await supabase
     .from('tap_list_items')
     .update({ badge })
@@ -151,6 +176,7 @@ export async function upsertServingOptions(
   options: { id?: string; label: string; size: string; price: number; display_order: number }[],
 ) {
   const { supabase } = await requireAuth()
+  await assertDraftItem(supabase, itemId)
 
   // Delete removed options (those not in the new list)
   const keepIds = options.filter((o) => o.id).map((o) => o.id!)
@@ -184,10 +210,22 @@ export async function upsertServingOptions(
   revalidatePath('/admin')
 }
 
+async function assertDraftItem(supabase: Awaited<ReturnType<typeof createClient>>, itemId: string) {
+  const { data, error } = await supabase
+    .from('tap_list_items')
+    .select('tap_lists!inner(status)')
+    .eq('id', itemId)
+    .single()
+  const tapList = data?.tap_lists as unknown as { status: string } | null
+  if (error || tapList?.status !== 'draft') throw new Error('Solo se puede editar un borrador.')
+}
+
 // ── Beer CRUD ─────────────────────────────────────────────────────────────────
 
 export async function createBeer(formData: FormData) {
   const { supabase } = await requireAuth()
+  const defaultPrice = Number(formData.get('price'))
+  if (!defaultPrice || defaultPrice <= 0) throw new Error('El precio debe ser mayor a cero.')
   const { data, error } = await supabase
     .from('beers')
     .insert({
@@ -195,6 +233,7 @@ export async function createBeer(formData: FormData) {
       brewery: formData.get('brewery') as string,
       style: formData.get('style') as string,
       abv: Number(formData.get('abv')),
+      default_price: defaultPrice,
       description: (formData.get('description') as string) || null,
     })
     .select()
@@ -207,6 +246,8 @@ export async function createBeer(formData: FormData) {
 
 export async function updateBeer(id: string, formData: FormData) {
   const { supabase } = await requireAuth()
+  const defaultPrice = Number(formData.get('price'))
+  if (!defaultPrice || defaultPrice <= 0) throw new Error('El precio debe ser mayor a cero.')
   const { error } = await supabase
     .from('beers')
     .update({
@@ -214,6 +255,7 @@ export async function updateBeer(id: string, formData: FormData) {
       brewery: formData.get('brewery') as string,
       style: formData.get('style') as string,
       abv: Number(formData.get('abv')),
+      default_price: defaultPrice,
       description: (formData.get('description') as string) || null,
     })
     .eq('id', id)

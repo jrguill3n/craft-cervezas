@@ -4,6 +4,7 @@ import { TapListEditor } from '@/components/admin/tap-list-editor'
 import type { LocationRow, ProfileRow, TapListFull } from '@/lib/db-types'
 
 export const metadata = { title: 'Tap List — Admin Craft' }
+export const dynamic = 'force-dynamic'
 
 export default async function AdminTapListPage() {
   const supabase = await createClient()
@@ -33,12 +34,14 @@ export default async function AdminTapListPage() {
     locationsQuery = locationsQuery.in('id', ids)
   }
 
-  const { data: locations } = await locationsQuery.order('name')
+  const { data: locations, error: locationsError } = await locationsQuery.order('name')
+  if (locationsError) throw new Error(`No se pudieron cargar las sucursales: ${locationsError.message}`)
 
-  // For each location, get the current working tap list (prefer draft, fall back to published)
+  // For each location, return the draft when it exists. A published list is
+  // read-only in the editor until create_draft_tap_list clones it.
   const tapListsWithItems: TapListFull[] = []
   for (const loc of locations ?? []) {
-    let { data: tapList } = await supabase
+    let { data: tapList, error: draftError } = await supabase
       .from('tap_lists')
       .select(`
         *,
@@ -54,9 +57,10 @@ export default async function AdminTapListPage() {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
+    if (draftError) throw new Error(`No se pudo cargar el borrador de ${loc.name}: ${draftError.message}`)
 
     if (!tapList) {
-      const { data: published } = await supabase
+      const { data: published, error: publishedError } = await supabase
         .from('tap_lists')
         .select(`
           *,
@@ -72,6 +76,7 @@ export default async function AdminTapListPage() {
         .order('published_at', { ascending: false })
         .limit(1)
         .maybeSingle()
+      if (publishedError) throw new Error(`No se pudo cargar el tap list de ${loc.name}: ${publishedError.message}`)
       tapList = published
     }
 
@@ -85,16 +90,17 @@ export default async function AdminTapListPage() {
   }
 
   // All beers for the "add beer" selector
-  const { data: allBeers } = await supabase
+  const { data: allBeers, error: beersError } = await supabase
     .from('beers')
-    .select('id, name, brewery, style, abv, ibu, description')
+    .select('id, name, brewery, style, abv, default_price, description, created_at, updated_at')
     .order('name')
+  if (beersError) throw new Error(`No se pudo cargar el catálogo de cervezas: ${beersError.message}`)
 
   return (
     <TapListEditor
       locations={(locations ?? []) as LocationRow[]}
       tapLists={tapListsWithItems}
-      allBeers={(allBeers ?? []) as any}
+      allBeers={(allBeers ?? []) as import('@/lib/db-types').BeerRow[]}
       profile={profile as ProfileRow}
     />
   )

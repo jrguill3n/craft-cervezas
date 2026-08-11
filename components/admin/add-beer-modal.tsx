@@ -6,7 +6,7 @@ import type { BeerRow } from '@/lib/db-types'
 
 type Props = {
   beers: BeerRow[]
-  onAdd: (beerId: string, tapNumber: string, badge: string, defaultPrice: string) => void
+  onAdd: (beerId: string, tapNumber: string, badge: string) => void
   onClose: () => void
 }
 
@@ -22,7 +22,6 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
   const [beerId, setBeerId] = useState('')
   const [tapNumber, setTapNumber] = useState('')
   const [badge, setBadge] = useState('')
-  const [defaultPrice, setDefaultPrice] = useState('')
   const [query, setQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -47,8 +46,8 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!beerId) return
-    onAdd(beerId, tapNumber, badge, defaultPrice)
+    if (!beerId || !selected?.default_price || Number(selected.default_price) <= 0) return
+    onAdd(beerId, tapNumber, badge)
   }
 
   return (
@@ -65,7 +64,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Agregar cerveza"
-        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col border-l border-foreground/15 bg-background shadow-2xl"
+        className="fixed inset-0 z-50 flex w-full flex-col bg-background shadow-2xl md:inset-y-0 md:right-0 md:left-auto md:max-w-xl md:border-l md:border-foreground/15"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-foreground/15 px-6 py-5">
@@ -76,7 +75,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
           <button
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex size-8 items-center justify-center text-foreground/40 transition-colors hover:text-foreground"
+            className="flex size-11 items-center justify-center text-foreground/40 transition-colors hover:text-foreground"
           >
             <X className="size-4" aria-hidden="true" />
           </button>
@@ -108,7 +107,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
                     key={b.id}
                     type="button"
                     onClick={() => setBeerId(b.id)}
-                    className={`flex w-full items-center justify-between border-b border-foreground/5 px-6 py-3.5 text-left transition-colors ${
+                    className={`flex min-h-14 w-full items-center justify-between border-b border-foreground/5 px-6 py-3.5 text-left transition-colors ${
                       isSelected
                         ? 'bg-foreground text-background'
                         : 'hover:bg-foreground/5'
@@ -120,8 +119,11 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
                         {b.brewery} · {b.style}
                       </span>
                     </span>
-                    <span className={`ml-4 shrink-0 font-mono text-xs ${isSelected ? 'text-background/60' : 'text-muted-foreground'}`}>
-                      {b.abv}%
+                    <span className={`ml-4 shrink-0 text-right font-mono text-xs ${isSelected ? 'text-background/60' : 'text-muted-foreground'}`}>
+                      <span className="block">{b.abv}%</span>
+                      <span className="mt-1 block font-semibold">
+                        {b.default_price == null ? 'SIN PRECIO' : `$${Number(b.default_price).toFixed(0)}`}
+                      </span>
                     </span>
                   </button>
                 )
@@ -166,31 +168,21 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
               </div>
             </div>
 
-            {/* Price — creates default "Vaso" serving option automatically */}
-            <div className="mt-3 flex flex-col gap-1.5">
-              <label htmlFor="drawer-price" className="label-xs text-foreground/50">
-                PRECIO MXN (opcional — crea opción &quot;Vaso&quot; automáticamente)
-              </label>
-              <div className="flex items-center border border-foreground/20 focus-within:border-foreground">
-                <span className="select-none border-r border-foreground/20 px-3 py-2 text-sm text-foreground/40">
-                  $
+            {selected && (
+              <div className="mt-3 flex min-h-11 items-center justify-between border border-foreground/15 px-3 py-2">
+                <span className="label-xs text-foreground/50">PRECIO</span>
+                <span className="text-sm font-semibold">
+                  {selected.default_price == null
+                    ? 'FALTA EN LA CERVEZA'
+                    : `$${Number(selected.default_price).toFixed(0)} MXN`}
                 </span>
-                <input
-                  id="drawer-price"
-                  type="text"
-                  inputMode="decimal"
-                  value={defaultPrice}
-                  onChange={(e) => setDefaultPrice(e.target.value)}
-                  placeholder="95.00"
-                  className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none"
-                />
               </div>
-            </div>
+            )}
 
             <button
               type="submit"
-              disabled={!beerId}
-              className="mt-4 w-full bg-accent py-3 text-xs font-semibold tracking-widest text-accent-foreground transition-colors hover:bg-accent/85 disabled:opacity-30"
+              disabled={!beerId || !selected?.default_price || Number(selected.default_price) <= 0}
+              className="mt-4 min-h-12 w-full bg-accent py-3 text-xs font-semibold tracking-widest text-accent-foreground transition-colors hover:bg-accent/85 disabled:opacity-30"
             >
               AGREGAR A LA LISTA
             </button>

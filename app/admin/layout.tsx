@@ -12,6 +12,15 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !anonKey) {
+    throw new Error(
+      'Falta NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY en el servidor.',
+    )
+  }
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -29,9 +38,9 @@ export default async function AdminLayout({
   if (!profile || !profile.active) redirect('/auth/login')
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar profile={profile} />
-      <main className="flex-1 overflow-auto">
+    <div className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-background xl:flex-row">
+      <AdminSidebar profile={profile} supabaseConfig={{ url, anonKey }} />
+      <main className="min-w-0 flex-1 overflow-x-hidden xl:overflow-y-auto">
         {children}
       </main>
     </div>

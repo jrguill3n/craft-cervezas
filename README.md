@@ -31,3 +31,31 @@ To learn more, take a look at the following resources:
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 - [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+# Craft Cervezas
+
+## Supabase
+
+The application expects these environment variables:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+Database changes live in `supabase/migrations`. Apply migrations to the linked
+Supabase project before deploying application code that depends on them.
+
+### Create the first super admin
+
+1. Create the user in Supabase Authentication (email/password). Public signup
+   stays disabled.
+2. In the SQL editor, insert the matching profile using the Authentication user
+   UUID:
+
+```sql
+insert into public.profiles (id, full_name, role, active)
+values ('AUTH_USER_UUID', 'Administrator', 'super_admin', true);
+```
+
+Never place the service-role key in browser code or in a `NEXT_PUBLIC_`
+variable.

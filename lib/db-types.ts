@@ -22,7 +22,7 @@ export type BeerRow = {
   brewery: string
   style: string
   abv: number
-  ibu: number | null
+  default_price: number | null
   description: string | null
   created_at: string
   updated_at: string

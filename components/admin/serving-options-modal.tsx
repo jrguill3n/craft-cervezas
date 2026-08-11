@@ -110,7 +110,7 @@ export function ServingOptionsModal({ item, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Opciones de servicio"
-        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col border-l border-foreground/15 bg-background shadow-2xl"
+        className="fixed inset-0 z-50 flex w-full flex-col bg-background shadow-2xl md:inset-y-0 md:right-0 md:left-auto md:max-w-xl md:border-l md:border-foreground/15"
       >
         {/* Header */}
         <div className="flex items-start justify-between border-b border-foreground/15 px-6 py-5">
@@ -122,7 +122,7 @@ export function ServingOptionsModal({ item, onClose }: Props) {
           <button
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex size-8 shrink-0 items-center justify-center text-foreground/40 transition-colors hover:text-foreground"
+            className="flex size-11 shrink-0 items-center justify-center text-foreground/40 transition-colors hover:text-foreground"
           >
             <X className="size-4" aria-hidden="true" />
           </button>
@@ -131,7 +131,7 @@ export function ServingOptionsModal({ item, onClose }: Props) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {/* Column headers */}
-          <div className="mb-2 grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
+          <div className="mb-2 hidden grid-cols-[1fr_1fr_1fr_auto] gap-2 md:grid">
             {['ETIQUETA', 'TAMAÑO', 'PRECIO MXN', ''].map((h, i) => (
               <span key={i} className="label-xs text-muted-foreground">{h}</span>
             ))}
@@ -139,7 +139,7 @@ export function ServingOptionsModal({ item, onClose }: Props) {
 
           <div className="flex flex-col gap-2">
             {rows.map((row, i) => (
-              <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] items-center gap-2">
+              <div key={i} className="grid grid-cols-1 items-center gap-2 border-b border-foreground/10 py-3 md:grid-cols-[1fr_1fr_1fr_auto] md:border-0 md:py-0">
                 <input
                   value={row.label}
                   onChange={(e) => updateRow(i, 'label', e.target.value)}
@@ -168,7 +168,7 @@ export function ServingOptionsModal({ item, onClose }: Props) {
                   type="button"
                   onClick={() => removeRow(i)}
                   aria-label="Eliminar opción"
-                  className="flex size-8 items-center justify-center text-foreground/25 transition-colors hover:text-accent"
+                  className="flex size-11 items-center justify-center text-foreground/50 transition-colors hover:text-accent"
                 >
                   <Trash2 className="size-3.5" aria-hidden="true" />
                 </button>
