@@ -80,32 +80,7 @@ export const branches: Branch[] = [
       { name: 'Cuerda Floja', style: 'Sour de guayaba', abv: '4.2%', origin: 'Tlaquepaque' },
       { name: 'Barril 09', style: 'Barrel aged barleywine', abv: '9.8%', origin: 'Craft / GDL' },
     ],
-    menu: [
-      {
-        title: 'Para compartir',
-        items: [
-          { name: 'Papas Craft', description: 'Alioli de chile morita', price: '$95' },
-          { name: 'Alitas al tarro', description: 'Glaseadas con stout', price: '$165' },
-          { name: 'Tabla de quesos', description: 'Tres quesos, nueces, pan', price: '$210' },
-        ],
-      },
-      {
-        title: 'Fuertes',
-        items: [
-          { name: 'Burger Craft', description: 'Doble carne, cheddar, cebolla en IPA', price: '$189' },
-          { name: 'Costilla lenta', description: 'Seis horas, puré rústico', price: '$245' },
-          { name: 'Coliflor rostizada', description: 'Opción vegetariana', price: '$155' },
-        ],
-      },
-      {
-        title: 'Otras bebidas',
-        items: [
-          { name: 'Michelada Craft', price: '$110' },
-          { name: 'Café de olla', price: '$55' },
-          { name: 'Limonada de hierbas', price: '$65' },
-        ],
-      },
-    ],
+    menu: [],
     promos: [
       { day: 'Martes', title: 'Dos por una', detail: 'Pintas de casa, 16:00 a 20:00' },
       { day: 'Jueves', title: 'Barril invitado', detail: 'Cervecería independiente distinta cada semana' },
@@ -156,27 +131,128 @@ export const branches: Branch[] = [
     ],
     menu: [
       {
-        title: 'Para compartir',
+        title: 'Burgers',
         items: [
-          { name: 'Elote de la casa', description: 'Mayonesa de epazote', price: '$85' },
-          { name: 'Tostadas de atún', price: '$175' },
-          { name: 'Pretzel con queso', description: 'Fundido con lager', price: '$135' },
+          {
+            name: 'Craft Burger',
+            description: 'Carne molida de res con queso americano, tomate bola, corazón de lechuga, cebolla blanca y aderezo de la casa.',
+            price: '$145 · Doble $195',
+          },
+          {
+            name: 'Bacon Blue Cheese Burger',
+            description: 'Carne molida de res con queso americano, cebolla caramelizada, tocino y aderezo de queso azul.',
+            price: '$145 · Doble $195',
+          },
         ],
       },
       {
-        title: 'Fuertes',
+        title: 'Sandwiches',
         items: [
-          { name: 'Pizza de horno', description: 'Masa fermentada 48 h', price: '$205' },
-          { name: 'Pollo al carbón', description: 'Media pieza, salsa macha', price: '$225' },
-          { name: 'Tacos de hongos', price: '$150' },
+          {
+            name: 'BLT Sandwich',
+            description: 'Pan de caja estilo italiano con tocino corte grueso, tomate bola, corazón de lechuga, cebolla blanca y queso americano, acompañado de papas lemon.',
+            price: '$120',
+          },
+          {
+            name: 'Grilled Cheese Sandwich',
+            description: 'Pan de caja estilo italiano con queso Monterrey, cheddar y americano, acompañado de sopa de tomate.',
+            price: '$145',
+          },
+          {
+            name: 'Chicken Chaangüich',
+            description: 'Pan de caja estilo italiano con pollo frito, ensalada de col, queso Monterrey y mayonesa de la casa, acompañado de yam fries.',
+            price: '$175',
+          },
+          {
+            name: 'Pulled Pork Sandwich',
+            description: 'Pan de masa madre con cabeza de lomo ahumado por 18 hrs y ensalada de col casera.',
+            price: '$195',
+          },
+          {
+            name: 'Chili Dog',
+            description: 'Hot dog de res en pan brioche con queso cheddar gratinado, cebolla caramelizada, chili de carne molida y chile toreado.',
+            price: '$145',
+          },
         ],
       },
       {
-        title: 'Otras bebidas',
+        title: 'Fries',
         items: [
-          { name: 'Vermut de la casa', price: '$120' },
-          { name: 'Agua de temporada', price: '$50' },
-          { name: 'Kombucha local', price: '$75' },
+          {
+            name: 'Papas Fritas',
+            description: 'Papas caseras con lemon pepper acompañadas de salsa pikina.',
+            price: '$65',
+          },
+          {
+            name: 'Papas con Ponzoña',
+            description: 'Papas caseras con chicharrón de chile serrano.',
+            price: '$75',
+          },
+          {
+            name: 'Fries',
+            description: 'Papas a la francesa acompañadas de salsa cátsup.',
+            price: '$75',
+          },
+          {
+            name: 'Buffalo Fries',
+            description: 'Papas a la francesa bañadas de salsa buffalo, aderezo de queso azul y queso azul.',
+            price: '$120',
+          },
+          {
+            name: 'Fried Chicken Fries',
+            description: 'Papas a la francesa con pollo frito, acompañadas de salsa buffalo y aderezo de queso azul.',
+            price: '$145',
+          },
+          {
+            name: 'Chili Cheese Fries',
+            description: 'Papas a la francesa gratinadas con queso amarillo y cubiertas con chili de carne molida.',
+            price: '$175',
+          },
+          {
+            name: 'Papas Mr. Green',
+            description: 'Papas cambray aplastadas y fritas, con salsa de limón y chile serrano con un toque de cilantro.',
+            price: '$100',
+          },
+          {
+            name: 'Yam Fries & Fried Chicken',
+            description: 'Papas de camote con pollo frito sazonado en especias acompañado de mayonesa de la casa y un toque de perejil.',
+            price: '$145',
+          },
+        ],
+      },
+      {
+        title: 'Snacks & Nachos',
+        items: [
+          {
+            name: 'Aceitunas',
+            description: 'Aceituna verde maceradas en aceite de olivo, ajo y semillas de mostaza.',
+            price: '$90',
+          },
+          {
+            name: 'Carne Seca',
+            description: 'Carne seca acompañada de limón y salsa pikina.',
+            price: '$120',
+          },
+          {
+            name: 'Corn Ribs',
+            description: 'Costillas de elote fritas con paprika, sal con ajo y aderezo de queso azul.',
+            price: '$120',
+          },
+          {
+            name: 'Nachos Naturales',
+            description: 'Chips de maíz con quesos, pico de gallo y crema especiada.',
+            price: '$150',
+          },
+          {
+            name: 'Nachos Pulled Pork',
+            description: 'Chips de maíz con quesos, pico de gallo, crema especiada y pulled pork ahumado por 18 horas.',
+            price: '$250',
+          },
+          {
+            name: 'Nachos con Chili',
+            description: 'Chips de maíz con quesos, pico de gallo, crema especiada y chili casero.',
+            price: '$195',
+          },
         ],
       },
     ],
@@ -227,32 +303,7 @@ export const branches: Branch[] = [
       { name: 'Trigo 12', style: 'Hefeweizen', abv: '5.3%', ibu: '14', origin: 'Craft / GDL' },
       { name: 'Café Negro', style: 'Porter con café', abv: '6.2%', ibu: '35', origin: 'Craft / GDL' },
     ],
-    menu: [
-      {
-        title: 'Para compartir',
-        items: [
-          { name: 'Cacahuates al comal', price: '$60' },
-          { name: 'Dedos de queso', price: '$120' },
-          { name: 'Nachos Craft', price: '$145' },
-        ],
-      },
-      {
-        title: 'Fuertes',
-        items: [
-          { name: 'Sándwich de pastrami', price: '$185' },
-          { name: 'Hot dog de la casa', description: 'Tocino y cebolla caramelizada', price: '$115' },
-          { name: 'Ensalada de la barra', price: '$135' },
-        ],
-      },
-      {
-        title: 'Para llevar',
-        items: [
-          { name: 'Growler 1 L', description: 'Cualquier llave de la barra', price: '$210' },
-          { name: 'Growler 2 L', price: '$380' },
-          { name: 'Six pack Craft', price: '$320' },
-        ],
-      },
-    ],
+    menu: [],
     promos: [
       { day: 'Lunes', title: 'Growler feliz', detail: '20% en rellenos todo el día' },
       { day: 'Viernes', title: 'Cierre de semana', detail: 'Pinta + hot dog por $160' },

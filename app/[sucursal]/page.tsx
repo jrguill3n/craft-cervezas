@@ -240,6 +240,51 @@ export default async function BranchPage({
           </div>
         </section>
 
+        {branch.menu.length > 0 ? (
+          <section aria-labelledby="menu-sucursal" className="border-b border-foreground/20">
+            <div className="mx-auto max-w-[1600px] px-5 py-14 md:px-10 md:py-20">
+              <div className="border-b border-foreground/20 pb-5">
+                <p className="label-xs text-accent">Sólo en {branch.name}</p>
+                <h2 id="menu-sucursal" className="display-tight mt-3 text-4xl md:text-6xl">
+                  Menú
+                </h2>
+              </div>
+
+              <div className="mt-10 grid gap-x-12 gap-y-14 lg:grid-cols-2">
+                {branch.menu.map((section) => (
+                  <section key={section.title} aria-labelledby={`menu-${section.title.toLowerCase().replaceAll(' ', '-')}`}>
+                    <h3
+                      id={`menu-${section.title.toLowerCase().replaceAll(' ', '-')}`}
+                      className="display-tight border-b border-foreground/20 pb-4 text-3xl md:text-4xl"
+                    >
+                      {section.title}
+                    </h3>
+                    <ul>
+                      {section.items.map((item) => (
+                        <li key={item.name} className="border-b border-foreground/15 py-5">
+                          <div className="flex items-start justify-between gap-5">
+                            <h4 className="text-base font-semibold uppercase tracking-wide md:text-lg">
+                              {item.name}
+                            </h4>
+                            <p className="shrink-0 font-mono text-sm font-semibold text-accent md:text-base">
+                              {item.price}
+                            </p>
+                          </div>
+                          {item.description ? (
+                            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/65">
+                              {item.description}
+                            </p>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         {/* Horarios */}
         <section className="border-b border-foreground/20">
           <div className="mx-auto max-w-[1600px] px-5 py-14 md:px-10 md:py-20">
