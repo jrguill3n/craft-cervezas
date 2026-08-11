@@ -30,6 +30,7 @@ export type Branch = {
   whatsapp: string
   hours: { days: string; time: string }[]
   image: string
+  gallery?: { src: string; alt: string }[]
   taps: Tap[]
   menu: MenuSection[]
   promos: { day: string; title: string; detail: string }[]
@@ -54,7 +55,25 @@ export const branches: Branch[] = [
       { days: 'Jue — Sáb', time: '13:00 — 02:00' },
       { days: 'Domingo', time: '13:00 — 22:00' },
     ],
-    image: '/brand/craft-providencia.jpg',
+    image: '/images/locations/providencia/hero.webp',
+    gallery: [
+      {
+        src: '/images/locations/providencia/craft.webp',
+        alt: 'Cliente disfrutando una cerveza frente al mural de Craft Providencia',
+      },
+      {
+        src: '/images/locations/providencia/mesa.webp',
+        alt: 'Mesa compartida con cervezas durante una degustación en Craft Providencia',
+      },
+      {
+        src: '/images/locations/providencia/cerveza.webp',
+        alt: 'Vaso de cerveza artesanal servido en Craft Providencia',
+      },
+      {
+        src: '/images/locations/providencia/degustacion.webp',
+        alt: 'Degustación de cerveza artesanal en la barra de Craft Providencia',
+      },
+    ],
     taps: [
       { name: 'Nube Baja', style: 'Hazy IPA', abv: '6.4%', ibu: '45', origin: 'Craft / GDL' },
       { name: 'Piedra Lisa', style: 'Pilsner checa', abv: '4.8%', ibu: '32', origin: 'Craft / GDL' },
@@ -112,7 +131,25 @@ export const branches: Branch[] = [
       { days: 'Jue — Sáb', time: '13:00 — 02:30' },
       { days: 'Domingo', time: '13:00 — 21:00' },
     ],
-    image: '/brand/craft-americana.jpg',
+    image: '/images/locations/americana/hero.webp',
+    gallery: [
+      {
+        src: '/images/locations/americana/cervezas.webp',
+        alt: 'Amigos brindando con cerveza artesanal en la terraza de Craft Americana',
+      },
+      {
+        src: '/images/locations/americana/ambiente.webp',
+        alt: 'Clientes conversando en el interior de Craft Americana',
+      },
+      {
+        src: '/images/locations/americana/servicio.webp',
+        alt: 'Cerveza artesanal sirviéndose en Craft Americana',
+      },
+      {
+        src: '/images/locations/americana/barra.webp',
+        alt: 'Cerveza recién servida desde las llaves de Craft Americana',
+      },
+    ],
     taps: [
       { name: 'Lote Corto', style: 'West coast IPA', abv: '6.8%', ibu: '62', origin: 'Craft / GDL' },
       { name: 'Patio', style: 'Saison de temporada', abv: '5.4%', ibu: '24', origin: 'Craft / GDL' },
@@ -169,7 +206,25 @@ export const branches: Branch[] = [
       { days: 'Jue — Sáb', time: '14:00 — 01:00' },
       { days: 'Domingo', time: '14:00 — 21:00' },
     ],
-    image: '/brand/craft-chapalita.jpg',
+    image: '/images/locations/chapalita/hero.webp',
+    gallery: [
+      {
+        src: '/images/locations/chapalita/fachada.webp',
+        alt: 'Fachada y letrero de Craft Chapalita al atardecer',
+      },
+      {
+        src: '/images/locations/chapalita/barra.webp',
+        alt: 'Equipo de Craft atendiendo la barra de Chapalita',
+      },
+      {
+        src: '/images/locations/chapalita/cerveza.webp',
+        alt: 'Cerveza de barril sirviéndose en un vaso de Craft',
+      },
+      {
+        src: '/images/locations/chapalita/mesa.webp',
+        alt: 'Cervezas y comida compartidas en una mesa de Craft Chapalita',
+      },
+    ],
     taps: [
       { name: 'Vecina', style: 'Blonde ale', abv: '4.6%', ibu: '20', origin: 'Craft / GDL' },
       { name: 'Growler IPA', style: 'Session IPA', abv: '4.9%', ibu: '40', origin: 'Craft / GDL' },

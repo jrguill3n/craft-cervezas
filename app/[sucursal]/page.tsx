@@ -101,6 +101,48 @@ export default async function BranchPage({
           </div>
         </section>
 
+        {branch.gallery?.length ? (
+          <section aria-labelledby="galeria-sucursal" className="border-b border-foreground/20">
+            <div className="mx-auto max-w-[1600px] px-5 py-14 md:px-10 md:py-20">
+              <div className="grid items-end gap-5 md:grid-cols-12 md:gap-8">
+                <div className="md:col-span-4">
+                  <p className="label-xs text-accent">La experiencia</p>
+                  <h2 id="galeria-sucursal" className="display-tight mt-4 text-4xl md:text-6xl">
+                    Así se vive {branch.name}
+                  </h2>
+                </div>
+                <p className="max-w-md text-sm leading-relaxed text-foreground/70 md:col-span-5 md:col-start-8">
+                  Una barra cercana, cerveza bien servida y mesas hechas para quedarse un rato más.
+                </p>
+              </div>
+
+              <ul className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-12 md:gap-4 md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
+                {branch.gallery.map((photo, index) => (
+                  <li
+                    key={photo.src}
+                    className={`relative w-[82%] shrink-0 snap-center overflow-hidden bg-muted sm:w-[58%] md:w-auto ${
+                      index === 0
+                        ? 'aspect-4/5 md:col-span-4 md:row-span-2'
+                        : index === 1
+                          ? 'aspect-4/3 md:col-span-8 md:aspect-16/9'
+                          : 'aspect-4/5 md:col-span-4'
+                    }`}
+                  >
+                    <Image
+                      src={photo.src}
+                      alt={photo.alt}
+                      fill
+                      sizes="(min-width: 768px) 33vw, 82vw"
+                      className="object-cover transition-transform duration-500 hover:scale-[1.02]"
+                    />
+                  </li>
+                ))}
+              </ul>
+              <p className="label-xs mt-3 text-muted-foreground md:hidden">Desliza para ver más</p>
+            </div>
+          </section>
+        ) : null}
+
         {/* Tap list */}
         <section className="border-b border-foreground/20">
           <div className="mx-auto max-w-[1600px] px-5 py-14 md:px-10 md:py-20">

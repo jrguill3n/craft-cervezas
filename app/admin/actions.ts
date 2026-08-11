@@ -22,30 +22,84 @@ async function requireAuth() {
 
 export async function createDraftTapList(locationId: string) {
   const { supabase } = await requireAuth()
-  const { data, error } = await supabase.rpc('create_draft_tap_list', {
-    p_location_id: locationId,
-  })
-  if (error) throw new Error(error.message)
+  const { data: existingDraft, error: draftLookupError } = await supabase
+    .from('tap_lists')
+    .select('id')
+    .eq('location_id', locationId)
+    .eq('status', 'draft')
+    .maybeSingle()
+  if (draftLookupError) throw new Error(draftLookupError.message)
+  if (existingDraft) return existingDraft.id
 
-  // Older published lists may predate serving options. Seed any missing draft
-  // price from the beer catalogue so the draft remains publishable.
-  const { data: items } = await supabase
-    .from('tap_list_items')
-    .select('id, beers(default_price), serving_options(id)')
-    .eq('tap_list_id', data)
-  const missingPrices = (items ?? []).flatMap((item) => {
-    const beer = item.beers as unknown as { default_price: number | null } | null
-    const options = item.serving_options as unknown as { id: string }[] | null
-    return (!options?.length && beer?.default_price)
-      ? [{ tap_list_item_id: item.id, label: 'Vaso', size: 'Vaso', price: Number(beer.default_price), display_order: 1 }]
-      : []
-  })
-  if (missingPrices.length) {
-    const { error: seedError } = await supabase.from('serving_options').insert(missingPrices)
-    if (seedError) throw new Error(seedError.message)
+  const { data: published, error: publishedError } = await supabase
+    .from('tap_lists')
+    .select('id')
+    .eq('location_id', locationId)
+    .eq('status', 'published')
+    .maybeSingle()
+  if (publishedError) throw new Error(publishedError.message)
+
+  const { data: draft, error: createError } = await supabase
+    .from('tap_lists')
+    .insert({ location_id: locationId, status: 'draft' })
+    .select('id')
+    .single()
+  if (createError || !draft) {
+    throw new Error(createError?.message ?? 'No se pudo crear el borrador.')
   }
+
+  try {
+    if (published) {
+      const { data: publishedItems, error: itemsError } = await supabase
+        .from('tap_list_items')
+        .select('beer_id, tap_number, availability_status, badge, display_order, beers(default_price), serving_options(label, size, price, display_order)')
+        .eq('tap_list_id', published.id)
+        .order('display_order')
+      if (itemsError) throw itemsError
+
+      for (const item of publishedItems ?? []) {
+        const { data: copiedItem, error: itemError } = await supabase
+          .from('tap_list_items')
+          .insert({
+            tap_list_id: draft.id,
+            beer_id: item.beer_id,
+            tap_number: item.tap_number,
+            availability_status: item.availability_status,
+            badge: item.badge,
+            display_order: item.display_order,
+          })
+          .select('id')
+          .single()
+        if (itemError || !copiedItem) throw itemError ?? new Error('No se pudo copiar una cerveza.')
+
+        const inheritedOptions = (item.serving_options ?? []).map((option) => ({
+          tap_list_item_id: copiedItem.id,
+          label: option.label,
+          size: option.size,
+          price: Number(option.price),
+          display_order: option.display_order,
+        }))
+        const beer = item.beers as unknown as { default_price: number | null } | null
+        const options = inheritedOptions.length
+          ? inheritedOptions
+          : beer?.default_price
+            ? [{ tap_list_item_id: copiedItem.id, label: 'Vaso', size: 'Vaso', price: Number(beer.default_price), display_order: 1 }]
+            : []
+
+        if (options.length) {
+          const { error: optionsError } = await supabase.from('serving_options').insert(options)
+          if (optionsError) throw optionsError
+        }
+      }
+    }
+  } catch (error) {
+    await supabase.from('tap_lists').delete().eq('id', draft.id)
+    const message = error instanceof Error ? error.message : 'No se pudo preparar la edición del tap list.'
+    throw new Error(message)
+  }
+
   revalidatePath('/admin')
-  return data
+  return draft.id
 }
 
 export async function publishTapList(tapListId: string) {
