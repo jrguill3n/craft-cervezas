@@ -49,8 +49,7 @@ export default async function AdminTapListPage() {
         locations(*),
         tap_list_items(
           *,
-          beers(*),
-          serving_options(*)
+          beers(*, serving_options(*))
         )
       `)
       .eq('location_id', loc.id)
@@ -61,7 +60,10 @@ export default async function AdminTapListPage() {
     if (tapListError) throw new Error(`No se pudo cargar el tap list de ${loc.name}: ${tapListError.message}`)
 
     if (tapList) {
-      tapList.tap_list_items = (tapList.tap_list_items ?? []).sort(compareTapListItems)
+      tapList.tap_list_items = (tapList.tap_list_items ?? []).map((item: any) => ({
+        ...item,
+        serving_options: item.beers?.serving_options ?? [],
+      })).sort(compareTapListItems)
       tapListsWithItems.push(tapList as TapListFull)
     }
   }

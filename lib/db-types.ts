@@ -51,7 +51,7 @@ export type TapListItemRow = {
 
 export type ServingOptionRow = {
   id: string
-  tap_list_item_id: string
+  beer_id: string
   label: string
   size: string
   price: number

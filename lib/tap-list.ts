@@ -17,8 +17,7 @@ export async function getPublishedTapList(slug: string): Promise<TapListFull | n
       locations!inner(*),
       tap_list_items(
         *,
-        beers(*),
-        serving_options(*)
+        beers(*, serving_options(*))
       )
     `)
     .eq('locations.slug', slug)
@@ -35,6 +34,10 @@ export async function getPublishedTapList(slug: string): Promise<TapListFull | n
   if (!data) return null
 
   data.tap_list_items = (data.tap_list_items ?? [])
+    .map((item: { beers?: { serving_options?: unknown[] } }) => ({
+      ...item,
+      serving_options: item.beers?.serving_options ?? [],
+    }))
     .sort(compareTapListItems)
 
   return data as TapListFull

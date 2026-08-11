@@ -124,7 +124,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       beers: beer,
       serving_options: [{
         id: `local-option-${localId}`,
-        tap_list_item_id: localId,
+        beer_id: beer.id,
         label: 'Pinta',
         size: 'Pinta',
         price: Number(price),
@@ -152,7 +152,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       serving_options: [{
         ...(item.serving_options[0] ?? {
           id: `local-option-${itemId}`,
-          tap_list_item_id: itemId,
+          beer_id: item.beer_id,
         }),
         label: 'Pinta',
         size: 'Pinta',

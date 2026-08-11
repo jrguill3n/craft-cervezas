@@ -66,3 +66,18 @@ from information_schema.routine_privileges
 where specific_schema = 'public'
   and routine_name in ('create_draft_tap_list', 'publish_tap_list')
 order by routine_name, grantee;
+
+-- 8) Every beer should have exactly one catalogue price; this must return zero rows.
+select b.id, b.name, count(so.id) as price_count
+from public.beers b
+left join public.serving_options so on so.beer_id = b.id
+group by b.id, b.name
+having count(so.id) <> 1
+order by b.name;
+
+-- 9) Price is catalogue-owned only; tap_list_item_id should no longer exist.
+select column_name
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'serving_options'
+order by ordinal_position;

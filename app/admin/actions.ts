@@ -62,7 +62,20 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
 
   try {
     for (const [index, item] of items.entries()) {
-      const { data: savedItem, error: itemError } = await supabase
+      const { data: catalogPrice, error: priceReadError } = await supabase
+        .from('serving_options')
+        .select('id')
+        .eq('beer_id', item.beer_id)
+        .maybeSingle()
+      if (priceReadError) throw priceReadError
+
+      const priceMutation = catalogPrice
+        ? supabase.from('serving_options').update({ label: 'Pinta', size: 'Pinta', price: item.price, display_order: 1 }).eq('id', catalogPrice.id)
+        : supabase.from('serving_options').insert({ beer_id: item.beer_id, label: 'Pinta', size: 'Pinta', price: item.price, display_order: 1 })
+      const { error: catalogPriceError } = await priceMutation
+      if (catalogPriceError) throw catalogPriceError
+
+      const { error: itemError } = await supabase
         .from('tap_list_items')
         .insert({
           tap_list_id: list.id,
@@ -71,18 +84,7 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
           badge: item.badge,
           display_order: index,
         })
-        .select('id')
-        .single()
-      if (itemError || !savedItem) throw itemError ?? new Error('No se pudo guardar una cerveza.')
-
-      const { error: optionsError } = await supabase.from('serving_options').insert({
-        tap_list_item_id: savedItem.id,
-        label: 'Pinta',
-        size: 'Pinta',
-        price: item.price,
-        display_order: 1,
-      })
-      if (optionsError) throw optionsError
+      if (itemError) throw itemError
     }
 
     const { error: publishError } = await supabase.rpc('publish_tap_list', {
