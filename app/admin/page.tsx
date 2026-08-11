@@ -7,7 +7,12 @@ import { compareTapListItems } from '@/lib/tap-list-order'
 export const metadata = { title: 'Tap List — Admin Craft' }
 export const dynamic = 'force-dynamic'
 
-export default async function AdminTapListPage() {
+export default async function AdminTapListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ location?: string }>
+}) {
+  const { location: requestedLocation } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -81,6 +86,9 @@ export default async function AdminTapListPage() {
       .slice()
       .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)[0]?.price ?? null,
   }))
+  const initialLocationId = (locations ?? []).find((location) => location.slug === requestedLocation)?.id
+    ?? locations?.[0]?.id
+    ?? ''
 
   return (
     <TapListEditor
@@ -88,6 +96,7 @@ export default async function AdminTapListPage() {
       tapLists={tapListsWithItems}
       allBeers={beersWithPrice as BeerRow[]}
       profile={profile as ProfileRow}
+      initialLocationId={initialLocationId}
     />
   )
 }

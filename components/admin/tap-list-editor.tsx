@@ -13,6 +13,7 @@ type Props = {
   tapLists: TapListFull[]
   allBeers: BeerRow[]
   profile: ProfileRow
+  initialLocationId: string
 }
 
 const BADGE_LABELS: Record<string, string> = {
@@ -29,9 +30,9 @@ const BADGE_COLORS: Record<string, string> = {
   house: 'text-accent',
 }
 
-export function TapListEditor({ locations, tapLists, allBeers, profile }: Props) {
+export function TapListEditor({ locations, tapLists, allBeers, profile, initialLocationId }: Props) {
   const router = useRouter()
-  const [activeLocationId, setActiveLocationId] = useState(locations[0]?.id ?? '')
+  const [activeLocationId, setActiveLocationId] = useState(initialLocationId)
   const [isPending, startTransition] = useTransition()
   const [showAddBeer, setShowAddBeer] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -43,6 +44,13 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
   const tapList = tapLists.find((t) => t.location_id === activeLocationId) ?? null
   const isEditing = editingLocationId === activeLocationId
   const items: TapListItemFull[] = (isEditing ? editedItems : (tapList?.tap_list_items ?? [])).slice().sort(compareTapListItems)
+
+  function handleLocationChange(locationId: string) {
+    const location = locations.find((candidate) => candidate.id === locationId)
+    if (!location) return
+    setActiveLocationId(locationId)
+    router.replace(`/admin?location=${encodeURIComponent(location.slug)}`, { scroll: false })
+  }
 
   function renumber(nextItems: TapListItemFull[]) {
     return nextItems.map((item, index) => ({
@@ -242,7 +250,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
             <select
               id="admin-location"
               value={activeLocationId}
-              onChange={(event) => setActiveLocationId(event.target.value)}
+              onChange={(event) => handleLocationChange(event.target.value)}
               disabled={isEditing || isPending}
               className="min-h-14 w-full appearance-none border border-foreground/25 bg-background px-4 pr-12 text-base font-semibold tracking-wide text-foreground focus:border-accent focus:outline-none"
             >
@@ -260,7 +268,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
             return (
               <button
                 key={loc.id}
-                onClick={() => setActiveLocationId(loc.id)}
+                onClick={() => handleLocationChange(loc.id)}
                 disabled={isEditing || isPending}
                 className={`relative min-h-11 shrink-0 px-4 py-3 text-[0.65rem] font-semibold tracking-widest transition-colors ${
                   isActive
