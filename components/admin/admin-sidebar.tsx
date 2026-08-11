@@ -51,7 +51,7 @@ export function AdminSidebar({ profile, supabaseConfig }: Props) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex min-h-16 w-full items-center justify-between border-b border-foreground/10 bg-background px-4 xl:hidden">
+      <header className="relative z-30 flex min-h-16 shrink-0 w-full items-center justify-between border-b border-foreground/10 bg-background px-4 pt-[env(safe-area-inset-top)] xl:hidden">
         <div>
           <span className="font-sans text-base font-bold tracking-[0.25em] text-foreground">CRAFT</span>
           <p className="mt-0.5 text-[0.6rem] tracking-widest text-muted-foreground">ADMIN</p>

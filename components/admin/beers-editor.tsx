@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronRight, Plus, Trash2, X } from 'lucide-react'
 import type { BeerRow } from '@/lib/db-types'
 import { createBeer, deleteBeer, updateBeer } from '@/app/admin/actions'
@@ -30,6 +31,7 @@ function beerToForm(b: BeerRow): FormState {
 }
 
 export function BeersEditor({ beers }: Props) {
+  const router = useRouter()
   const [editing, setEditing] = useState<BeerRow | null>(null)
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
@@ -68,12 +70,16 @@ export function BeersEditor({ beers }: Props) {
   }
 
   function handleSave() {
-    if (!form.name || !form.brewery || !form.style || !form.abv) {
+    if (!form.name.trim() || !form.brewery.trim() || !form.style.trim() || form.abv === '') {
       setError('Nombre, cervecería, estilo y ABV son obligatorios.')
       return
     }
     if (!form.price || Number(form.price) <= 0) {
       setError('El precio debe ser mayor a cero.')
+      return
+    }
+    if (!Number.isFinite(Number(form.abv)) || Number(form.abv) < 0 || Number(form.abv) > 100) {
+      setError('El ABV debe estar entre 0 y 100.')
       return
     }
     setError(null)
@@ -85,8 +91,9 @@ export function BeersEditor({ beers }: Props) {
           await createBeer(buildFormData())
         }
         cancel()
+        router.refresh()
       } catch (err) {
-        setError('Error al guardar. Intenta de nuevo.')
+        setError(err instanceof Error ? err.message : 'Error al guardar. Intenta de nuevo.')
       }
     })
   }
@@ -96,6 +103,7 @@ export function BeersEditor({ beers }: Props) {
       try {
         await deleteBeer(id)
         setDeleteCandidate(null)
+        router.refresh()
       } catch {
         setError('No se puede eliminar: la cerveza está en uso en una tap list.')
       }
@@ -140,8 +148,8 @@ export function BeersEditor({ beers }: Props) {
 
       {/* Form */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-background md:static md:mb-8 md:block md:border md:border-foreground/20 md:p-6">
-          <div className="sticky top-0 z-10 flex min-h-16 items-center justify-between border-b border-foreground/15 bg-background px-4 md:static md:mb-5 md:min-h-0 md:border-0 md:p-0">
+        <div className="fixed inset-x-0 top-0 z-50 flex h-dvh max-h-dvh flex-col overflow-hidden overscroll-none bg-background md:static md:mb-8 md:block md:h-auto md:max-h-none md:border md:border-foreground/20 md:p-6">
+          <div className="relative z-10 flex min-h-16 shrink-0 items-center justify-between border-b border-foreground/15 bg-background px-4 pt-[env(safe-area-inset-top)] md:static md:mb-5 md:min-h-0 md:border-0 md:p-0">
             <div>
               <p className="label-xs text-muted-foreground md:hidden">CATÁLOGO</p>
               <h2 className="mt-1 text-base font-bold tracking-widest text-foreground md:mt-0 md:text-sm">
@@ -152,7 +160,7 @@ export function BeersEditor({ beers }: Props) {
               <X className="size-5" aria-hidden="true" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-4 py-5 md:overflow-visible md:p-0">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 [-webkit-overflow-scrolling:touch] md:overflow-visible md:p-0">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
             {(
               [
@@ -251,7 +259,10 @@ export function BeersEditor({ beers }: Props) {
               <p className="mt-1 truncate text-sm text-muted-foreground">{beer.brewery} · {beer.style}</p>
               <p className="mt-1 text-xs text-foreground/45">{beer.abv}% ABV · MXN</p>
             </button>
-            <button onClick={() => setDeleteCandidate(beer)} className="inline-flex size-11 shrink-0 items-center justify-center text-foreground/35 hover:text-accent" aria-label={`Eliminar ${beer.name}`}>
+            <button onClick={() => {
+              setError(null)
+              setDeleteCandidate(beer)
+            }} className="inline-flex size-11 shrink-0 items-center justify-center text-foreground/35 hover:text-accent" aria-label={`Eliminar ${beer.name}`}>
               <Trash2 className="size-4" aria-hidden="true" />
             </button>
             <button onClick={() => startEdit(beer)} className="inline-flex size-11 shrink-0 items-center justify-center border border-foreground/15" aria-label={`Editar ${beer.name}`}>
@@ -295,7 +306,10 @@ export function BeersEditor({ beers }: Props) {
                       EDITAR
                     </button>
                     <button
-                      onClick={() => setDeleteCandidate(b)}
+                      onClick={() => {
+                        setError(null)
+                        setDeleteCandidate(b)
+                      }}
                       disabled={isPending}
                       className="text-xs tracking-widest text-foreground/30 hover:text-accent disabled:opacity-30"
                     >
@@ -313,8 +327,12 @@ export function BeersEditor({ beers }: Props) {
           <div className="w-full max-w-md border border-foreground/20 bg-background p-6">
             <h2 className="text-xl font-semibold">¿Eliminar {deleteCandidate.name}?</h2>
             <p className="mt-3 text-sm text-muted-foreground">No podrá eliminarse si está en uso en un tap list.</p>
+            {error && <p className="mt-4 text-xs text-accent" role="alert">{error}</p>}
             <div className="mt-6 flex gap-3">
-              <button onClick={() => setDeleteCandidate(null)} className="min-h-11 flex-1 border border-foreground/20">CANCELAR</button>
+              <button onClick={() => {
+                setDeleteCandidate(null)
+                setError(null)
+              }} className="min-h-11 flex-1 border border-foreground/20">CANCELAR</button>
               <button onClick={() => handleDelete(deleteCandidate.id)} disabled={isPending} className="min-h-11 flex-1 bg-accent text-accent-foreground">ELIMINAR</button>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { TapListEditor } from '@/components/admin/tap-list-editor'
 import type { LocationRow, ProfileRow, TapListFull } from '@/lib/db-types'
+import { compareTapListItems } from '@/lib/tap-list-order'
 
 export const metadata = { title: 'Tap List — Admin Craft' }
 export const dynamic = 'force-dynamic'
@@ -37,11 +38,11 @@ export default async function AdminTapListPage() {
   const { data: locations, error: locationsError } = await locationsQuery.order('name')
   if (locationsError) throw new Error(`No se pudieron cargar las sucursales: ${locationsError.message}`)
 
-  // For each location, return the draft when it exists. A published list is
-  // read-only in the editor until create_draft_tap_list clones it.
+  // The editor always starts from the currently published list. Changes stay
+  // in the browser until the user explicitly saves and publishes them.
   const tapListsWithItems: TapListFull[] = []
   for (const loc of locations ?? []) {
-    let { data: tapList, error: draftError } = await supabase
+    const { data: tapList, error: tapListError } = await supabase
       .from('tap_lists')
       .select(`
         *,
@@ -53,38 +54,14 @@ export default async function AdminTapListPage() {
         )
       `)
       .eq('location_id', loc.id)
-      .eq('status', 'draft')
-      .order('created_at', { ascending: false })
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
       .limit(1)
       .maybeSingle()
-    if (draftError) throw new Error(`No se pudo cargar el borrador de ${loc.name}: ${draftError.message}`)
-
-    if (!tapList) {
-      const { data: published, error: publishedError } = await supabase
-        .from('tap_lists')
-        .select(`
-          *,
-          locations(*),
-          tap_list_items(
-            *,
-            beers(*),
-            serving_options(*)
-          )
-        `)
-        .eq('location_id', loc.id)
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (publishedError) throw new Error(`No se pudo cargar el tap list de ${loc.name}: ${publishedError.message}`)
-      tapList = published
-    }
+    if (tapListError) throw new Error(`No se pudo cargar el tap list de ${loc.name}: ${tapListError.message}`)
 
     if (tapList) {
-      // Sort items by display_order
-      tapList.tap_list_items = (tapList.tap_list_items ?? []).sort(
-        (a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order,
-      )
+      tapList.tap_list_items = (tapList.tap_list_items ?? []).sort(compareTapListItems)
       tapListsWithItems.push(tapList as TapListFull)
     }
   }

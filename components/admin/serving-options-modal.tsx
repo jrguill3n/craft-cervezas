@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Plus, Trash2 } from 'lucide-react'
 import type { TapListItemFull } from '@/lib/db-types'
-import { upsertServingOptions } from '@/app/admin/actions'
+import { useModalScrollLock } from './use-modal-scroll-lock'
 
 type ServingRow = {
   id?: string
@@ -15,6 +15,7 @@ type ServingRow = {
 
 type Props = {
   item: TapListItemFull
+  onSave: (options: TapListItemFull['serving_options']) => void
   onClose: () => void
 }
 
@@ -34,10 +35,11 @@ function rowsFromItem(item: TapListItemFull): ServingRow[] {
     }))
 }
 
-export function ServingOptionsModal({ item, onClose }: Props) {
+export function ServingOptionsModal({ item, onSave, onClose }: Props) {
   const [rows, setRows] = useState<ServingRow[]>(() => rowsFromItem(item))
-  const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+
+  useModalScrollLock()
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -66,34 +68,30 @@ export function ServingOptionsModal({ item, onClose }: Props) {
 
   function handleSave() {
     setError(null)
+    if (rows.length === 0) {
+      setError('Agrega al menos un precio antes de guardar.')
+      return
+    }
     for (const r of rows) {
       if (!r.label.trim() || !r.size.trim() || r.price === '') {
         setError('Completa todos los campos antes de guardar.')
         return
       }
-      if (isNaN(Number(r.price)) || Number(r.price) < 0) {
-        setError('El precio debe ser un número positivo.')
+      if (isNaN(Number(r.price)) || Number(r.price) <= 0) {
+        setError('El precio debe ser mayor a cero.')
         return
       }
     }
 
-    startTransition(async () => {
-      try {
-        await upsertServingOptions(
-          item.id,
-          rows.map((r, i) => ({
-            id: r.id,
-            label: r.label,
-            size: r.size,
-            price: Number(r.price),
-            display_order: i,
-          })),
-        )
-        onClose()
-      } catch {
-        setError('Error al guardar. Intenta de nuevo.')
-      }
-    })
+    onSave(rows.map((r, i) => ({
+      id: r.id ?? `local-option-${item.id}-${i}`,
+      tap_list_item_id: item.id,
+      label: r.label,
+      size: r.size,
+      price: Number(r.price),
+      display_order: i,
+    })))
+    onClose()
   }
 
   return (
@@ -110,10 +108,10 @@ export function ServingOptionsModal({ item, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Opciones de servicio"
-        className="fixed inset-0 z-50 flex w-full flex-col bg-background shadow-2xl md:inset-y-0 md:right-0 md:left-auto md:max-w-xl md:border-l md:border-foreground/15"
+        className="fixed inset-x-0 top-0 z-50 flex h-dvh max-h-dvh w-full flex-col overflow-hidden overscroll-none bg-background shadow-2xl md:inset-y-0 md:right-0 md:left-auto md:h-auto md:max-h-none md:max-w-xl md:border-l md:border-foreground/15"
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-foreground/15 px-6 py-5">
+        <div className="flex shrink-0 items-start justify-between border-b border-foreground/15 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] md:px-6 md:py-5">
           <div>
             <p className="label-xs text-muted-foreground">PRECIOS</p>
             <h2 className="display-tight mt-0.5 text-2xl">{item.beers.name}</h2>
@@ -129,7 +127,7 @@ export function ServingOptionsModal({ item, onClose }: Props) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 [-webkit-overflow-scrolling:touch] md:px-6 md:py-5">
           {/* Column headers */}
           <div className="mb-2 hidden grid-cols-[1fr_1fr_1fr_auto] gap-2 md:grid">
             {['ETIQUETA', 'TAMAÑO', 'PRECIO MXN', ''].map((h, i) => (
@@ -191,7 +189,7 @@ export function ServingOptionsModal({ item, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-foreground/15 px-6 py-5">
+        <div className="flex shrink-0 gap-3 border-t border-foreground/15 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6 md:py-5">
           <button
             onClick={onClose}
             className="flex-1 border border-foreground/20 py-3 text-xs font-semibold tracking-widest text-foreground/50 transition-colors hover:border-foreground hover:text-foreground"
@@ -200,10 +198,9 @@ export function ServingOptionsModal({ item, onClose }: Props) {
           </button>
           <button
             onClick={handleSave}
-            disabled={isPending}
             className="flex-1 bg-accent py-3 text-xs font-semibold tracking-widest text-accent-foreground transition-colors hover:bg-accent/85 disabled:opacity-40"
           >
-            {isPending ? 'GUARDANDO…' : 'GUARDAR'}
+            GUARDAR
           </button>
         </div>
       </aside>

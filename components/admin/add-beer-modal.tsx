@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Search, ChevronDown } from 'lucide-react'
 import type { BeerRow } from '@/lib/db-types'
+import { useModalScrollLock } from './use-modal-scroll-lock'
 
 type Props = {
   beers: BeerRow[]
-  onAdd: (beerId: string, tapNumber: string, badge: string) => void
+  onAdd: (beerId: string, tapNumber: string, badge: string) => boolean
   onClose: () => void
 }
 
@@ -23,11 +24,17 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
   const [tapNumber, setTapNumber] = useState('')
   const [badge, setBadge] = useState('')
   const [query, setQuery] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
-  // Focus search on mount, close on Escape
+  useModalScrollLock()
+
+  // Avoid opening the mobile keyboard as the drawer mounts; that changes the
+  // visual viewport and makes the entire panel appear to jump.
   useEffect(() => {
-    searchRef.current?.focus()
+    if (window.matchMedia('(min-width: 768px)').matches) {
+      searchRef.current?.focus()
+    }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
@@ -46,8 +53,21 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!beerId || !selected?.default_price || Number(selected.default_price) <= 0) return
-    onAdd(beerId, tapNumber, badge)
+    setError(null)
+    if (!beerId || !selected?.default_price || Number(selected.default_price) <= 0) {
+      setError('Selecciona una cerveza con precio antes de agregarla.')
+      return
+    }
+    if (tapNumber) {
+      const parsedTapNumber = Number(tapNumber)
+      if (!Number.isInteger(parsedTapNumber) || parsedTapNumber < 1 || parsedTapNumber > 99) {
+        setError('El número de tap debe ser entero entre 1 y 99.')
+        return
+      }
+    }
+    if (onAdd(beerId, tapNumber, badge)) {
+      onClose()
+    }
   }
 
   return (
@@ -64,10 +84,10 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Agregar cerveza"
-        className="fixed inset-0 z-50 flex w-full flex-col bg-background shadow-2xl md:inset-y-0 md:right-0 md:left-auto md:max-w-xl md:border-l md:border-foreground/15"
+        className="fixed inset-x-0 top-0 z-50 flex h-dvh max-h-dvh w-full flex-col overflow-hidden overscroll-none bg-background shadow-2xl md:inset-y-0 md:right-0 md:left-auto md:h-auto md:max-h-none md:max-w-xl md:border-l md:border-foreground/15"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-foreground/15 px-6 py-5">
+        <div className="flex shrink-0 items-center justify-between border-b border-foreground/15 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] md:px-6 md:py-5">
           <div>
             <p className="label-xs text-muted-foreground">NUEVA ENTRADA</p>
             <h2 className="display-tight mt-0.5 text-2xl">Agregar</h2>
@@ -81,10 +101,10 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Search */}
-          <div className="relative border-b border-foreground/10 px-6 py-4">
-            <Search className="absolute left-9 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <div className="relative shrink-0 border-b border-foreground/10 px-4 py-3 md:px-6 md:py-4">
+            <Search className="absolute left-7 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground md:left-9" aria-hidden="true" />
             <input
               ref={searchRef}
               type="text"
@@ -96,7 +116,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
           </div>
 
           {/* Beer list */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
             {filtered.length === 0 ? (
               <p className="px-6 py-8 text-sm text-muted-foreground">Sin resultados.</p>
             ) : (
@@ -132,7 +152,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
           </div>
 
           {/* Bottom controls */}
-          <div className="border-t border-foreground/15 px-6 py-5">
+          <div className="shrink-0 border-t border-foreground/15 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6 md:py-5">
             {selected && (
               <p className="mb-4 text-xs text-muted-foreground">
                 <span className="font-semibold text-foreground">{selected.name}</span>
@@ -177,6 +197,8 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
                 </span>
               </div>
             )}
+
+            {error && <p className="mt-3 text-xs text-accent" role="alert">{error}</p>}
 
             <button
               type="submit"

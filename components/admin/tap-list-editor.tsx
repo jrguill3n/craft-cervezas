@@ -1,16 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, X, Settings2, Globe, Pencil, ChevronDown } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, X, Settings2, Save, Pencil, ChevronDown } from 'lucide-react'
 import type { BeerRow, LocationRow, ProfileRow, TapListFull, TapListItemFull } from '@/lib/db-types'
-import {
-  addTapListItem,
-  createDraftTapList,
-  publishTapList,
-  removeTapListItem,
-  updateItemAvailability,
-  updateItemBadge,
-} from '@/app/admin/actions'
+import { compareTapListItems } from '@/lib/tap-list-order'
+import { saveAndPublishTapList } from '@/app/admin/actions'
 import { ServingOptionsModal } from './serving-options-modal'
 import { AddBeerModal } from './add-beer-modal'
 
@@ -36,71 +31,141 @@ const BADGE_COLORS: Record<string, string> = {
 }
 
 export function TapListEditor({ locations, tapLists, allBeers, profile }: Props) {
+  const router = useRouter()
   const [activeLocationId, setActiveLocationId] = useState(locations[0]?.id ?? '')
   const [isPending, startTransition] = useTransition()
   const [servingItemId, setServingItemId] = useState<string | null>(null)
   const [showAddBeer, setShowAddBeer] = useState(false)
-  const [confirmPublish, setConfirmPublish] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [editingLocationId, setEditingLocationId] = useState<string | null>(null)
+  const [editedItems, setEditedItems] = useState<TapListItemFull[]>([])
 
   const activeLocation = locations.find((l) => l.id === activeLocationId)
   const tapList = tapLists.find((t) => t.location_id === activeLocationId) ?? null
-  const items: TapListItemFull[] = (tapList?.tap_list_items ?? []).slice().sort(
-    (a, b) => a.display_order - b.display_order,
-  )
-  const isPublished = tapList?.status === 'published'
+  const isEditing = editingLocationId === activeLocationId
+  const items: TapListItemFull[] = (isEditing ? editedItems : (tapList?.tap_list_items ?? [])).slice().sort(compareTapListItems)
   const servingItem = items.find((i) => i.id === servingItemId) ?? null
 
-  function handleCreateDraft() {
-    startTransition(async () => {
-      await createDraftTapList(activeLocationId)
-    })
+  function handleEdit() {
+    setEditedItems((tapList?.tap_list_items ?? []).map((item) => ({
+      ...item,
+      serving_options: item.serving_options.map((option) => ({ ...option })),
+    })))
+    setEditingLocationId(activeLocationId)
+    setMessage(null)
   }
 
-  function handlePublishToggle() {
-    if (!tapList) return
+  function handleCancel() {
+    setEditingLocationId(null)
+    setEditedItems([])
+    setServingItemId(null)
+    setShowAddBeer(false)
+  }
+
+  function handleSave() {
+    const tapNumbers = items.map((item) => item.tap_number).filter((value): value is number => value !== null)
+    if (new Set(tapNumbers).size !== tapNumbers.length) {
+      setMessage('No puede haber dos cervezas con el mismo número de tap.')
+      return
+    }
+    if (items.some((item) => item.serving_options.length === 0)) {
+      setMessage('Todas las cervezas deben tener al menos un precio.')
+      return
+    }
+    if (items.some((item) => item.serving_options.some((option) => Number(option.price) <= 0))) {
+      setMessage('Todos los precios deben ser mayores a cero.')
+      return
+    }
     startTransition(async () => {
       try {
-        await publishTapList(tapList.id)
-        setConfirmPublish(false)
-        setMessage('Tap list publicado correctamente.')
+        await saveAndPublishTapList(activeLocationId, items.map((item) => ({
+          beer_id: item.beer_id,
+          tap_number: item.tap_number,
+          availability_status: item.availability_status,
+          badge: item.badge,
+          serving_options: item.serving_options.map((option, index) => ({
+            label: option.label,
+            size: option.size,
+            price: Number(option.price),
+            display_order: index,
+          })),
+        })))
+        setEditingLocationId(null)
+        setEditedItems([])
+        setMessage('Cambios guardados y publicados.')
+        router.refresh()
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : 'No se pudo publicar el tap list.')
+        setMessage(error instanceof Error ? error.message : 'No se pudo guardar el tap list.')
       }
     })
   }
 
   function handleAddBeer(beerId: string, tapNumber: string, badge: string) {
-    if (!tapList) return
-    startTransition(async () => {
-      const fd = new FormData()
-      fd.set('tap_list_id', tapList.id)
-      fd.set('beer_id', beerId)
-      if (tapNumber) fd.set('tap_number', tapNumber)
-      if (badge) fd.set('badge', badge)
-      await addTapListItem(fd)
-    })
+    if (editedItems.some((item) => item.beer_id === beerId)) {
+      setMessage('Esa cerveza ya está en el tap list.')
+      return false
+    }
+    const parsedTapNumber = tapNumber ? Number(tapNumber) : null
+    if (parsedTapNumber !== null) {
+      if (!Number.isInteger(parsedTapNumber) || parsedTapNumber < 1 || parsedTapNumber > 99) {
+        setMessage('El número de tap debe ser entero entre 1 y 99.')
+        return false
+      }
+      if (editedItems.some((item) => item.tap_number === parsedTapNumber)) {
+        setMessage(`El tap ${parsedTapNumber} ya está ocupado.`)
+        return false
+      }
+    }
+    const beer = allBeers.find((candidate) => candidate.id === beerId)
+    if (!beer) {
+      setMessage('No se encontró la cerveza seleccionada.')
+      return false
+    }
+    const localId = `local-item-${crypto.randomUUID()}`
+    setEditedItems((current) => [...current, {
+      id: localId,
+      tap_list_id: tapList?.id ?? 'local-list',
+      beer_id: beer.id,
+      tap_number: parsedTapNumber,
+      availability_status: 'available',
+      badge: (badge || null) as TapListItemFull['badge'],
+      display_order: current.length,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      beers: beer,
+      serving_options: beer.default_price ? [{
+        id: `local-option-${localId}`,
+        tap_list_item_id: localId,
+        label: 'Vaso',
+        size: 'Vaso',
+        price: Number(beer.default_price),
+        display_order: 0,
+      }] : [],
+    }])
+    setMessage(null)
+    return true
   }
 
   function handleRemoveItem(itemId: string) {
-    startTransition(async () => {
-      await removeTapListItem(itemId)
-    })
+    setEditedItems((current) => current.filter((item) => item.id !== itemId))
   }
 
   function handleToggleAvailability(item: TapListItemFull) {
-    startTransition(async () => {
-      await updateItemAvailability(
-        item.id,
-        item.availability_status === 'available' ? 'unavailable' : 'available',
-      )
-    })
+    setEditedItems((current) => current.map((candidate) => candidate.id === item.id ? {
+      ...candidate,
+      availability_status: item.availability_status === 'available' ? 'unavailable' : 'available',
+    } : candidate))
   }
 
   function handleBadgeChange(itemId: string, badge: string) {
-    startTransition(async () => {
-      await updateItemBadge(itemId, badge || null)
-    })
+    setEditedItems((current) => current.map((item) => item.id === itemId ? {
+      ...item,
+      badge: (badge || null) as TapListItemFull['badge'],
+    } : item))
+  }
+
+  function handleServingOptions(itemId: string, options: TapListItemFull['serving_options']) {
+    setEditedItems((current) => current.map((item) => item.id === itemId ? { ...item, serving_options: options } : item))
   }
 
   return (
@@ -116,26 +181,14 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
           </div>
 
           <div className="flex shrink-0 flex-col items-end gap-2 md:flex-row md:items-center md:gap-3">
-            {tapList && (
-              <>
-                {/* Status badge */}
-                <span
-                  className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[0.6rem] font-semibold tracking-widest ${
-                    isPublished
-                      ? 'border-green-500/30 bg-green-500/10 text-green-400'
-                      : 'border-foreground/15 text-foreground/40'
-                  }`}
-                >
-                  <span className={`size-1.5 rounded-full ${isPublished ? 'bg-green-400' : 'bg-foreground/25'}`} />
-                  {isPublished ? 'PUBLICADO' : 'BORRADOR'}
-                </span>
-
-                {isPublished && (
-                  <button onClick={handleCreateDraft} disabled={isPending} className="inline-flex min-h-11 items-center gap-2 border border-foreground/25 px-3 text-[0.65rem] font-semibold tracking-widest md:px-4 md:text-xs">
-                    <Pencil className="size-4" aria-hidden="true" /> <span className="md:hidden">EDITAR</span><span className="hidden md:inline">PREPARAR CAMBIOS</span>
-                  </button>
-                )}
-              </>
+            <span className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[0.6rem] font-semibold tracking-widest ${isEditing ? 'border-accent/40 text-accent' : 'border-green-500/30 bg-green-500/10 text-green-400'}`}>
+              <span className={`size-1.5 rounded-full ${isEditing ? 'bg-accent' : 'bg-green-400'}`} />
+              {isEditing ? 'EDITANDO' : 'GUARDADO'}
+            </span>
+            {!isEditing && (
+              <button onClick={handleEdit} disabled={isPending} className="inline-flex min-h-11 items-center gap-2 border border-foreground/25 px-3 text-[0.65rem] font-semibold tracking-widest md:px-4 md:text-xs">
+                <Pencil className="size-4" aria-hidden="true" /> EDITAR
+              </button>
             )}
           </div>
         </div>
@@ -148,6 +201,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
               id="admin-location"
               value={activeLocationId}
               onChange={(event) => setActiveLocationId(event.target.value)}
+              disabled={isEditing || isPending}
               className="min-h-14 w-full appearance-none border border-foreground/25 bg-background px-4 pr-12 text-base font-semibold tracking-wide text-foreground focus:border-accent focus:outline-none"
             >
               {locations.map((loc) => (
@@ -165,6 +219,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
               <button
                 key={loc.id}
                 onClick={() => setActiveLocationId(loc.id)}
+                disabled={isEditing || isPending}
                 className={`relative min-h-11 shrink-0 px-4 py-3 text-[0.65rem] font-semibold tracking-widest transition-colors ${
                   isActive
                     ? 'text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-accent'
@@ -172,7 +227,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                 }`}
               >
                 {loc.name.toUpperCase()}
-                {tl?.status === 'published' && (
+                {tl && (
                   <span className="ml-1.5 inline-block size-1.5 translate-y-[-1px] rounded-full bg-green-400" />
                 )}
               </button>
@@ -187,20 +242,20 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
               Sin tap list para {activeLocation?.name}.
             </p>
             <button
-              onClick={handleCreateDraft}
+              onClick={handleEdit}
               disabled={isPending}
               className="inline-flex items-center gap-2 border border-foreground px-5 py-2.5 text-xs font-semibold tracking-widest text-foreground transition-colors hover:bg-foreground hover:text-background disabled:opacity-40"
             >
               <Plus className="size-3.5" aria-hidden="true" />
-              CREAR BORRADOR
+              CREAR TAP LIST
             </button>
           </div>
         )}
 
         {/* ── Items table ───────────────────────────────────────────────────── */}
-        {tapList && (
-          <div className="flex flex-1 flex-col overflow-hidden pb-24 md:pb-0">
-            <div className="flex-1 overflow-y-auto">
+        {(tapList || isEditing) && (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
               <div className="divide-y divide-foreground/10 px-4 xl:hidden">
                 {items.length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">Sin cervezas. Agrega la primera.</p>}
                 {items.map((item) => (
@@ -211,24 +266,24 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                         <h3 className="truncate text-base font-semibold">{item.beers.name}</h3>
                         <p className="mt-1 truncate text-xs text-muted-foreground">{item.beers.brewery} · {item.beers.style} · {item.beers.abv}%</p>
                       </div>
-                      <button onClick={() => setServingItemId(item.id)} disabled={isPending || isPublished} className={`inline-flex min-h-11 shrink-0 items-center gap-2 border px-3 text-sm font-semibold disabled:opacity-60 ${(item.serving_options.length || item.beers.default_price) ? 'border-foreground/15 text-foreground' : 'border-accent/40 text-accent'}`}>
+                      <button onClick={() => setServingItemId(item.id)} disabled={isPending || !isEditing} className={`inline-flex min-h-11 shrink-0 items-center gap-2 border px-3 text-sm font-semibold disabled:opacity-60 ${(item.serving_options.length || item.beers.default_price) ? 'border-foreground/15 text-foreground' : 'border-accent/40 text-accent'}`}>
                         <Settings2 className="size-4 text-accent" aria-hidden="true" />
                         {item.serving_options.length ? item.serving_options.map((option) => `$${Number(option.price).toFixed(0)}`).join('/') : item.beers.default_price ? `$${Number(item.beers.default_price).toFixed(0)}` : 'AGREGAR PRECIO'}
                       </button>
                     </div>
                     <div className="mt-2.5 flex items-center gap-2 pl-12">
-                      <button onClick={() => handleToggleAvailability(item)} disabled={isPending || isPublished} aria-pressed={item.availability_status === 'available'} aria-label={`Estado de ${item.beers.name}: ${item.availability_status === 'available' ? 'disponible' : 'agotado'}. Toca para cambiar.`} className={`inline-flex min-h-12 items-center gap-2 border px-3 text-xs font-semibold tracking-wide disabled:opacity-60 ${item.availability_status === 'available' ? 'border-green-500/30 bg-green-500/10 text-green-400' : 'border-foreground/20 text-foreground/55'}`}>
+                      <button onClick={() => handleToggleAvailability(item)} disabled={isPending || !isEditing} aria-pressed={item.availability_status === 'available'} aria-label={`Estado de ${item.beers.name}: ${item.availability_status === 'available' ? 'disponible' : 'agotado'}. Toca para cambiar.`} className={`inline-flex min-h-12 items-center gap-2 border px-3 text-xs font-semibold tracking-wide disabled:opacity-60 ${item.availability_status === 'available' ? 'border-green-500/30 bg-green-500/10 text-green-400' : 'border-foreground/20 text-foreground/55'}`}>
                         <span className={`size-2 rounded-full ${item.availability_status === 'available' ? 'bg-green-400' : 'bg-foreground/30'}`} aria-hidden="true" />
                         {item.availability_status === 'available' ? 'Disponible' : 'Agotado'}
                       </button>
                       <div className="relative min-w-0 flex-1">
-                        <select value={item.badge ?? ''} onChange={(event) => handleBadgeChange(item.id, event.target.value)} disabled={isPending || isPublished} aria-label={`Badge de ${item.beers.name}`} className={`min-h-12 w-full appearance-none border border-foreground/20 bg-background px-3 pr-9 text-xs font-semibold tracking-wide disabled:opacity-60 ${item.badge ? BADGE_COLORS[item.badge] : 'text-foreground/55'}`}>
+                        <select value={item.badge ?? ''} onChange={(event) => handleBadgeChange(item.id, event.target.value)} disabled={isPending || !isEditing} aria-label={`Badge de ${item.beers.name}`} className={`min-h-12 w-full appearance-none border border-foreground/20 bg-background px-3 pr-9 text-xs font-semibold tracking-wide disabled:opacity-60 ${item.badge ? BADGE_COLORS[item.badge] : 'text-foreground/55'}`}>
                           <option value="">Sin badge</option>
                           {Object.entries(BADGE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                         </select>
                         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-accent" aria-hidden="true" />
                       </div>
-                      <button onClick={() => handleRemoveItem(item.id)} disabled={isPending || isPublished} className="inline-flex size-12 shrink-0 items-center justify-center border border-foreground/15 text-accent disabled:opacity-30" aria-label={`Quitar ${item.beers.name}`}><X className="size-4" aria-hidden="true" /></button>
+                      <button onClick={() => handleRemoveItem(item.id)} disabled={isPending || !isEditing} className="inline-flex size-12 shrink-0 items-center justify-center border border-foreground/15 text-accent disabled:opacity-30" aria-label={`Quitar ${item.beers.name}`}><X className="size-4" aria-hidden="true" /></button>
                     </div>
                   </article>
                 ))}
@@ -282,7 +337,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                         <select
                           value={item.badge ?? ''}
                           onChange={(e) => handleBadgeChange(item.id, e.target.value)}
-                          disabled={isPending || isPublished}
+                          disabled={isPending || !isEditing}
                           className={`bg-transparent text-[0.65rem] font-semibold tracking-widest focus:outline-none disabled:opacity-40 ${
                             item.badge ? BADGE_COLORS[item.badge] : 'text-foreground/30'
                           }`}
@@ -298,7 +353,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                       <td className="px-3 py-4">
                         <button
                           onClick={() => setServingItemId(item.id)}
-                          disabled={isPending || isPublished}
+                          disabled={isPending || !isEditing}
                           className="inline-flex items-center gap-1.5 text-[0.65rem] font-semibold tracking-widest text-accent transition-colors hover:text-accent/70 disabled:opacity-40"
                         >
                           <Settings2 className="size-3" aria-hidden="true" />
@@ -316,7 +371,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                       <td className="px-3 py-4">
                         <button
                           onClick={() => handleToggleAvailability(item)}
-                          disabled={isPending || isPublished}
+                          disabled={isPending || !isEditing}
                           className={`text-[0.65rem] font-semibold tracking-widest transition-colors disabled:opacity-40 ${
                             item.availability_status === 'available'
                               ? 'text-green-400 hover:text-green-300'
@@ -331,7 +386,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                       <td className="px-8 py-4 text-right">
                         <button
                           onClick={() => handleRemoveItem(item.id)}
-                          disabled={isPending || isPublished}
+                          disabled={isPending || !isEditing}
                           aria-label={`Eliminar ${item.beers.name}`}
                           className="text-foreground/15 transition-colors hover:text-accent group-hover:text-foreground/40 disabled:opacity-30"
                         >
@@ -345,10 +400,10 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
             </div>
 
             {/* ── Footer row ──────────────────────────────────────────────── */}
-            <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-foreground/15 bg-background px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,.22)] md:static md:px-6 md:shadow-none xl:px-8 xl:py-4">
+            <div className="relative z-30 flex shrink-0 items-center justify-between gap-3 border-t border-foreground/15 bg-background px-4 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,.22)] md:px-6 md:py-3 md:shadow-none xl:px-8 xl:py-4">
               <button
                 onClick={() => setShowAddBeer(true)}
-                disabled={isPending || isPublished}
+                disabled={isPending || !isEditing}
                 className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-semibold tracking-widest text-accent transition-colors hover:text-accent/70 disabled:opacity-40"
               >
                 <Plus className="size-3.5" aria-hidden="true" />
@@ -356,14 +411,17 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
               </button>
               <span className="label-xs hidden text-muted-foreground md:inline">
                 {items.length} cerveza{items.length !== 1 ? 's' : ''}
-                {tapList.published_at ? (
+                {tapList?.published_at ? (
                   <> · Publicado {new Date(tapList.published_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</>
                 ) : null}
               </span>
-              {!isPublished && (
-                <button onClick={() => setConfirmPublish(true)} disabled={isPending || items.length === 0} className="inline-flex min-h-11 items-center gap-2 bg-accent px-4 text-xs font-semibold tracking-widest text-accent-foreground disabled:opacity-40">
-                  <Globe className="size-4" aria-hidden="true" /> <span className="sm:hidden">PUBLICAR</span><span className="hidden sm:inline">PUBLICAR CAMBIOS</span>
-                </button>
+              {isEditing && (
+                <div className="flex gap-2">
+                  <button onClick={handleCancel} disabled={isPending} className="min-h-11 border border-foreground/20 px-3 text-xs font-semibold tracking-widest disabled:opacity-40">CANCELAR</button>
+                  <button onClick={handleSave} disabled={isPending} className="inline-flex min-h-11 items-center gap-2 bg-accent px-4 text-xs font-semibold tracking-widest text-accent-foreground disabled:opacity-40">
+                    <Save className="size-4" aria-hidden="true" /> {isPending ? 'GUARDANDO…' : 'GUARDAR Y PUBLICAR'}
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -371,13 +429,10 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       </div>
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}
-      {showAddBeer && tapList && (
+      {showAddBeer && isEditing && (
         <AddBeerModal
           beers={allBeers}
-          onAdd={(beerId, tapNumber, badge) => {
-            handleAddBeer(beerId, tapNumber, badge)
-            setShowAddBeer(false)
-          }}
+          onAdd={handleAddBeer}
           onClose={() => setShowAddBeer(false)}
         />
       )}
@@ -385,21 +440,9 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       {servingItem && (
         <ServingOptionsModal
           item={servingItem}
+          onSave={(options) => handleServingOptions(servingItem.id, options)}
           onClose={() => setServingItemId(null)}
         />
-      )}
-
-      {confirmPublish && tapList && !isPublished && (
-        <div className="fixed inset-0 z-[60] grid place-items-center bg-background/80 p-4" role="dialog" aria-modal="true" aria-label="Confirmar publicación">
-          <div className="w-full max-w-md border border-foreground/20 bg-background p-6">
-            <h2 className="display-tight text-2xl">¿Publicar cambios?</h2>
-            <p className="mt-3 text-sm text-muted-foreground">Esta versión reemplazará el tap list público de {activeLocation?.name}.</p>
-            <div className="mt-6 flex gap-3">
-              <button onClick={() => setConfirmPublish(false)} className="min-h-11 flex-1 border border-foreground/20">CANCELAR</button>
-              <button onClick={handlePublishToggle} disabled={isPending} className="min-h-11 flex-1 bg-accent text-accent-foreground">{isPending ? 'PUBLICANDO…' : 'PUBLICAR'}</button>
-            </div>
-          </div>
-        </div>
       )}
       {message && <div role="status" className="fixed right-4 bottom-20 z-[70] max-w-sm border border-foreground/20 bg-background px-4 py-3 text-sm shadow-xl xl:bottom-4">{message}</div>}
     </>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { TapListFull } from '@/lib/db-types'
+import { compareTapListItems } from '@/lib/tap-list-order'
 
 /**
  * Returns the most recently published tap list for a given location slug.
@@ -35,7 +36,7 @@ export async function getPublishedTapList(slug: string): Promise<TapListFull | n
 
   data.tap_list_items = (data.tap_list_items ?? [])
     .filter((i: { availability_status: string }) => i.availability_status === 'available')
-    .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
+    .sort(compareTapListItems)
 
   return data as TapListFull
 }

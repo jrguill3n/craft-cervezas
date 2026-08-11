@@ -38,9 +38,9 @@ export default async function AdminLayout({
   if (!profile || !profile.active) redirect('/auth/login')
 
   return (
-    <div className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-background xl:flex-row">
+    <div className="flex h-dvh min-h-0 min-w-0 flex-col overflow-hidden bg-background xl:flex-row">
       <AdminSidebar profile={profile} supabaseConfig={{ url, anonKey }} />
-      <main className="min-w-0 flex-1 overflow-x-hidden xl:overflow-y-auto">
+      <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none xl:overflow-y-auto">
         {children}
       </main>
     </div>
