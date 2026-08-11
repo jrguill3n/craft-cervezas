@@ -24,7 +24,6 @@ export type TapListSaveItem = {
   beer_id: string
   tap_number: number | null
   badge: 'new' | 'limited' | 'guest' | 'house' | null
-  price: number
 }
 
 export async function saveAndPublishTapList(locationId: string, items: TapListSaveItem[]) {
@@ -42,7 +41,21 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
   }
   for (const item of items) {
     if (!item.beer_id) throw new Error('Hay una cerveza inválida en el tap list.')
-    if (!Number.isFinite(item.price) || item.price <= 0) throw new Error('Todos los precios deben ser mayores a cero.')
+  }
+
+  const beerIds = [...new Set(items.map((item) => item.beer_id))]
+  if (beerIds.length > 0) {
+    const { data: catalogPrices, error: catalogError } = await supabase
+      .from('serving_options')
+      .select('beer_id, price')
+      .in('beer_id', beerIds)
+    if (catalogError) throw new Error(catalogError.message)
+    const validPrices = new Set(
+      (catalogPrices ?? []).filter((option) => Number(option.price) > 0).map((option) => option.beer_id),
+    )
+    if (beerIds.some((beerId) => !validPrices.has(beerId))) {
+      throw new Error('Todas las cervezas deben tener un precio válido en el catálogo de Cervezas.')
+    }
   }
 
   // Remove any abandoned records from the former draft-based workflow.
@@ -62,19 +75,6 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
 
   try {
     for (const [index, item] of items.entries()) {
-      const { data: catalogPrice, error: priceReadError } = await supabase
-        .from('serving_options')
-        .select('id')
-        .eq('beer_id', item.beer_id)
-        .maybeSingle()
-      if (priceReadError) throw priceReadError
-
-      const priceMutation = catalogPrice
-        ? supabase.from('serving_options').update({ label: 'Pinta', size: 'Pinta', price: item.price, display_order: 1 }).eq('id', catalogPrice.id)
-        : supabase.from('serving_options').insert({ beer_id: item.beer_id, label: 'Pinta', size: 'Pinta', price: item.price, display_order: 1 })
-      const { error: catalogPriceError } = await priceMutation
-      if (catalogPriceError) throw catalogPriceError
-
       const { error: itemError } = await supabase
         .from('tap_list_items')
         .insert({

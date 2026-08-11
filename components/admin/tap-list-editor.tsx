@@ -78,7 +78,6 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
           beer_id: item.beer_id,
           tap_number: item.tap_number,
           badge: item.badge,
-          price: Number(item.serving_options[0]?.price),
         })))
         setEditingLocationId(null)
         setEditedItems([])
@@ -90,7 +89,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
     })
   }
 
-  function handleAddBeer(beerId: string, tapNumber: string, badge: string, price: string) {
+  function handleAddBeer(beerId: string, tapNumber: string, badge: string) {
     if (editedItems.some((item) => item.beer_id === beerId)) {
       setMessage('Esa cerveza ya está en el tap list.')
       return false
@@ -111,6 +110,10 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       setMessage('No se encontró la cerveza seleccionada.')
       return false
     }
+    if (beer.primary_price == null || Number(beer.primary_price) <= 0) {
+      setMessage('Esta cerveza necesita un precio válido en el catálogo de Cervezas.')
+      return false
+    }
     const localId = `local-item-${crypto.randomUUID()}`
     setEditedItems((current) => [...current, {
       id: localId,
@@ -127,7 +130,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
         beer_id: beer.id,
         label: 'Pinta',
         size: 'Pinta',
-        price: Number(price),
+        price: Number(beer.primary_price),
         display_order: 1,
       }],
     }])
@@ -143,22 +146,6 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
     setEditedItems((current) => current.map((item) => item.id === itemId ? {
       ...item,
       badge: (badge || null) as TapListItemFull['badge'],
-    } : item))
-  }
-
-  function handlePriceChange(itemId: string, price: string) {
-    setEditedItems((current) => current.map((item) => item.id === itemId ? {
-      ...item,
-      serving_options: [{
-        ...(item.serving_options[0] ?? {
-          id: `local-option-${itemId}`,
-          beer_id: item.beer_id,
-        }),
-        label: 'Pinta',
-        size: 'Pinta',
-        price: Number(price),
-        display_order: 1,
-      }],
     } : item))
   }
 
@@ -260,10 +247,9 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                         <h3 className="truncate text-base font-semibold">{item.beers.name}</h3>
                         <p className="mt-1 truncate text-xs text-muted-foreground">{item.beers.brewery} · {item.beers.style} · {item.beers.abv}%</p>
                       </div>
-                      <label className="flex min-h-11 w-28 shrink-0 items-center border border-foreground/20 px-3 focus-within:border-accent">
-                        <span className="mr-1 text-foreground/40">$</span>
-                        <input type="number" inputMode="decimal" min="0.01" step="0.01" value={item.serving_options[0]?.price ?? ''} onChange={(event) => handlePriceChange(item.id, event.target.value)} disabled={isPending || !isEditing} aria-label={`Precio de ${item.beers.name} en MXN`} className="min-w-0 flex-1 bg-transparent font-mono text-sm focus:outline-none disabled:opacity-60" />
-                      </label>
+                      <span className="w-28 shrink-0 text-right font-mono text-sm font-semibold text-foreground">
+                        {item.serving_options[0]?.price == null ? 'PENDIENTE' : `$${Number(item.serving_options[0].price).toFixed(0)}`}
+                      </span>
                     </div>
                     <div className="mt-2.5 flex items-center gap-2 pl-12">
                       <div className="relative min-w-0 flex-1">
@@ -320,12 +306,11 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                         {item.beers.abv}%
                       </td>
 
-                      {/* Single pint price */}
+                      {/* Catalogue price — read only */}
                       <td className="px-3 py-4">
-                        <label className="flex min-h-11 w-28 items-center border border-foreground/20 px-3 focus-within:border-accent">
-                          <span className="mr-1 text-foreground/40">$</span>
-                          <input type="number" inputMode="decimal" min="0.01" step="0.01" value={item.serving_options[0]?.price ?? ''} onChange={(event) => handlePriceChange(item.id, event.target.value)} disabled={isPending || !isEditing} aria-label={`Precio de ${item.beers.name} en MXN`} className="min-w-0 flex-1 bg-transparent font-mono text-sm focus:outline-none disabled:opacity-60" />
-                        </label>
+                        <span className="font-mono text-sm font-semibold text-foreground">
+                          {item.serving_options[0]?.price == null ? 'PENDIENTE' : `$${Number(item.serving_options[0].price).toFixed(0)}`}
+                        </span>
                       </td>
 
                       {/* Badge selector + remove */}

@@ -7,7 +7,7 @@ import { useModalScrollLock } from './use-modal-scroll-lock'
 
 type Props = {
   beers: BeerRow[]
-  onAdd: (beerId: string, tapNumber: string, badge: string, price: string) => boolean
+  onAdd: (beerId: string, tapNumber: string, badge: string) => boolean
   onClose: () => void
 }
 
@@ -23,7 +23,6 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
   const [beerId, setBeerId] = useState('')
   const [tapNumber, setTapNumber] = useState('')
   const [badge, setBadge] = useState('')
-  const [price, setPrice] = useState('')
   const [query, setQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -55,8 +54,8 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (!beerId || !price || Number(price) <= 0) {
-      setError('Selecciona una cerveza y captura un precio válido.')
+    if (!beerId || selected?.primary_price == null || Number(selected.primary_price) <= 0) {
+      setError('Esta cerveza necesita un precio válido en el catálogo de Cervezas.')
       return
     }
     if (tapNumber) {
@@ -66,7 +65,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
         return
       }
     }
-    if (onAdd(beerId, tapNumber, badge, price)) {
+    if (onAdd(beerId, tapNumber, badge)) {
       onClose()
     }
   }
@@ -127,10 +126,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
                   <button
                     key={b.id}
                     type="button"
-                    onClick={() => {
-                      setBeerId(b.id)
-                      setPrice(b.primary_price == null ? '' : String(b.primary_price))
-                    }}
+                    onClick={() => setBeerId(b.id)}
                     className={`flex min-h-14 w-full items-center justify-between border-b border-foreground/5 px-6 py-3.5 text-left transition-colors ${
                       isSelected
                         ? 'bg-foreground text-background'
@@ -191,19 +187,20 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
               </div>
             </div>
 
-            <label className="mt-3 block">
-              <span className="label-xs text-foreground/50">PRECIO MXN · PINTA</span>
-              <div className="mt-2 flex min-h-12 items-center border border-foreground/20 px-3 focus-within:border-accent">
-                <span className="mr-1 text-foreground/40">$</span>
-                <input type="number" inputMode="decimal" min="0.01" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="110.00" className="min-w-0 flex-1 bg-transparent text-base focus:outline-none" />
+            {selected && (
+              <div className="mt-3 flex min-h-12 items-center justify-between border border-foreground/15 px-3">
+                <span className="label-xs text-foreground/50">PRECIO DEL CATÁLOGO</span>
+                <span className="font-mono text-sm font-semibold">
+                  {selected.primary_price == null ? 'PENDIENTE' : `$${Number(selected.primary_price).toFixed(0)} MXN`}
+                </span>
               </div>
-            </label>
+            )}
 
             {error && <p className="mt-3 text-xs text-accent" role="alert">{error}</p>}
 
             <button
               type="submit"
-              disabled={!beerId || !price || Number(price) <= 0}
+              disabled={!beerId || selected?.primary_price == null || Number(selected.primary_price) <= 0}
               className="mt-4 min-h-12 w-full bg-accent py-3 text-xs font-semibold tracking-widest text-accent-foreground transition-colors hover:bg-accent/85 disabled:opacity-30"
             >
               AGREGAR A LA LISTA
