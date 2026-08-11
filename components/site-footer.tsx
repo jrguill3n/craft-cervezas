@@ -6,8 +6,8 @@ export function SiteFooter() {
   return (
     <footer id="contacto" className="border-t border-foreground/20 bg-background">
       <div className="mx-auto max-w-[1600px] px-5 py-16 md:px-10 md:py-24">
-        <div className="grid gap-12 md:grid-cols-12 md:gap-8">
-          <div className="md:col-span-4">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
+          <div className="sm:col-span-2 lg:col-span-4">
             <CraftWordmark width={240} />
             <p className="mt-8 max-w-xs text-sm leading-relaxed text-foreground/70">
               Cerveza independiente, buena comida y mejores encuentros. Tres barras en
@@ -15,7 +15,7 @@ export function SiteFooter() {
             </p>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="lg:col-span-3">
             <h2 className="label-xs text-muted-foreground">Sucursales</h2>
             <ul className="mt-5 flex flex-col gap-3">
               {branches.map((branch) => (
@@ -32,7 +32,7 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="lg:col-span-3">
             <h2 className="label-xs text-muted-foreground">Redes</h2>
             <ul className="mt-5 flex flex-col gap-3">
               {contact.socials.map((social) => (
@@ -51,7 +51,7 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-2">
             <h2 className="label-xs text-muted-foreground">Contacto</h2>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>

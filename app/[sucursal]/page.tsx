@@ -179,23 +179,10 @@ export default async function BranchPage({
                     <p className="text-sm text-muted-foreground md:col-span-2">{item.beers.brewery}</p>
                     <div className="md:col-span-2">
                       <p className="label-xs text-right">{item.beers.abv}%</p>
-                      {(item.serving_options.length > 0 || item.beers.default_price != null) && (
-                        <ul className="mt-1 flex flex-wrap justify-end gap-x-3 gap-y-0.5">
-                          {item.serving_options.length > 0 ? (
-                            item.serving_options
-                              .slice()
-                              .sort((a, b) => a.display_order - b.display_order)
-                              .map((opt) => (
-                                <li key={opt.id} className="label-xs text-muted-foreground">
-                                  {opt.size} · ${Number(opt.price).toFixed(0)} MXN
-                                </li>
-                              ))
-                          ) : (
-                            <li className="label-xs text-muted-foreground">
-                              Vaso · ${Number(item.beers.default_price).toFixed(0)} MXN
-                            </li>
-                          )}
-                        </ul>
+                      {item.serving_options.length > 0 && (
+                        <p className="label-xs mt-1 text-right text-muted-foreground">
+                          ${Number(item.serving_options.slice().sort((a, b) => a.display_order - b.display_order)[0].price).toFixed(0)} MXN
+                        </p>
                       )}
                     </div>
                   </li>

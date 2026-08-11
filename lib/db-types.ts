@@ -22,7 +22,7 @@ export type BeerRow = {
   brewery: string
   style: string
   abv: number
-  default_price: number | null
+  primary_price?: number | null
   description: string | null
   created_at: string
   updated_at: string
@@ -43,7 +43,6 @@ export type TapListItemRow = {
   tap_list_id: string
   beer_id: string
   tap_number: number | null
-  availability_status: 'available' | 'unavailable'
   badge: 'new' | 'limited' | 'guest' | 'house' | null
   display_order: number
   created_at: string

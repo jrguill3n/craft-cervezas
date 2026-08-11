@@ -25,7 +25,7 @@ function beerToForm(b: BeerRow): FormState {
     brewery: b.brewery,
     style: b.style,
     abv: String(b.abv),
-    price: b.default_price == null ? '' : String(b.default_price),
+    price: b.primary_price == null ? '' : String(b.primary_price),
     description: b.description ?? '',
   }
 }
@@ -253,7 +253,7 @@ export function BeersEditor({ beers }: Props) {
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="truncate text-base font-semibold">{beer.name}</h2>
                 <span className="shrink-0 font-mono text-sm font-semibold text-accent">
-                  {beer.default_price == null ? '—' : `$${Number(beer.default_price).toFixed(0)}`}
+                  {beer.primary_price == null ? '—' : `$${Number(beer.primary_price).toFixed(0)}`}
                 </span>
               </div>
               <p className="mt-1 truncate text-sm text-muted-foreground">{beer.brewery} · {beer.style}</p>
@@ -295,7 +295,7 @@ export function BeersEditor({ beers }: Props) {
                 <td className="py-3 pr-6 text-xs text-foreground/70">{b.style}</td>
                 <td className="py-3 pr-6 font-mono text-xs text-foreground/70">{b.abv}%</td>
                 <td className="py-3 pr-6 font-mono text-xs font-semibold text-foreground">
-                  {b.default_price == null ? 'PENDIENTE' : `$${Number(b.default_price).toFixed(0)}`}
+                  {b.primary_price == null ? 'PENDIENTE' : `$${Number(b.primary_price).toFixed(0)}`}
                 </td>
                 <td className="py-3 text-right">
                   <div className="flex items-center justify-end gap-4">

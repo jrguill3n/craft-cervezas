@@ -35,7 +35,6 @@ export async function getPublishedTapList(slug: string): Promise<TapListFull | n
   if (!data) return null
 
   data.tap_list_items = (data.tap_list_items ?? [])
-    .filter((i: { availability_status: string }) => i.availability_status === 'available')
     .sort(compareTapListItems)
 
   return data as TapListFull

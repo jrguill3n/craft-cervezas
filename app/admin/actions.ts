@@ -23,13 +23,12 @@ async function requireAuth() {
 export type TapListSaveItem = {
   beer_id: string
   tap_number: number | null
-  availability_status: 'available' | 'unavailable'
   badge: 'new' | 'limited' | 'guest' | 'house' | null
-  serving_options: { label: string; size: string; price: number; display_order: number }[]
+  price: number
 }
 
 export async function saveAndPublishTapList(locationId: string, items: TapListSaveItem[]) {
-  const { supabase, user } = await requireAuth()
+  const { supabase } = await requireAuth()
   if (!locationId) throw new Error('Falta la sucursal.')
 
   const tapNumbers = items
@@ -43,14 +42,7 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
   }
   for (const item of items) {
     if (!item.beer_id) throw new Error('Hay una cerveza inválida en el tap list.')
-    if (item.serving_options.length === 0) {
-      throw new Error('Todas las cervezas deben tener al menos un precio.')
-    }
-    if (item.serving_options.some((option) =>
-      !option.label.trim() || !option.size.trim() || !Number.isFinite(option.price) || option.price <= 0
-    )) {
-      throw new Error('Todos los precios deben tener etiqueta, tamaño y un monto mayor a cero.')
-    }
+    if (!Number.isFinite(item.price) || item.price <= 0) throw new Error('Todos los precios deben ser mayores a cero.')
   }
 
   // Remove any abandoned records from the former draft-based workflow.
@@ -76,7 +68,6 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
           tap_list_id: list.id,
           beer_id: item.beer_id,
           tap_number: item.tap_number,
-          availability_status: item.availability_status,
           badge: item.badge,
           display_order: index,
         })
@@ -84,23 +75,18 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
         .single()
       if (itemError || !savedItem) throw itemError ?? new Error('No se pudo guardar una cerveza.')
 
-      if (item.serving_options.length) {
-        const { error: optionsError } = await supabase.from('serving_options').insert(
-          item.serving_options.map((option, optionIndex) => ({
-            tap_list_item_id: savedItem.id,
-            label: option.label,
-            size: option.size,
-            price: option.price,
-            display_order: optionIndex,
-          })),
-        )
-        if (optionsError) throw optionsError
-      }
+      const { error: optionsError } = await supabase.from('serving_options').insert({
+        tap_list_item_id: savedItem.id,
+        label: 'Pinta',
+        size: 'Pinta',
+        price: item.price,
+        display_order: 1,
+      })
+      if (optionsError) throw optionsError
     }
 
     const { error: publishError } = await supabase.rpc('publish_tap_list', {
       p_tap_list_id: list.id,
-      p_user_id: user.id,
     })
     if (publishError) throw publishError
   } catch (error) {
@@ -121,10 +107,10 @@ export async function createBeer(formData: FormData) {
   const brewery = String(formData.get('brewery') ?? '').trim()
   const style = String(formData.get('style') ?? '').trim()
   const abv = Number(formData.get('abv'))
-  const defaultPrice = Number(formData.get('price'))
+  const price = Number(formData.get('price'))
   if (!name || !brewery || !style) throw new Error('Nombre, cervecería y estilo son obligatorios.')
   if (!Number.isFinite(abv) || abv < 0 || abv > 100) throw new Error('El ABV debe estar entre 0 y 100.')
-  if (!Number.isFinite(defaultPrice) || defaultPrice <= 0) throw new Error('El precio debe ser mayor a cero.')
+  if (!Number.isFinite(price) || price <= 0) throw new Error('El precio debe ser mayor a cero.')
   const { data, error } = await supabase
     .from('beers')
     .insert({
@@ -132,12 +118,22 @@ export async function createBeer(formData: FormData) {
       brewery,
       style,
       abv,
-      default_price: defaultPrice,
       description: (formData.get('description') as string) || null,
     })
     .select()
     .single()
   if (error) throw new Error(error.message)
+  const { error: priceError } = await supabase.from('serving_options').insert({
+    beer_id: data.id,
+    label: 'Pinta',
+    size: 'Pinta',
+    price,
+    display_order: 1,
+  })
+  if (priceError) {
+    await supabase.from('beers').delete().eq('id', data.id)
+    throw new Error(priceError.message)
+  }
   revalidatePath('/admin')
   revalidatePath('/admin/beers')
   return data
@@ -150,10 +146,10 @@ export async function updateBeer(id: string, formData: FormData) {
   const brewery = String(formData.get('brewery') ?? '').trim()
   const style = String(formData.get('style') ?? '').trim()
   const abv = Number(formData.get('abv'))
-  const defaultPrice = Number(formData.get('price'))
+  const price = Number(formData.get('price'))
   if (!name || !brewery || !style) throw new Error('Nombre, cervecería y estilo son obligatorios.')
   if (!Number.isFinite(abv) || abv < 0 || abv > 100) throw new Error('El ABV debe estar entre 0 y 100.')
-  if (!Number.isFinite(defaultPrice) || defaultPrice <= 0) throw new Error('El precio debe ser mayor a cero.')
+  if (!Number.isFinite(price) || price <= 0) throw new Error('El precio debe ser mayor a cero.')
   const { error } = await supabase
     .from('beers')
     .update({
@@ -161,11 +157,21 @@ export async function updateBeer(id: string, formData: FormData) {
       brewery,
       style,
       abv,
-      default_price: defaultPrice,
       description: (formData.get('description') as string) || null,
     })
     .eq('id', id)
   if (error) throw new Error(error.message)
+  const { data: primary } = await supabase
+    .from('serving_options')
+    .select('id')
+    .eq('beer_id', id)
+    .limit(1)
+    .maybeSingle()
+  const priceMutation = primary
+    ? supabase.from('serving_options').update({ label: 'Pinta', size: 'Pinta', price, display_order: 1 }).eq('id', primary.id)
+    : supabase.from('serving_options').insert({ beer_id: id, label: 'Pinta', size: 'Pinta', price, display_order: 1 })
+  const { error: priceError } = await priceMutation
+  if (priceError) throw new Error(priceError.message)
   revalidatePath('/admin')
   revalidatePath('/admin/beers')
 }

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { TapListEditor } from '@/components/admin/tap-list-editor'
-import type { LocationRow, ProfileRow, TapListFull } from '@/lib/db-types'
+import type { BeerRow, LocationRow, ProfileRow, TapListFull } from '@/lib/db-types'
 import { compareTapListItems } from '@/lib/tap-list-order'
 
 export const metadata = { title: 'Tap List — Admin Craft' }
@@ -69,15 +69,22 @@ export default async function AdminTapListPage() {
   // All beers for the "add beer" selector
   const { data: allBeers, error: beersError } = await supabase
     .from('beers')
-    .select('id, name, brewery, style, abv, default_price, description, created_at, updated_at')
+    .select('id, name, brewery, style, abv, description, created_at, updated_at, serving_options(price, display_order)')
     .order('name')
   if (beersError) throw new Error(`No se pudo cargar el catálogo de cervezas: ${beersError.message}`)
+
+  const beersWithPrice = (allBeers ?? []).map((beer: any) => ({
+    ...beer,
+    primary_price: (beer.serving_options ?? [])
+      .slice()
+      .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)[0]?.price ?? null,
+  }))
 
   return (
     <TapListEditor
       locations={(locations ?? []) as LocationRow[]}
       tapLists={tapListsWithItems}
-      allBeers={(allBeers ?? []) as import('@/lib/db-types').BeerRow[]}
+      allBeers={beersWithPrice as BeerRow[]}
       profile={profile as ProfileRow}
     />
   )
