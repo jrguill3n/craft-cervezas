@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, type PointerEvent as ReactPointerEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Save, Pencil, ChevronDown } from 'lucide-react'
+import { Plus, X, Save, Pencil, ChevronDown, GripVertical } from 'lucide-react'
 import type { BeerRow, LocationRow, ProfileRow, TapListFull, TapListItemFull } from '@/lib/db-types'
 import { compareTapListItems } from '@/lib/tap-list-order'
 import { saveAndPublishTapList } from '@/app/admin/actions'
@@ -37,17 +37,26 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
   const [message, setMessage] = useState<string | null>(null)
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null)
   const [editedItems, setEditedItems] = useState<TapListItemFull[]>([])
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null)
 
   const activeLocation = locations.find((l) => l.id === activeLocationId)
   const tapList = tapLists.find((t) => t.location_id === activeLocationId) ?? null
   const isEditing = editingLocationId === activeLocationId
   const items: TapListItemFull[] = (isEditing ? editedItems : (tapList?.tap_list_items ?? [])).slice().sort(compareTapListItems)
 
+  function renumber(nextItems: TapListItemFull[]) {
+    return nextItems.map((item, index) => ({
+      ...item,
+      tap_number: index + 1,
+      display_order: index,
+    }))
+  }
+
   function handleEdit() {
-    setEditedItems((tapList?.tap_list_items ?? []).map((item) => ({
+    setEditedItems(renumber((tapList?.tap_list_items ?? []).slice().sort(compareTapListItems).map((item) => ({
       ...item,
       serving_options: item.serving_options.map((option) => ({ ...option })),
-    })))
+    }))))
     setEditingLocationId(activeLocationId)
     setMessage(null)
   }
@@ -89,21 +98,10 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
     })
   }
 
-  function handleAddBeer(beerId: string, tapNumber: string, badge: string) {
+  function handleAddBeer(beerId: string, badge: string) {
     if (editedItems.some((item) => item.beer_id === beerId)) {
       setMessage('Esa cerveza ya está en el tap list.')
       return false
-    }
-    const parsedTapNumber = tapNumber ? Number(tapNumber) : null
-    if (parsedTapNumber !== null) {
-      if (!Number.isInteger(parsedTapNumber) || parsedTapNumber < 1 || parsedTapNumber > 99) {
-        setMessage('El número de tap debe ser entero entre 1 y 99.')
-        return false
-      }
-      if (editedItems.some((item) => item.tap_number === parsedTapNumber)) {
-        setMessage(`El tap ${parsedTapNumber} ya está ocupado.`)
-        return false
-      }
     }
     const beer = allBeers.find((candidate) => candidate.id === beerId)
     if (!beer) {
@@ -115,11 +113,11 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       return false
     }
     const localId = `local-item-${crypto.randomUUID()}`
-    setEditedItems((current) => [...current, {
+    setEditedItems((current) => renumber([...current, {
       id: localId,
       tap_list_id: tapList?.id ?? 'local-list',
       beer_id: beer.id,
-      tap_number: parsedTapNumber,
+      tap_number: current.length + 1,
       badge: (badge || null) as TapListItemFull['badge'],
       display_order: current.length,
       created_at: new Date().toISOString(),
@@ -133,13 +131,13 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
         price: Number(beer.primary_price),
         display_order: 1,
       }],
-    }])
+    }]))
     setMessage(null)
     return true
   }
 
   function handleRemoveItem(itemId: string) {
-    setEditedItems((current) => current.filter((item) => item.id !== itemId))
+    setEditedItems((current) => renumber(current.filter((item) => item.id !== itemId)))
   }
 
   function handleBadgeChange(itemId: string, badge: string) {
@@ -147,6 +145,68 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
       ...item,
       badge: (badge || null) as TapListItemFull['badge'],
     } : item))
+  }
+
+  function moveItem(itemId: string, targetItemId: string) {
+    if (itemId === targetItemId) return
+    setEditedItems((current) => {
+      const ordered = current.slice().sort(compareTapListItems)
+      const from = ordered.findIndex((item) => item.id === itemId)
+      const to = ordered.findIndex((item) => item.id === targetItemId)
+      if (from < 0 || to < 0 || from === to) return current
+      const [moved] = ordered.splice(from, 1)
+      ordered.splice(to, 0, moved)
+      return renumber(ordered)
+    })
+  }
+
+  function moveItemBy(itemId: string, delta: number) {
+    const index = items.findIndex((item) => item.id === itemId)
+    const target = items[index + delta]
+    if (!target) return
+    moveItem(itemId, target.id)
+    setMessage(`Tap ${index + 1} movido a la posición ${index + delta + 1}.`)
+  }
+
+  function handleDragStart(event: ReactPointerEvent<HTMLButtonElement>, itemId: string) {
+    if (!isEditing || isPending) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setDraggingItemId(itemId)
+  }
+
+  function handleDragMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!draggingItemId) return
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-reorder-id]')
+    const targetId = target?.dataset.reorderId
+    if (targetId) moveItem(draggingItemId, targetId)
+  }
+
+  function handleDragEnd(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setDraggingItemId(null)
+  }
+
+  function renderReorderHandle(item: TapListItemFull) {
+    if (!isEditing) return null
+    return (
+      <button
+        type="button"
+        aria-label={`Mover ${item.beers.name}. Usa las flechas arriba y abajo o arrastra.`}
+        onPointerDown={(event) => handleDragStart(event, item.id)}
+        onPointerMove={handleDragMove}
+        onPointerUp={handleDragEnd}
+        onPointerCancel={handleDragEnd}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowUp') { event.preventDefault(); moveItemBy(item.id, -1) }
+          if (event.key === 'ArrowDown') { event.preventDefault(); moveItemBy(item.id, 1) }
+        }}
+        className={`inline-flex size-11 touch-none items-center justify-center border border-foreground/15 text-accent active:cursor-grabbing ${draggingItemId === item.id ? 'bg-accent text-accent-foreground' : 'cursor-grab'}`}
+      >
+        <GripVertical className="size-5" aria-hidden="true" />
+      </button>
+    )
   }
 
   return (
@@ -159,6 +219,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
             <p className="label-xs text-muted-foreground">Tap List</p>
             <h1 className="display-tight mt-2 truncate text-4xl md:text-5xl">{activeLocation?.name ?? '—'}</h1>
             <p className="mt-2 text-xs text-muted-foreground">{items.length} cerveza{items.length !== 1 ? 's' : ''}</p>
+            {isEditing && <p className="mt-1 text-xs font-semibold text-accent">ARRASTRA ⠿ PARA CAMBIAR EL ORDEN Y EL NÚMERO DE TAP</p>}
           </div>
 
           <div className="flex shrink-0 flex-col items-end gap-2 md:flex-row md:items-center md:gap-3">
@@ -240,8 +301,9 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
               <div className="divide-y divide-foreground/10 px-4 xl:hidden">
                 {items.length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">Sin cervezas. Agrega la primera.</p>}
                 {items.map((item) => (
-                  <article key={item.id} className="py-3.5">
+                  <article key={item.id} data-reorder-id={item.id} className={`py-3.5 transition-colors ${draggingItemId === item.id ? 'bg-accent/10' : ''}`}>
                     <div className="flex items-center gap-3">
+                      {renderReorderHandle(item)}
                       <span className="display-tight w-9 shrink-0 text-center text-2xl text-accent">{item.tap_number ?? '—'}</span>
                       <div className="min-w-0 flex-1">
                         <h3 className="truncate text-base font-semibold">{item.beers.name}</h3>
@@ -251,7 +313,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                         {item.serving_options[0]?.price == null ? 'PENDIENTE' : `$${Number(item.serving_options[0].price).toFixed(0)}`}
                       </span>
                     </div>
-                    <div className="mt-2.5 flex items-center gap-2 pl-12">
+                    <div className={`mt-2.5 flex items-center gap-2 ${isEditing ? 'pl-[6.5rem]' : 'pl-12'}`}>
                       <div className="relative min-w-0 flex-1">
                         <select value={item.badge ?? ''} onChange={(event) => handleBadgeChange(item.id, event.target.value)} disabled={isPending || !isEditing} aria-label={`Badge de ${item.beers.name}`} className={`min-h-12 w-full appearance-none border border-foreground/20 bg-background px-3 pr-9 text-xs font-semibold tracking-wide disabled:opacity-60 ${item.badge ? BADGE_COLORS[item.badge] : 'text-foreground/55'}`}>
                           <option value="">Sin badge</option>
@@ -284,10 +346,13 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                     </tr>
                   )}
                   {items.map((item) => (
-                    <tr key={item.id} className="group transition-colors hover:bg-foreground/3">
+                    <tr key={item.id} data-reorder-id={item.id} className={`group transition-colors hover:bg-foreground/3 ${draggingItemId === item.id ? 'bg-accent/10' : ''}`}>
                       {/* Tap number */}
                       <td className="px-8 py-4 font-mono text-xs text-muted-foreground">
-                        {item.tap_number != null ? String(item.tap_number).padStart(2, '0') : '—'}
+                        <div className="flex items-center gap-2">
+                          {renderReorderHandle(item)}
+                          <span>{item.tap_number != null ? String(item.tap_number).padStart(2, '0') : '—'}</span>
+                        </div>
                       </td>
 
                       {/* Beer name + brewery */}

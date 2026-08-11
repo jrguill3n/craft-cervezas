@@ -7,7 +7,7 @@ import { useModalScrollLock } from './use-modal-scroll-lock'
 
 type Props = {
   beers: BeerRow[]
-  onAdd: (beerId: string, tapNumber: string, badge: string) => boolean
+  onAdd: (beerId: string, badge: string) => boolean
   onClose: () => void
 }
 
@@ -21,7 +21,6 @@ const BADGE_OPTIONS = [
 
 export function AddBeerModal({ beers, onAdd, onClose }: Props) {
   const [beerId, setBeerId] = useState('')
-  const [tapNumber, setTapNumber] = useState('')
   const [badge, setBadge] = useState('')
   const [query, setQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -58,14 +57,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
       setError('Esta cerveza necesita un precio válido en el catálogo de Cervezas.')
       return
     }
-    if (tapNumber) {
-      const parsedTapNumber = Number(tapNumber)
-      if (!Number.isInteger(parsedTapNumber) || parsedTapNumber < 1 || parsedTapNumber > 99) {
-        setError('El número de tap debe ser entero entre 1 y 99.')
-        return
-      }
-    }
-    if (onAdd(beerId, tapNumber, badge)) {
+    if (onAdd(beerId, badge)) {
       onClose()
     }
   }
@@ -160,20 +152,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
               </p>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="label-xs text-foreground/50">TAP #</label>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="1"
-                  max="99"
-                  value={tapNumber}
-                  onChange={(e) => setTapNumber(e.target.value)}
-                  placeholder="Ej. 3"
-                  className="border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground focus:outline-none"
-                />
-              </div>
+            <div className="grid gap-3">
               <div className="flex flex-col gap-2">
                 <label className="label-xs text-foreground/50">BADGE</label>
                 <div className="relative">

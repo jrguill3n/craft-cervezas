@@ -39,6 +39,9 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
   if (new Set(tapNumbers).size !== tapNumbers.length) {
     throw new Error('No puede haber dos cervezas con el mismo número de tap.')
   }
+  if (items.some((item, index) => item.tap_number !== index + 1)) {
+    throw new Error('El orden y el número de tap deben coincidir consecutivamente desde 1.')
+  }
   for (const item of items) {
     if (!item.beer_id) throw new Error('Hay una cerveza inválida en el tap list.')
   }
