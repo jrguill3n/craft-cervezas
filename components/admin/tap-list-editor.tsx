@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, X, Settings2, Globe, Pencil } from 'lucide-react'
+import { Plus, X, Settings2, Globe, Pencil, ChevronDown } from 'lucide-react'
 import type { BeerRow, LocationRow, ProfileRow, TapListFull, TapListItemFull } from '@/lib/db-types'
 import {
   addTapListItem,
@@ -143,16 +143,19 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
         {/* ── Location tabs ─────────────────────────────────────────────────── */}
         <div className="border-y border-foreground/15 px-4 py-3 md:hidden">
           <label htmlFor="admin-location" className="label-xs mb-2 block text-muted-foreground">SUCURSAL</label>
-          <select
-            id="admin-location"
-            value={activeLocationId}
-            onChange={(event) => setActiveLocationId(event.target.value)}
-            className="min-h-12 w-full border border-foreground/20 bg-background px-4 text-sm font-semibold tracking-widest text-foreground focus:border-accent focus:outline-none"
-          >
-            {locations.map((loc) => (
-              <option key={loc.id} value={loc.id}>{loc.name.toUpperCase()}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="admin-location"
+              value={activeLocationId}
+              onChange={(event) => setActiveLocationId(event.target.value)}
+              className="min-h-14 w-full appearance-none border border-foreground/25 bg-background px-4 pr-12 text-base font-semibold tracking-wide text-foreground focus:border-accent focus:outline-none"
+            >
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-accent" aria-hidden="true" />
+          </div>
         </div>
         <div className="hidden overflow-x-auto border-b border-foreground/15 px-2 md:flex md:px-4 xl:px-8">
           {locations.map((loc) => {
@@ -208,26 +211,24 @@ export function TapListEditor({ locations, tapLists, allBeers, profile }: Props)
                         <h3 className="truncate text-base font-semibold">{item.beers.name}</h3>
                         <p className="mt-1 truncate text-xs text-muted-foreground">{item.beers.brewery} · {item.beers.style} · {item.beers.abv}%</p>
                       </div>
-                      <button onClick={() => setServingItemId(item.id)} disabled={isPending || isPublished} className="inline-flex min-h-11 shrink-0 items-center gap-2 border border-foreground/15 px-3 text-sm font-semibold text-foreground disabled:opacity-60">
+                      <button onClick={() => setServingItemId(item.id)} disabled={isPending || isPublished} className={`inline-flex min-h-11 shrink-0 items-center gap-2 border px-3 text-sm font-semibold disabled:opacity-60 ${(item.serving_options.length || item.beers.default_price) ? 'border-foreground/15 text-foreground' : 'border-accent/40 text-accent'}`}>
                         <Settings2 className="size-4 text-accent" aria-hidden="true" />
-                        {item.serving_options.length ? item.serving_options.map((option) => `$${Number(option.price).toFixed(0)}`).join('/') : '—'}
+                        {item.serving_options.length ? item.serving_options.map((option) => `$${Number(option.price).toFixed(0)}`).join('/') : item.beers.default_price ? `$${Number(item.beers.default_price).toFixed(0)}` : 'AGREGAR PRECIO'}
                       </button>
                     </div>
                     <div className="mt-2.5 flex items-center gap-2 pl-12">
-                      <button onClick={() => handleToggleAvailability(item)} disabled={isPending || isPublished} className={`min-h-10 border px-3 text-[0.6rem] font-semibold tracking-wider disabled:opacity-60 ${item.availability_status === 'available' ? 'border-green-500/25 text-green-400' : 'border-foreground/15 text-foreground/40'}`}>
-                        {item.availability_status === 'available' ? 'DISPONIBLE' : 'AGOTADO'}
+                      <button onClick={() => handleToggleAvailability(item)} disabled={isPending || isPublished} aria-pressed={item.availability_status === 'available'} aria-label={`Estado de ${item.beers.name}: ${item.availability_status === 'available' ? 'disponible' : 'agotado'}. Toca para cambiar.`} className={`inline-flex min-h-12 items-center gap-2 border px-3 text-xs font-semibold tracking-wide disabled:opacity-60 ${item.availability_status === 'available' ? 'border-green-500/30 bg-green-500/10 text-green-400' : 'border-foreground/20 text-foreground/55'}`}>
+                        <span className={`size-2 rounded-full ${item.availability_status === 'available' ? 'bg-green-400' : 'bg-foreground/30'}`} aria-hidden="true" />
+                        {item.availability_status === 'available' ? 'Disponible' : 'Agotado'}
                       </button>
-                      <select
-                        value={item.badge ?? ''}
-                        onChange={(event) => handleBadgeChange(item.id, event.target.value)}
-                        disabled={isPending || isPublished}
-                        aria-label={`Badge de ${item.beers.name}`}
-                        className={`min-h-10 min-w-0 flex-1 border border-foreground/15 bg-background px-3 text-[0.6rem] font-semibold tracking-wider disabled:opacity-60 ${item.badge ? BADGE_COLORS[item.badge] : 'text-foreground/40'}`}
-                      >
-                        <option value="">SIN BADGE</option>
-                        {Object.entries(BADGE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                      </select>
-                      <button onClick={() => handleRemoveItem(item.id)} disabled={isPending || isPublished} className="inline-flex size-10 shrink-0 items-center justify-center border border-foreground/15 text-accent disabled:opacity-30" aria-label={`Quitar ${item.beers.name}`}><X className="size-4" aria-hidden="true" /></button>
+                      <div className="relative min-w-0 flex-1">
+                        <select value={item.badge ?? ''} onChange={(event) => handleBadgeChange(item.id, event.target.value)} disabled={isPending || isPublished} aria-label={`Badge de ${item.beers.name}`} className={`min-h-12 w-full appearance-none border border-foreground/20 bg-background px-3 pr-9 text-xs font-semibold tracking-wide disabled:opacity-60 ${item.badge ? BADGE_COLORS[item.badge] : 'text-foreground/55'}`}>
+                          <option value="">Sin badge</option>
+                          {Object.entries(BADGE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-accent" aria-hidden="true" />
+                      </div>
+                      <button onClick={() => handleRemoveItem(item.id)} disabled={isPending || isPublished} className="inline-flex size-12 shrink-0 items-center justify-center border border-foreground/15 text-accent disabled:opacity-30" aria-label={`Quitar ${item.beers.name}`}><X className="size-4" aria-hidden="true" /></button>
                     </div>
                   </article>
                 ))}

@@ -26,6 +26,24 @@ export async function createDraftTapList(locationId: string) {
     p_location_id: locationId,
   })
   if (error) throw new Error(error.message)
+
+  // Older published lists may predate serving options. Seed any missing draft
+  // price from the beer catalogue so the draft remains publishable.
+  const { data: items } = await supabase
+    .from('tap_list_items')
+    .select('id, beers(default_price), serving_options(id)')
+    .eq('tap_list_id', data)
+  const missingPrices = (items ?? []).flatMap((item) => {
+    const beer = item.beers as unknown as { default_price: number | null } | null
+    const options = item.serving_options as unknown as { id: string }[] | null
+    return (!options?.length && beer?.default_price)
+      ? [{ tap_list_item_id: item.id, label: 'Vaso', size: 'Vaso', price: Number(beer.default_price), display_order: 1 }]
+      : []
+  })
+  if (missingPrices.length) {
+    const { error: seedError } = await supabase.from('serving_options').insert(missingPrices)
+    if (seedError) throw new Error(seedError.message)
+  }
   revalidatePath('/admin')
   return data
 }

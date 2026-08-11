@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Search } from 'lucide-react'
+import { X, Search, ChevronDown } from 'lucide-react'
 import type { BeerRow } from '@/lib/db-types'
 
 type Props = {
@@ -154,17 +154,16 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
                   className="border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground focus:outline-none"
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <label className="label-xs text-foreground/50">BADGE</label>
-                <select
-                  value={badge}
-                  onChange={(e) => setBadge(e.target.value)}
-                  className="border border-foreground/20 bg-background px-3 py-2 text-sm text-foreground focus:border-foreground focus:outline-none"
-                >
-                  {BADGE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select value={badge} onChange={(e) => setBadge(e.target.value)} className="min-h-12 w-full appearance-none border border-foreground/25 bg-background px-3 pr-10 text-sm font-semibold text-foreground focus:border-accent focus:outline-none">
+                    {BADGE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-accent" aria-hidden="true" />
+                </div>
               </div>
             </div>
 
