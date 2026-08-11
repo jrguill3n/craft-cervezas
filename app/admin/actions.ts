@@ -120,7 +120,6 @@ export async function createBeer(formData: FormData) {
       brewery,
       style,
       abv,
-      description: (formData.get('description') as string) || null,
     })
     .select()
     .single()
@@ -159,7 +158,6 @@ export async function updateBeer(id: string, formData: FormData) {
       brewery,
       style,
       abv,
-      description: (formData.get('description') as string) || null,
     })
     .eq('id', id)
   if (error) throw new Error(error.message)

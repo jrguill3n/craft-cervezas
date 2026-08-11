@@ -14,10 +14,9 @@ type FormState = {
   style: string
   abv: string
   price: string
-  description: string
 }
 
-const EMPTY: FormState = { name: '', brewery: '', style: '', abv: '', price: '', description: '' }
+const EMPTY: FormState = { name: '', brewery: '', style: '', abv: '', price: '' }
 
 function beerToForm(b: BeerRow): FormState {
   return {
@@ -26,7 +25,6 @@ function beerToForm(b: BeerRow): FormState {
     style: b.style,
     abv: String(b.abv),
     price: b.primary_price == null ? '' : String(b.primary_price),
-    description: b.description ?? '',
   }
 }
 
@@ -74,7 +72,7 @@ export function BeersEditor({ beers }: Props) {
       setError('Nombre, cervecería, estilo y ABV son obligatorios.')
       return
     }
-    if (!form.price || Number(form.price) <= 0) {
+    if (!form.price || !Number.isFinite(Number(form.price)) || Number(form.price) <= 0) {
       setError('El precio debe ser mayor a cero.')
       return
     }
@@ -177,6 +175,7 @@ export function BeersEditor({ beers }: Props) {
                   inputMode={type === 'number' ? 'decimal' : undefined}
                   step={type === 'number' ? '0.1' : undefined}
                   min={type === 'number' ? '0' : undefined}
+                  required
                   value={form[field]}
                   onChange={(e) => handleField(field, e.target.value)}
                   placeholder={placeholder}
@@ -207,17 +206,6 @@ export function BeersEditor({ beers }: Props) {
               </div>
             </div>
           </div>
-          <div className="mt-5 flex flex-col gap-1 md:mt-4">
-            <label className="label-xs text-foreground/60">DESCRIPCIÓN (opcional)</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => handleField('description', e.target.value)}
-              rows={2}
-              placeholder="Notas de cata, maridajes…"
-              className="resize-none border border-foreground/20 bg-transparent px-4 py-3 text-base text-foreground placeholder:text-foreground/25 focus:border-foreground focus:outline-none md:text-sm"
-            />
-          </div>
-
           {error && <p className="mt-3 text-xs text-accent" role="alert">{error}</p>}
 
           </div>
