@@ -211,59 +211,11 @@ export default async function BranchPage({
           </div>
         </section>
 
-        {/* Menú */}
+        {/* Horarios */}
         <section className="border-b border-foreground/20">
           <div className="mx-auto max-w-[1600px] px-5 py-14 md:px-10 md:py-20">
-            <h2 className="display-tight text-4xl md:text-6xl">Menú</h2>
-            <div className="mt-10 grid gap-10 border-t border-foreground/20 pt-8 md:grid-cols-3 md:gap-8">
-              {branch.menu.map((section) => (
-                <div key={section.title}>
-                  <h3 className="label-xs text-muted-foreground">{section.title}</h3>
-                  <ul className="mt-6 flex flex-col">
-                    {section.items.map((item) => (
-                      <li
-                        key={item.name}
-                        className="flex items-baseline justify-between gap-4 border-b border-foreground/15 py-4"
-                      >
-                        <div>
-                          <p className="font-medium">{item.name}</p>
-                          {item.description ? (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {item.description}
-                            </p>
-                          ) : null}
-                        </div>
-                        <p className="text-sm tabular-nums">{item.price}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Promociones + horarios */}
-        <section className="border-b border-foreground/20">
-          <div className="mx-auto grid max-w-[1600px] gap-12 px-5 py-14 md:grid-cols-12 md:gap-8 md:px-10 md:py-20">
-            <div className="md:col-span-7">
-              <h2 className="display-tight text-4xl md:text-5xl">Promociones y eventos</h2>
-              <ul className="mt-8 border-t border-foreground/20">
-                {branch.promos.map((promo) => (
-                  <li
-                    key={promo.title}
-                    className="grid gap-x-6 gap-y-1 border-b border-foreground/15 py-6 md:grid-cols-12"
-                  >
-                    <span className="label-xs text-accent md:col-span-3">{promo.day}</span>
-                    <h3 className="display-tight text-2xl md:col-span-4">{promo.title}</h3>
-                    <p className="text-sm text-foreground/75 md:col-span-5">{promo.detail}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="md:col-span-4 md:col-start-9">
-              <h2 className="label-xs text-muted-foreground">Horarios</h2>
+            <div className="max-w-xl">
+              <h2 className="display-tight text-4xl md:text-5xl">Horarios</h2>
               <ul className="mt-6 border-t border-foreground/20">
                 {branch.hours.map((slot) => (
                   <li
@@ -275,6 +227,9 @@ export default async function BranchPage({
                   </li>
                 ))}
               </ul>
+              <p className="mt-4 text-xs uppercase tracking-[0.12em] text-foreground/60">
+                Cerramos la barra 30 minutos antes
+              </p>
             </div>
           </div>
         </section>
