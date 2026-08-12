@@ -319,7 +319,6 @@ export const branchNav = branches.map((branch) => ({
 }))
 
 export const secondaryNav = [
-  { label: 'Club Craft', href: '/club-craft' },
   { label: 'Playlists', href: spotifyProfileUrl },
   { label: 'Contacto', href: '/#contacto' },
 ]
@@ -372,8 +371,7 @@ export const clubBenefits = [
 ]
 
 export const contact = {
-  email: 'hola@craftcervezas.mx',
-  press: 'prensa@craftcervezas.mx',
+  email: 'hola@craftcervezas.com',
   city: 'Guadalajara, Jalisco · México',
   socials: [
     {
@@ -386,8 +384,7 @@ export const contact = {
       href: spotifyProfileUrl,
       handle: 'Playlists de Craft',
     },
-    { label: 'Facebook', href: 'https://facebook.com', handle: '/craftcervezas' },
-    { label: 'WhatsApp', href: 'https://wa.me/523312345601', handle: '33 1234 5601' },
+    { label: 'Facebook', href: 'https://facebook.com/craftcervezas', handle: '/craftcervezas' },
   ],
 }
 
