@@ -311,7 +311,7 @@ export const branches: Branch[] = [
   },
 ].sort((a, b) => ['americana', 'chapalita', 'providencia'].indexOf(a.slug) - ['americana', 'chapalita', 'providencia'].indexOf(b.slug))
 
-export const spotifyProfileUrl = 'https://open.spotify.com/user/kxg3ka40qtwukq3l5dpwya9n3'
+export const spotifyProfileUrl = 'https://open.spotify.com/user/kxg3ka40qtwukq3l5dpwya9n3?si=67ace30128bf4405&nd=1&dlsi=273c6c766c1f4381'
 
 export const branchNav = branches.map((branch) => ({
   label: branch.name,
