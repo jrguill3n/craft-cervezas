@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import type { TapListFull } from '@/lib/db-types'
 import { compareTapListItems } from '@/lib/tap-list-order'
 
+const PUBLIC_LOCATION_ORDER = ['americana', 'chapalita', 'providencia']
+
 /**
  * Returns the most recently published tap list for a given location slug.
  * Used by the public-facing site — no auth required (respects the
@@ -63,8 +65,15 @@ export async function getAllPublishedTapLists(): Promise<TapListFull[]> {
 
   if (!locations?.length) return []
 
+  const orderedLocations = locations.slice().sort((a: { slug: string }, b: { slug: string }) => {
+    const aIndex = PUBLIC_LOCATION_ORDER.indexOf(a.slug)
+    const bIndex = PUBLIC_LOCATION_ORDER.indexOf(b.slug)
+    return (aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex)
+      - (bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex)
+  })
+
   const results = await Promise.all(
-    locations.map((l: { slug: string }) => getPublishedTapList(l.slug)),
+    orderedLocations.map((l: { slug: string }) => getPublishedTapList(l.slug)),
   )
 
   return results.filter(Boolean) as TapListFull[]

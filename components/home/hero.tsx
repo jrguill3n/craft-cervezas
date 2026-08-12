@@ -3,7 +3,7 @@ import { BranchFinder } from '@/components/home/branch-finder'
 
 export function Hero() {
   return (
-    <section className="border-b border-foreground/20">
+    <section id="sucursales" className="scroll-mt-24 border-b border-foreground/20">
       <div className="mx-auto max-w-[1600px] md:grid md:grid-cols-12">
         <div className="flex flex-col px-5 pt-10 pb-12 md:col-span-7 md:px-10 md:pt-16 md:pb-16">
           <div className="label-xs flex items-center gap-4 text-muted-foreground">

@@ -3,18 +3,38 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { ChevronDown, Menu, X } from 'lucide-react'
 import { CraftWordmark } from '@/components/craft-logo'
-import { branchNav, navigation, secondaryNav } from '@/lib/craft-content'
+import { branchNav, spotifyProfileUrl } from '@/lib/craft-content'
 import { cn } from '@/lib/utils'
+
+const tapListNav = branchNav.map((branch) => ({
+  label: branch.label,
+  href: `${branch.href.replace(/^\//, '/taplist?ubicacion=')}`,
+}))
+
+const mainNavigation = [
+  { label: 'Club Craft', href: '/club-craft' },
+  { label: 'Playlists', href: spotifyProfileUrl },
+]
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
+  const [tapListsOpen, setTapListsOpen] = useState(false)
+  const [branchesOpen, setBranchesOpen] = useState(false)
+  const [mobileTapListsOpen, setMobileTapListsOpen] = useState(false)
+  const [mobileBranchesOpen, setMobileBranchesOpen] = useState(false)
   const pathname = usePathname()
+  const isBranchPage = branchNav.some((item) => item.href === pathname)
+
+  function isActive(href: string) {
+    if (href === '/#sucursales') return isBranchPage
+    return pathname === href
+  }
 
   return (
     <header className="border-b border-foreground/20 bg-background">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 py-6 md:px-10 md:py-7">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-[1fr_auto] items-center gap-6 px-5 py-6 md:px-10 md:py-7 lg:grid-cols-[1fr_auto_1fr]">
         <Link
           href="/"
           aria-label="Craft, ir al inicio"
@@ -24,10 +44,90 @@ export function SiteHeader() {
           <CraftWordmark width={176} priority />
         </Link>
 
-        <nav aria-label="Principal" className="hidden lg:block">
+        <nav aria-label="Principal" className="hidden justify-self-center lg:block">
           <ul className="flex items-center gap-8">
-            {navigation.map((item) => {
-              const active = pathname === item.href
+            <li className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setTapListsOpen((value) => !value)
+                  setBranchesOpen(false)
+                }}
+                aria-expanded={tapListsOpen}
+                aria-haspopup="menu"
+                className={cn(
+                  'label-xs flex items-center gap-1 border-b border-transparent pb-1 font-medium transition-colors hover:text-accent',
+                  pathname === '/taplist' && 'border-accent text-accent',
+                )}
+              >
+                Tap Lists
+                <ChevronDown
+                  className={cn('size-3 transition-transform', tapListsOpen && 'rotate-180')}
+                  aria-hidden="true"
+                />
+              </button>
+              {tapListsOpen ? (
+                <div
+                  role="menu"
+                  className="absolute left-0 top-full z-30 mt-4 min-w-52 border border-foreground/20 bg-background py-2 shadow-2xl shadow-background/40"
+                >
+                  {tapListNav.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      role="menuitem"
+                      onClick={() => setTapListsOpen(false)}
+                      className="label-xs block px-4 py-3 font-semibold text-foreground/75 transition-colors hover:bg-foreground hover:text-background"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </li>
+
+            <li className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setBranchesOpen((value) => !value)
+                  setTapListsOpen(false)
+                }}
+                aria-expanded={branchesOpen}
+                aria-haspopup="menu"
+                className={cn(
+                  'label-xs flex items-center gap-1 border-b border-transparent pb-1 font-medium transition-colors hover:text-accent',
+                  isBranchPage && 'border-accent text-accent',
+                )}
+              >
+                Sucursales
+                <ChevronDown
+                  className={cn('size-3 transition-transform', branchesOpen && 'rotate-180')}
+                  aria-hidden="true"
+                />
+              </button>
+              {branchesOpen ? (
+                <div
+                  role="menu"
+                  className="absolute left-0 top-full z-30 mt-4 min-w-52 border border-foreground/20 bg-background py-2 shadow-2xl shadow-background/40"
+                >
+                  {branchNav.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      role="menuitem"
+                      onClick={() => setBranchesOpen(false)}
+                      className="label-xs block px-4 py-3 font-semibold text-foreground/75 transition-colors hover:bg-foreground hover:text-background"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </li>
+
+            {mainNavigation.map((item) => {
+              const active = isActive(item.href)
               const className = cn(
                 'label-xs border-b border-transparent pb-1 font-medium transition-colors hover:text-accent',
                 active && 'border-accent text-accent',
@@ -54,7 +154,7 @@ export function SiteHeader() {
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
           aria-controls="menu-movil"
-          className="label-xs flex min-h-11 items-center gap-2 border border-foreground/30 px-3 py-2 font-medium lg:hidden"
+          className="label-xs flex min-h-11 items-center gap-2 justify-self-end border border-foreground/30 px-3 py-2 font-medium lg:hidden"
         >
           {open ? <X className="size-4" /> : <Menu className="size-4" />}
           {open ? 'Cerrar' : 'Menú'}
@@ -67,23 +167,86 @@ export function SiteHeader() {
           aria-label="Principal móvil"
           className="border-t border-foreground/20 lg:hidden"
         >
-          <p className="label-xs px-5 pt-5 pb-1 text-muted-foreground">Sucursales</p>
           <ul>
-            {branchNav.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="display-tight block px-5 py-3 text-3xl"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileTapListsOpen((value) => !value)
+                  setMobileBranchesOpen(false)
+                }}
+                aria-expanded={mobileTapListsOpen}
+                className={cn(
+                  'display-tight flex w-full items-center justify-between px-5 py-4 text-left text-4xl',
+                  pathname === '/taplist' && 'text-accent',
+                )}
+              >
+                Tap Lists
+                <ChevronDown
+                  className={cn('size-6 transition-transform', mobileTapListsOpen && 'rotate-180')}
+                  aria-hidden="true"
+                />
+              </button>
+              {mobileTapListsOpen ? (
+                <ul className="border-y border-foreground/15 bg-foreground/[0.03] py-2">
+                  {tapListNav.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => {
+                          setOpen(false)
+                          setMobileTapListsOpen(false)
+                        }}
+                        className="label-xs block px-8 py-3 font-semibold text-foreground/75"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </li>
 
-          <ul className="mt-4 border-t border-foreground/15">
-            {secondaryNav.map((item) => (
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileBranchesOpen((value) => !value)
+                  setMobileTapListsOpen(false)
+                }}
+                aria-expanded={mobileBranchesOpen}
+                className={cn(
+                  'display-tight flex w-full items-center justify-between px-5 py-4 text-left text-4xl',
+                  isBranchPage && 'text-accent',
+                )}
+              >
+                Sucursales
+                <ChevronDown
+                  className={cn('size-6 transition-transform', mobileBranchesOpen && 'rotate-180')}
+                  aria-hidden="true"
+                />
+              </button>
+              {mobileBranchesOpen ? (
+                <ul className="border-y border-foreground/15 bg-foreground/[0.03] py-2">
+                  {branchNav.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => {
+                          setOpen(false)
+                          setMobileBranchesOpen(false)
+                        }}
+                        className="label-xs block px-8 py-3 font-semibold text-foreground/75"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </li>
+
+            {mainNavigation.map((item) => (
               <li key={item.href}>
                 {item.href.startsWith('http') ? (
                   <a
@@ -91,7 +254,7 @@ export function SiteHeader() {
                     target="_blank"
                     rel="noreferrer"
                     onClick={() => setOpen(false)}
-                    className="label-xs block px-5 py-4 font-semibold"
+                    className="display-tight block px-5 py-4 text-4xl"
                   >
                     {item.label}
                   </a>
@@ -99,7 +262,10 @@ export function SiteHeader() {
                   <Link
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="label-xs block px-5 py-4 font-semibold"
+                    className={cn(
+                      'display-tight block px-5 py-4 text-4xl',
+                      isActive(item.href) && 'text-accent',
+                    )}
                   >
                     {item.label}
                   </Link>
