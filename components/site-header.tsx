@@ -14,7 +14,6 @@ const tapListNav = branchNav.map((branch) => ({
 }))
 
 const mainNavigation = [
-  { label: 'Club Craft', href: '/club-craft' },
   { label: 'Playlists', href: spotifyProfileUrl },
 ]
 
