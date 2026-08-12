@@ -304,7 +304,7 @@ export default async function InsurgenteGdlPage() {
       <SoulBurgerSection />
 
       <footer className="bg-black px-5 py-5 text-[#f3f1ec] md:px-10">
-        <div className="mx-auto flex max-w-5xl flex-col gap-5 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-5 text-xs text-white/60">
           <div>
             <p className="font-black tracking-[0.24em] text-white">INSURGENTE GDL</p>
             <a
@@ -316,19 +316,11 @@ export default async function InsurgenteGdlPage() {
               @insurgentebrew_gdl
             </a>
           </div>
-          <a
-            href={INSTAGRAM_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center font-semibold tracking-[0.18em] transition-colors hover:text-white"
-          >
-            INSTAGRAM
-          </a>
           <img
             src={INSURGENTE_OWL}
             alt=""
             aria-hidden="true"
-            className="h-20 w-auto invert opacity-80"
+            className="h-20 w-14 shrink-0 object-contain invert opacity-80 sm:w-auto"
           />
         </div>
         <div className="mt-4 overflow-hidden border-t border-white/25 pt-3 font-serif text-xs italic tracking-wide text-white/55">
