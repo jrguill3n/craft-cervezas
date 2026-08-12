@@ -31,7 +31,8 @@ export function SiteHeader() {
     return pathname === href
   }
 
-  const desktopNavItemClassName = 'label-xs inline-flex min-h-11 items-center border-b-2 border-transparent font-medium transition-colors hover:text-accent'
+  const desktopNavItemClassName = 'inline-flex min-h-11 items-center border-b border-transparent text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-foreground/75 transition-colors hover:text-accent'
+  const mobileNavItemClassName = 'label-xs flex min-h-16 w-full items-center justify-between px-5 py-4 text-left text-base font-semibold tracking-[0.22em]'
 
   return (
     <header className="border-b border-foreground/20 bg-background">
@@ -46,7 +47,7 @@ export function SiteHeader() {
         </Link>
 
         <nav aria-label="Principal" className="hidden lg:block">
-          <ul className="flex items-center gap-8">
+          <ul className="flex items-center gap-6">
             <li className="relative">
               <button
                 type="button"
@@ -180,13 +181,13 @@ export function SiteHeader() {
                 }}
                 aria-expanded={mobileTapListsOpen}
                 className={cn(
-                  'display-tight flex w-full items-center justify-between px-5 py-4 text-left text-4xl',
+                  mobileNavItemClassName,
                   pathname === '/taplist' && 'text-accent',
                 )}
               >
                 Tap Lists
                 <ChevronDown
-                  className={cn('size-6 transition-transform', mobileTapListsOpen && 'rotate-180')}
+                  className={cn('size-5 transition-transform', mobileTapListsOpen && 'rotate-180')}
                   aria-hidden="true"
                 />
               </button>
@@ -219,13 +220,13 @@ export function SiteHeader() {
                 }}
                 aria-expanded={mobileBranchesOpen}
                 className={cn(
-                  'display-tight flex w-full items-center justify-between px-5 py-4 text-left text-4xl',
+                  mobileNavItemClassName,
                   isBranchPage && 'text-accent',
                 )}
               >
                 Sucursales
                 <ChevronDown
-                  className={cn('size-6 transition-transform', mobileBranchesOpen && 'rotate-180')}
+                  className={cn('size-5 transition-transform', mobileBranchesOpen && 'rotate-180')}
                   aria-hidden="true"
                 />
               </button>
@@ -257,7 +258,7 @@ export function SiteHeader() {
                     target="_blank"
                     rel="noreferrer"
                     onClick={() => setOpen(false)}
-                    className="display-tight block px-5 py-4 text-4xl"
+                    className="label-xs flex min-h-16 items-center px-5 py-4 text-base font-semibold tracking-[0.22em]"
                   >
                     {item.label}
                   </a>
