@@ -205,12 +205,12 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
           <div className="min-w-0">
             <p className="label-xs text-muted-foreground">PANEL DE ADMINISTRACIÓN</p>
             <h1 className="display-tight mt-2 text-4xl text-foreground md:text-5xl">Tap List</h1>
-            <p className="mt-2 text-xs text-muted-foreground">{items.length} cerveza{items.length !== 1 ? 's' : ''}</p>
+            <p className="mt-2 hidden text-xs text-muted-foreground md:block">{items.length} cerveza{items.length !== 1 ? 's' : ''}</p>
             {isEditing && <p className="mt-1 hidden text-xs font-semibold text-accent sm:block">ARRASTRA ⠿ PARA CAMBIAR EL ORDEN Y EL NÚMERO DE TAP</p>}
           </div>
 
           {!isEditing && (
-            <button onClick={handleEdit} disabled={isPending} className="inline-flex min-h-11 shrink-0 items-center gap-2 border border-foreground/25 px-3 text-[0.65rem] font-semibold tracking-widest md:px-4 md:text-xs">
+            <button onClick={handleEdit} disabled={isPending} className="hidden min-h-11 shrink-0 items-center gap-2 border border-foreground/25 px-4 text-xs font-semibold tracking-widest md:inline-flex">
               <Pencil className="size-4" aria-hidden="true" /> EDITAR
             </button>
           )}
@@ -218,22 +218,34 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
 
         {/* ── Location tabs ─────────────────────────────────────────────────── */}
         <div className="border-y border-foreground/15 px-4 py-2 md:hidden">
-          <div className="relative">
-            <select
-              id="admin-location"
-              aria-label="Sucursal que se está editando"
-              value={activeLocationId}
-              onChange={(event) => handleLocationChange(event.target.value)}
-              disabled={isEditing || isPending}
-              className={`min-h-12 w-full appearance-none border bg-background px-4 pr-12 text-base font-semibold tracking-wide focus:outline-none ${isEditing ? 'border-accent/50 text-accent' : 'border-foreground/25 text-foreground focus:border-accent'}`}
-            >
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}{isEditing && loc.id === activeLocationId ? ' — Editando' : ''}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-accent" aria-hidden="true" />
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="relative">
+                <select
+                  id="admin-location"
+                  aria-label="Sucursal que se está editando"
+                  value={activeLocationId}
+                  onChange={(event) => handleLocationChange(event.target.value)}
+                  disabled={isEditing || isPending}
+                  className={`min-h-12 w-full appearance-none border bg-background px-4 pr-12 text-base font-semibold tracking-wide focus:outline-none ${isEditing ? 'border-accent/50 text-accent' : 'border-foreground/25 text-foreground focus:border-accent'}`}
+                >
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}{isEditing && loc.id === activeLocationId ? ' — Editando' : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-accent" aria-hidden="true" />
+              </div>
+              <p className="mt-2 px-1 text-xs text-muted-foreground">
+                {items.length} cerveza{items.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            {!isEditing && (
+              <button onClick={handleEdit} disabled={isPending} className="inline-flex min-h-12 shrink-0 items-center gap-2 border border-foreground/25 px-3 text-[0.65rem] font-semibold tracking-widest">
+                <Pencil className="size-4" aria-hidden="true" /> EDITAR
+              </button>
+            )}
           </div>
         </div>
         <div className="hidden overflow-x-auto border-b border-foreground/15 px-2 md:flex md:px-4 xl:px-8">
