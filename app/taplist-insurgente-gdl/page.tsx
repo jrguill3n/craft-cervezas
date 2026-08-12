@@ -153,64 +153,67 @@ function TapListSection({
   loadFailed: boolean
 }) {
   return (
-    <section className="px-5 pb-12 md:px-10 md:pb-16">
-      <div className="mx-auto max-w-4xl">
-        <div className="flex items-end justify-between gap-5 border-b border-white/20 pb-4">
+    <section className="px-4 pb-10 md:px-10 md:pb-16">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-3 flex items-end justify-between gap-5">
           <div>
-            <h2 className="text-4xl font-black leading-none tracking-tight md:text-6xl">TAP LIST</h2>
+            <p className="font-serif text-sm italic text-black/60">Sé un Insurgente, toma artesanal</p>
+            <h2 className="mt-2 text-4xl font-black leading-none tracking-[0.06em] md:text-6xl">TAP LIST</h2>
           </div>
           {tapList?.tap_list_items?.length ? (
-            <p className="pb-1 font-mono text-xs uppercase tracking-[0.18em] text-white/45">
+            <p className="pb-1 font-mono text-xs uppercase tracking-[0.18em] text-black/45">
               {tapList.tap_list_items.length} taps
             </p>
           ) : null}
         </div>
 
-        {loadFailed ? (
-          <div className="py-14">
+        <div className="border-y-4 border-black bg-[#f8f7f2] shadow-[0_12px_0_#111]">
+          <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_3rem_4.5rem] border-b-2 border-black px-3 py-2 font-mono text-[0.58rem] font-bold uppercase tracking-[0.14em] text-black/55 md:grid-cols-[4rem_minmax(0,1.2fr)_minmax(8rem,0.8fr)_4rem_6rem] md:px-5">
+            <span>No.</span>
+            <span>Cerveza</span>
+            <span className="hidden md:block">Estilo</span>
+            <span>Alc %</span>
+            <span className="text-right">Pinta</span>
+          </div>
+
+          {loadFailed ? (
+            <div className="px-4 py-12 md:px-6">
             <p className="text-xl font-semibold">No pudimos cargar el Tap List.</p>
-            <p className="mt-2 text-sm text-white/55">Intenta de nuevo en unos minutos o consulta con el bar.</p>
+            <p className="mt-2 text-sm text-black/55">Intenta de nuevo en unos minutos o consulta con el bar.</p>
           </div>
         ) : tapList?.tap_list_items?.length ? (
-          <ol className="divide-y divide-white/12">
+          <ol>
             {tapList.tap_list_items.map((item, index) => {
               const option = item.serving_options
                 .slice()
                 .sort((a, b) => a.display_order - b.display_order)[0]
               return (
-                <li key={item.id} className="grid gap-4 py-5 md:grid-cols-[4rem_minmax(0,1.35fr)_minmax(0,1fr)_auto] md:items-baseline md:gap-8">
-                  <p className="font-mono text-sm text-[#e13b2f]">
+                <li key={item.id} className="grid grid-cols-[2.5rem_minmax(0,1fr)_3rem_4.5rem] items-baseline border-b border-black/70 px-3 py-3 last:border-b-0 md:grid-cols-[4rem_minmax(0,1.2fr)_minmax(8rem,0.8fr)_4rem_6rem] md:px-5">
+                  <p className="font-mono text-sm font-bold text-black/70">
                     {String(item.tap_number ?? index + 1).padStart(2, '0')}
                   </p>
                   <div className="min-w-0">
-                    <h3 className="text-2xl font-black uppercase leading-none tracking-tight md:text-3xl">
+                    <h3 className="font-mono text-lg font-black uppercase leading-none tracking-[0.02em] md:text-2xl">
                       {item.beers.name}
                     </h3>
-                    <p className="mt-2 text-sm text-white/55">{item.beers.brewery}</p>
+                    <p className="mt-1 font-mono text-xs uppercase tracking-wide text-black/55">{item.beers.brewery}</p>
+                    <p className="mt-2 text-xs leading-tight text-black/65 md:hidden">{item.beers.style}</p>
                   </div>
-                  <p className="text-sm leading-relaxed text-white/70">{item.beers.style}</p>
-                  <div className="flex items-baseline justify-between gap-5 md:min-w-52 md:justify-end">
-                    <p className="font-mono text-sm text-white/65">{item.beers.abv}%</p>
-                    <p className="text-right text-sm">
-                      {option ? (
-                        <>
-                          <span className="text-white/45">{option.label || option.size}</span>
-                          <span className="ml-2 font-mono font-bold text-white">{formatPrice(option.price)}</span>
-                        </>
-                      ) : (
-                        <span className="text-white/35">—</span>
-                      )}
-                    </p>
-                  </div>
+                  <p className="hidden font-mono text-sm uppercase leading-tight text-black/70 md:block">{item.beers.style}</p>
+                  <p className="font-mono text-sm font-bold text-black/75">{item.beers.abv}</p>
+                  <p className="text-right font-mono text-sm font-black text-black">
+                    {option ? formatPrice(option.price) : '—'}
+                  </p>
                 </li>
               )
             })}
           </ol>
         ) : (
-          <div className="py-14">
+          <div className="px-4 py-12 md:px-6">
             <p className="text-xl font-semibold">Tap List en actualización. Consulta con el bar.</p>
           </div>
         )}
+        </div>
       </div>
     </section>
   )
@@ -218,12 +221,12 @@ function TapListSection({
 
 function SoulBurgerSection() {
   return (
-    <section className="border-t border-white/15 bg-[#080808] px-5 py-12 md:px-10 md:py-16">
+    <section className="border-t-2 border-black bg-[#f3f1ec] px-5 py-12 text-black md:px-10 md:py-16">
       <div className="mx-auto max-w-4xl">
         <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <div>
-            <p className="text-xs font-semibold tracking-[0.28em] text-[#e13b2f]">NOT JUST A BURGER</p>
-            <h2 className="mt-3 text-4xl font-black leading-none tracking-tight md:text-6xl">
+            <p className="font-serif text-sm italic text-black/60">NOT JUST A BURGER</p>
+            <h2 className="mt-3 text-4xl font-black leading-none tracking-[0.04em] md:text-6xl">
               SOUL BURGER LAB
             </h2>
           </div>
@@ -231,7 +234,7 @@ function SoulBurgerSection() {
             <img
               src={SOUL_BURGER_LOGO}
               alt="Soul Fried Chicken"
-              className="max-h-20 max-w-56 border border-white/10 object-contain opacity-95"
+              className="max-h-20 max-w-56 border border-black/10 object-contain opacity-95"
             />
           </div>
         </div>
@@ -239,10 +242,10 @@ function SoulBurgerSection() {
         <div className="mt-10 grid gap-10 md:grid-cols-2">
           {soulBurgerMenu.map((section) => (
             <section key={section.title}>
-              <h3 className="border-b border-[#e13b2f]/70 pb-3 text-sm font-black uppercase tracking-[0.22em] text-[#e13b2f]">
+              <h3 className="border-b-2 border-black pb-3 text-sm font-black uppercase tracking-[0.22em] text-black">
                 {section.title}
               </h3>
-              <div className="divide-y divide-white/10">
+              <div className="divide-y divide-black/20">
                 {section.items.map((item) => (
                   <article key={item.name} className="py-5">
                     <div className="flex items-baseline justify-between gap-4">
@@ -250,7 +253,7 @@ function SoulBurgerSection() {
                       {item.price ? <p className="font-mono text-base font-bold">{item.price}</p> : null}
                     </div>
                     {item.description ? (
-                      <p className="mt-2 text-sm leading-relaxed text-white/62">{item.description}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-black/62">{item.description}</p>
                     ) : null}
                   </article>
                 ))}
@@ -259,11 +262,11 @@ function SoulBurgerSection() {
           ))}
         </div>
 
-        <div className="mt-10 space-y-3 border-t border-white/15 pt-6">
-          <p className="text-sm text-white/55">
+        <div className="mt-10 space-y-3 border-t-2 border-black pt-6 text-center">
+          <p className="text-sm text-black/65">
             Todas las burgers y sandos incluyen una porción de 25 gr de chips.
           </p>
-          <p className="text-xs font-black tracking-[0.28em] text-[#e13b2f]">DINE IN ONLY</p>
+          <p className="text-3xl font-black tracking-[0.04em] text-black md:text-5xl">DINE IN ONLY</p>
         </div>
       </div>
     </section>
@@ -282,23 +285,24 @@ export default async function InsurgenteGdlPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-[#030303] text-white">
-      <header className="px-5 pt-8 pb-7 md:px-10 md:pt-12 md:pb-9">
-        <div className="mx-auto max-w-4xl">
+    <main className="min-h-dvh bg-[#f3f1ec] text-black">
+      <header className="px-5 pt-8 pb-5 md:px-10 md:pt-12 md:pb-8">
+        <div className="mx-auto max-w-5xl">
           <img
             src={INSURGENTE_LOGO}
             alt="Insurgente GDL"
-            className="h-auto w-64 max-w-full invert md:w-80"
+            className="h-auto w-64 max-w-full md:w-80"
           />
-          <p className="mt-4 text-xs font-black tracking-[0.36em] text-white/45">GDL</p>
+          <div className="mt-4 h-1 w-64 max-w-full bg-black md:w-80" />
+          <p className="mt-4 font-serif text-sm italic text-black/55">GDL</p>
         </div>
       </header>
 
       <TapListSection tapList={tapList} loadFailed={loadFailed} />
       <SoulBurgerSection />
 
-      <footer className="border-t border-white/15 px-5 py-8 md:px-10">
-        <div className="mx-auto flex max-w-4xl flex-col gap-5 text-xs text-white/45 sm:flex-row sm:items-end sm:justify-between">
+      <footer className="bg-black px-5 py-5 text-[#f3f1ec] md:px-10">
+        <div className="mx-auto flex max-w-5xl flex-col gap-5 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-black tracking-[0.24em] text-white">INSURGENTE GDL</p>
             <a
@@ -322,8 +326,13 @@ export default async function InsurgenteGdlPage() {
             src={INSURGENTE_OWL}
             alt=""
             aria-hidden="true"
-            className="h-16 w-auto invert opacity-45"
+            className="h-20 w-auto invert opacity-80"
           />
+        </div>
+        <div className="mt-4 overflow-hidden border-t border-white/25 pt-3 font-serif text-xs italic tracking-wide text-white/55">
+          <p className="whitespace-nowrap">
+            ¡Sé un Insurgente, toma artesanal! &nbsp; ¡Sé un Insurgente, toma artesanal! &nbsp; ¡Sé un Insurgente, toma artesanal!
+          </p>
         </div>
       </footer>
     </main>
