@@ -222,40 +222,35 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
       <div className={`flex h-full flex-col transition-opacity ${isPending ? 'opacity-60' : ''}`}>
 
         {/* ── Page header ──────────────────────────────────────────────────── */}
-        <div className="flex items-end justify-between gap-4 px-4 pt-5 pb-4 md:items-center md:px-6 md:pt-8 md:pb-6 xl:px-8">
+        <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-5 xl:px-8">
           <div className="min-w-0">
             <p className="label-xs text-muted-foreground">Tap List</p>
-            <h1 className="display-tight mt-2 truncate text-4xl md:text-5xl">{activeLocation?.name ?? '—'}</h1>
-            <p className="mt-2 text-xs text-muted-foreground">{items.length} cerveza{items.length !== 1 ? 's' : ''}</p>
-            {isEditing && <p className="mt-1 text-xs font-semibold text-accent">ARRASTRA ⠿ PARA CAMBIAR EL ORDEN Y EL NÚMERO DE TAP</p>}
+            <p className="mt-1 text-xs text-muted-foreground">{items.length} cerveza{items.length !== 1 ? 's' : ''}</p>
+            {isEditing && <p className="mt-1 hidden text-xs font-semibold text-accent sm:block">ARRASTRA ⠿ PARA CAMBIAR EL ORDEN Y EL NÚMERO DE TAP</p>}
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-2 md:flex-row md:items-center md:gap-3">
-            <span className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[0.6rem] font-semibold tracking-widest ${isEditing ? 'border-accent/40 text-accent' : 'border-green-500/30 bg-green-500/10 text-green-400'}`}>
-              <span className={`size-1.5 rounded-full ${isEditing ? 'bg-accent' : 'bg-green-400'}`} />
-              {isEditing ? 'EDITANDO' : 'GUARDADO'}
-            </span>
-            {!isEditing && (
-              <button onClick={handleEdit} disabled={isPending} className="inline-flex min-h-11 items-center gap-2 border border-foreground/25 px-3 text-[0.65rem] font-semibold tracking-widest md:px-4 md:text-xs">
-                <Pencil className="size-4" aria-hidden="true" /> EDITAR
-              </button>
-            )}
-          </div>
+          {!isEditing && (
+            <button onClick={handleEdit} disabled={isPending} className="inline-flex min-h-11 shrink-0 items-center gap-2 border border-foreground/25 px-3 text-[0.65rem] font-semibold tracking-widest md:px-4 md:text-xs">
+              <Pencil className="size-4" aria-hidden="true" /> EDITAR
+            </button>
+          )}
         </div>
 
         {/* ── Location tabs ─────────────────────────────────────────────────── */}
-        <div className="border-y border-foreground/15 px-4 py-3 md:hidden">
-          <label htmlFor="admin-location" className="label-xs mb-2 block text-muted-foreground">SUCURSAL</label>
+        <div className="border-y border-foreground/15 px-4 py-2 md:hidden">
           <div className="relative">
             <select
               id="admin-location"
+              aria-label="Sucursal que se está editando"
               value={activeLocationId}
               onChange={(event) => handleLocationChange(event.target.value)}
               disabled={isEditing || isPending}
-              className="min-h-14 w-full appearance-none border border-foreground/25 bg-background px-4 pr-12 text-base font-semibold tracking-wide text-foreground focus:border-accent focus:outline-none"
+              className={`min-h-12 w-full appearance-none border bg-background px-4 pr-12 text-base font-semibold tracking-wide focus:outline-none ${isEditing ? 'border-accent/50 text-accent' : 'border-foreground/25 text-foreground focus:border-accent'}`}
             >
               {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>{loc.name}</option>
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}{isEditing && loc.id === activeLocationId ? ' — Editando' : ''}
+                </option>
               ))}
             </select>
             <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-accent" aria-hidden="true" />
@@ -276,7 +271,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
                     : 'text-foreground/40 hover:text-foreground/70'
                 }`}
               >
-                {loc.name.toUpperCase()}
+                {loc.name.toUpperCase()}{isEditing && isActive ? ' · EDITANDO' : ''}
                 {tl && (
                   <span className="ml-1.5 inline-block size-1.5 translate-y-[-1px] rounded-full bg-green-400" />
                 )}
