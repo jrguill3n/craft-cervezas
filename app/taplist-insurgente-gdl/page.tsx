@@ -286,15 +286,17 @@ export default async function InsurgenteGdlPage() {
 
   return (
     <main className="min-h-dvh bg-[#f3f1ec] text-black">
-      <header className="px-5 pt-8 pb-5 md:px-10 md:pt-12 md:pb-8">
-        <div className="mx-auto max-w-5xl">
+      <header className="px-5 pt-8 pb-5 text-center md:px-10 md:pt-12 md:pb-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-center">
           <img
             src={INSURGENTE_LOGO}
             alt="Insurgente GDL"
             className="h-auto w-64 max-w-full md:w-80"
           />
           <div className="mt-4 h-1 w-64 max-w-full bg-black md:w-80" />
-          <p className="mt-4 font-serif text-sm italic text-black/55">GDL</p>
+          <p className="mt-4 max-w-xs font-serif text-sm italic leading-snug text-black/55 md:max-w-none">
+            Argentina 16, Col. Americana. Guadalajara.
+          </p>
         </div>
       </header>
 
