@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, Plus, Trash2, X } from 'lucide-react'
+import { ArrowUpDown, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react'
 import type { BeerRow } from '@/lib/db-types'
 import { createBeer, deleteBeer, updateBeer } from '@/app/admin/actions'
 
 type Props = { beers: BeerRow[] }
+type SortKey = 'name' | 'brewery' | 'style' | 'abv' | 'primary_price'
+type SortDirection = 'asc' | 'desc'
 
 type FormState = {
   name: string
@@ -17,6 +19,22 @@ type FormState = {
 }
 
 const EMPTY: FormState = { name: '', brewery: '', style: '', abv: '', price: '' }
+const SORT_OPTIONS: { key: SortKey; label: string; numeric?: boolean }[] = [
+  { key: 'name', label: 'Nombre' },
+  { key: 'brewery', label: 'Cervecería' },
+  { key: 'style', label: 'Estilo' },
+  { key: 'abv', label: 'ABV', numeric: true },
+  { key: 'primary_price', label: 'Precio', numeric: true },
+]
+const collator = new Intl.Collator('es-MX', { numeric: true, sensitivity: 'base' })
+
+function normalizeSearch(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
 
 function beerToForm(b: BeerRow): FormState {
   return {
@@ -36,6 +54,51 @@ export function BeersEditor({ beers }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<BeerRow | null>(null)
+  const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+
+  const activeSortOption = SORT_OPTIONS.find((option) => option.key === sortKey) ?? SORT_OPTIONS[0]
+  const sortDirectionLabel = sortDirection === 'asc'
+    ? (activeSortOption.numeric ? 'MENOR A MAYOR' : 'A-Z')
+    : (activeSortOption.numeric ? 'MAYOR A MENOR' : 'Z-A')
+
+  const visibleBeers = useMemo(() => {
+    const query = normalizeSearch(search)
+
+    return beers
+      .filter((beer) => {
+        if (!query) return true
+        return normalizeSearch(`${beer.name} ${beer.brewery}`).includes(query)
+      })
+      .slice()
+      .sort((a, b) => {
+        const aValue = a[sortKey]
+        const bValue = b[sortKey]
+        const aMissing = aValue == null
+        const bMissing = bValue == null
+
+        if (aMissing || bMissing) {
+          if (aMissing && bMissing) return 0
+          return aMissing ? 1 : -1
+        }
+
+        const result = typeof aValue === 'number' && typeof bValue === 'number'
+          ? aValue - bValue
+          : collator.compare(String(aValue), String(bValue))
+
+        return sortDirection === 'asc' ? result : -result
+      })
+  }, [beers, search, sortDirection, sortKey])
+
+  function chooseSort(nextKey: SortKey) {
+    if (nextKey === sortKey) {
+      setSortDirection((current) => current === 'asc' ? 'desc' : 'asc')
+      return
+    }
+    setSortKey(nextKey)
+    setSortDirection('asc')
+  }
 
   function startCreate() {
     setEditing(null)
@@ -109,6 +172,9 @@ export function BeersEditor({ beers }: Props) {
   }
 
   const showForm = creating || editing !== null
+  const resultText = search.trim()
+    ? `${visibleBeers.length} de ${beers.length} resultado${visibleBeers.length !== 1 ? 's' : ''}`
+    : `${beers.length} en el catálogo`
 
   useEffect(() => {
     if (!showForm) return
@@ -130,7 +196,7 @@ export function BeersEditor({ beers }: Props) {
         <div>
           <p className="label-xs text-muted-foreground">PANEL DE ADMINISTRACIÓN</p>
           <h1 className="display-tight mt-2 text-4xl text-foreground md:text-5xl">Cervezas</h1>
-          <p className="mt-2 text-xs text-muted-foreground">{beers.length} en el catálogo</p>
+          <p className="mt-2 text-xs text-muted-foreground">{resultText}</p>
         </div>
         {!showForm && (
           <button
@@ -227,15 +293,77 @@ export function BeersEditor({ beers }: Props) {
         </div>
       )}
 
+      <section className="mb-5 grid gap-3 border-y border-foreground/10 py-4 md:mb-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:border md:border-foreground/10 md:p-4">
+        <div className="min-w-0">
+          <label htmlFor="beer-search" className="label-xs text-foreground/50">
+            BUSCAR POR CERVEZA O CERVECERÍA
+          </label>
+          <div className="mt-2 flex min-h-12 items-center border border-foreground/20 focus-within:border-foreground">
+            <Search className="ml-4 size-4 shrink-0 text-foreground/35" aria-hidden="true" />
+            <input
+              id="beer-search"
+              type="search"
+              inputMode="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Ej. Caballo Blanco, Hercules..."
+              className="min-w-0 flex-1 bg-transparent px-3 text-base text-foreground placeholder:text-foreground/25 focus:outline-none md:text-sm"
+            />
+            {search ? (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="mr-1 inline-flex size-11 shrink-0 items-center justify-center text-foreground/40"
+                aria-label="Limpiar búsqueda"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:w-[22rem]">
+          <div>
+            <label htmlFor="beer-sort" className="label-xs text-foreground/50">
+              ORDENAR
+            </label>
+            <select
+              id="beer-sort"
+              value={sortKey}
+              onChange={(event) => {
+                setSortKey(event.target.value as SortKey)
+                setSortDirection('asc')
+              }}
+              className="mt-2 min-h-12 w-full border border-foreground/20 bg-background px-3 text-sm font-semibold text-foreground focus:border-foreground focus:outline-none"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.key} value={option.key}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSortDirection((current) => current === 'asc' ? 'desc' : 'asc')}
+            className="label-xs mt-auto inline-flex min-h-12 items-center justify-center gap-2 border border-foreground/20 px-3 font-semibold"
+            aria-label={`Cambiar orden: ${sortDirectionLabel}`}
+          >
+            <ArrowUpDown className="size-4" aria-hidden="true" />
+            <span>{sortDirectionLabel}</span>
+          </button>
+        </div>
+      </section>
+
       {/* Mobile catalogue */}
       <div className="divide-y divide-foreground/10 border-y border-foreground/10 xl:hidden">
-        {beers.length === 0 && (
+        {visibleBeers.length === 0 && (
           <div className="px-4 py-16 text-center">
-            <p className="text-base font-semibold">El catálogo está vacío</p>
-            <p className="mt-2 text-sm text-muted-foreground">Crea la primera cerveza para agregarla a un tap.</p>
+            <p className="text-base font-semibold">{beers.length === 0 ? 'El catálogo está vacío' : 'Sin resultados'}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {beers.length === 0 ? 'Crea la primera cerveza para agregarla a un tap.' : 'Prueba con otro nombre o cervecería.'}
+            </p>
           </div>
         )}
-        {beers.map((beer) => (
+        {visibleBeers.map((beer) => (
           <article key={beer.id} className="flex min-h-[5.75rem] items-center gap-3 py-3">
             <button onClick={() => startEdit(beer)} className="min-w-0 flex-1 text-left">
               <div className="flex items-baseline justify-between gap-3">
@@ -263,20 +391,36 @@ export function BeersEditor({ beers }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-foreground/10 text-left">
-              {['NOMBRE', 'CERVECERÍA', 'ESTILO', 'ABV', 'PRECIO', ''].map((h) => (
-                <th key={h} className="label-xs pb-3 pr-6 text-muted-foreground">{h}</th>
+              {SORT_OPTIONS.map((option) => (
+                <th
+                  key={option.key}
+                  className="pb-3 pr-6"
+                  aria-sort={sortKey === option.key ? sortDirection === 'asc' ? 'ascending' : 'descending' : 'none'}
+                >
+                  <button
+                    type="button"
+                    onClick={() => chooseSort(option.key)}
+                    className="label-xs inline-flex min-h-11 items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {option.label.toUpperCase()}
+                    <span className={sortKey === option.key ? 'text-accent' : 'text-foreground/25'}>
+                      {sortKey === option.key ? sortDirectionLabel : 'ORDENAR'}
+                    </span>
+                  </button>
+                </th>
               ))}
+              <th className="label-xs pb-3 text-right text-muted-foreground">ACCIONES</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-foreground/5">
-              {beers.length === 0 && (
+              {visibleBeers.length === 0 && (
               <tr>
                 <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
-                  Sin cervezas. Crea la primera.
+                  {beers.length === 0 ? 'Sin cervezas. Crea la primera.' : 'Sin resultados para esta búsqueda.'}
                 </td>
               </tr>
             )}
-            {beers.map((b) => (
+            {visibleBeers.map((b) => (
               <tr key={b.id} className="group">
                 <td className="py-3 pr-6 font-semibold text-foreground">{b.name}</td>
                 <td className="py-3 pr-6 text-xs text-foreground/70">{b.brewery}</td>
