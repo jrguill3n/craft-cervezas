@@ -24,7 +24,7 @@ export function LoginForm() {
           required
           autoComplete="email"
           className="min-h-11 border border-foreground/20 bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground focus:outline-none"
-          placeholder="craftchapalita@craft.mx"
+          placeholder="hola@craftcervezas.com"
         />
       </div>
 
