@@ -16,6 +16,16 @@ type Props = {
   initialLocationId: string
 }
 
+const mexicoCityDateTime = new Intl.DateTimeFormat('es-MX', {
+  timeZone: 'America/Mexico_City',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+})
+
 export function TapListEditor({ locations, tapLists, allBeers, profile, initialLocationId }: Props) {
   const router = useRouter()
   const [activeLocationId, setActiveLocationId] = useState(initialLocationId)
@@ -387,12 +397,11 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
                 <Plus className="size-3.5" aria-hidden="true" />
                 <span className="sm:hidden">AGREGAR</span><span className="hidden sm:inline">AGREGAR CERVEZA</span>
               </button>
-              <span className="label-xs hidden text-muted-foreground md:inline">
-                {items.length} cerveza{items.length !== 1 ? 's' : ''}
-                {tapList?.published_at ? (
-                  <> · Publicado {new Date(tapList.published_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</>
-                ) : null}
-              </span>
+              {tapList?.published_at ? (
+                <span className="label-xs hidden text-muted-foreground md:inline">
+                  Publicado {mexicoCityDateTime.format(new Date(tapList.published_at))} · Hora del centro
+                </span>
+              ) : null}
               {isEditing && (
                 <div className="flex gap-2">
                   <button onClick={handleCancel} disabled={isPending} className="min-h-11 border border-foreground/20 px-3 text-xs font-semibold tracking-widest disabled:opacity-40">CANCELAR</button>
