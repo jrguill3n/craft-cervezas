@@ -205,7 +205,6 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
           <div className="min-w-0">
             <p className="label-xs text-muted-foreground">PANEL DE ADMINISTRACIÓN</p>
             <h1 className="display-tight mt-2 text-4xl text-foreground md:text-5xl">Tap List</h1>
-            <p className="mt-2 hidden text-xs text-muted-foreground md:block">{items.length} cerveza{items.length !== 1 ? 's' : ''}</p>
             {isEditing && <p className="mt-1 hidden text-xs font-semibold text-accent sm:block">ARRASTRA ⠿ PARA CAMBIAR EL ORDEN Y EL NÚMERO DE TAP</p>}
           </div>
 
@@ -238,7 +237,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
                 <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-accent" aria-hidden="true" />
               </div>
               <p className="mt-2 px-1 text-xs text-muted-foreground">
-                {items.length} cerveza{items.length !== 1 ? 's' : ''}
+                {items.length} tap{items.length !== 1 ? 's' : ''}
               </p>
             </div>
             {!isEditing && (
@@ -257,16 +256,16 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
                 key={loc.id}
                 onClick={() => handleLocationChange(loc.id)}
                 disabled={isEditing || isPending}
-                className={`relative min-h-11 shrink-0 px-4 py-3 text-[0.65rem] font-semibold tracking-widest transition-colors ${
+                className={`relative min-h-14 shrink-0 px-4 py-2.5 text-left text-[0.65rem] font-semibold tracking-widest transition-colors ${
                   isActive
                     ? 'text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-accent'
                     : 'text-foreground/40 hover:text-foreground/70'
                 }`}
               >
-                {loc.name.toUpperCase()}{isEditing && isActive ? ' · EDITANDO' : ''}
-                {tl && (
-                  <span className="ml-1.5 inline-block size-1.5 translate-y-[-1px] rounded-full bg-green-400" />
-                )}
+                <span className="block">{loc.name.toUpperCase()}{isEditing && isActive ? ' · EDITANDO' : ''}</span>
+                <span className="mt-1 block text-[0.6rem] font-normal tracking-normal text-muted-foreground">
+                  {tl?.tap_list_items.length ?? 0} tap{(tl?.tap_list_items.length ?? 0) !== 1 ? 's' : ''}
+                </span>
               </button>
             )
           })}
