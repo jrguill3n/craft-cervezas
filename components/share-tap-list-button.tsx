@@ -5,13 +5,15 @@ import { Check, Share2 } from 'lucide-react'
 
 type Props = {
   branchName: string
+  branchSlug: string
 }
 
-export function ShareTapListButton({ branchName }: Props) {
+export function ShareTapListButton({ branchName, branchSlug }: Props) {
   const [copied, setCopied] = useState(false)
 
   async function handleShare() {
-    const url = new URL(window.location.href)
+    const url = new URL('/taplist', window.location.origin)
+    url.searchParams.set('ubicacion', branchSlug)
     url.hash = 'tap-list'
 
     try {
