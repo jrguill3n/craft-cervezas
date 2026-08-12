@@ -32,9 +32,11 @@ export function SiteHeader() {
     return pathname === href
   }
 
+  const desktopNavItemClassName = 'label-xs inline-flex min-h-11 items-center border-b-2 border-transparent font-medium transition-colors hover:text-accent'
+
   return (
     <header className="border-b border-foreground/20 bg-background">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-[1fr_auto] items-center gap-6 px-5 py-6 md:px-10 md:py-7 lg:grid-cols-[1fr_auto_1fr]">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 py-6 md:px-10 md:py-7">
         <Link
           href="/"
           aria-label="Craft, ir al inicio"
@@ -44,7 +46,7 @@ export function SiteHeader() {
           <CraftWordmark width={176} priority />
         </Link>
 
-        <nav aria-label="Principal" className="hidden justify-self-center lg:block">
+        <nav aria-label="Principal" className="hidden lg:block">
           <ul className="flex items-center gap-8">
             <li className="relative">
               <button
@@ -56,7 +58,8 @@ export function SiteHeader() {
                 aria-expanded={tapListsOpen}
                 aria-haspopup="menu"
                 className={cn(
-                  'label-xs flex items-center gap-1 border-b border-transparent pb-1 font-medium transition-colors hover:text-accent',
+                  desktopNavItemClassName,
+                  'gap-1',
                   pathname === '/taplist' && 'border-accent text-accent',
                 )}
               >
@@ -96,7 +99,8 @@ export function SiteHeader() {
                 aria-expanded={branchesOpen}
                 aria-haspopup="menu"
                 className={cn(
-                  'label-xs flex items-center gap-1 border-b border-transparent pb-1 font-medium transition-colors hover:text-accent',
+                  desktopNavItemClassName,
+                  'gap-1',
                   isBranchPage && 'border-accent text-accent',
                 )}
               >
@@ -129,7 +133,7 @@ export function SiteHeader() {
             {mainNavigation.map((item) => {
               const active = isActive(item.href)
               const className = cn(
-                'label-xs border-b border-transparent pb-1 font-medium transition-colors hover:text-accent',
+                desktopNavItemClassName,
                 active && 'border-accent text-accent',
               )
               return (
