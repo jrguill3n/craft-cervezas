@@ -191,7 +191,7 @@ export function BeersEditor({ beers }: Props) {
   }, [showForm])
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-5 md:px-6 md:py-8 xl:px-8">
+    <div className="w-full px-4 py-5 md:px-6 md:py-8 xl:px-8">
       <div className="mb-5 flex items-end justify-between gap-4 md:mb-8 md:items-center">
         <div>
           <p className="label-xs text-muted-foreground">PANEL DE ADMINISTRACIÓN</p>
