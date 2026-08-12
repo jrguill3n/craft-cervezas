@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { ArrowUpRight, MessageCircle, Phone } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
+import { ShareTapListButton } from '@/components/share-tap-list-button'
 import { branches, getBranch } from '@/lib/craft-content'
 import { getPublishedTapList } from '@/lib/tap-list'
 
@@ -151,15 +152,18 @@ export default async function BranchPage({
         ) : null}
 
         {/* Tap list */}
-        <section className="border-b border-foreground/20">
+        <section id="tap-list" className="scroll-mt-20 border-b border-foreground/20">
           <div className="mx-auto max-w-[1600px] px-5 py-14 md:px-10 md:py-20">
-            <div className="flex items-baseline justify-between gap-6 border-b border-foreground/20 pb-5">
+            <div className="flex items-end justify-between gap-4 border-b border-foreground/20 pb-5">
               <h2 className="display-tight text-4xl md:text-6xl">Tap list</h2>
-              {tapList && (
-                <p className="label-xs text-muted-foreground">
-                  {tapList.tap_list_items.length} llave{tapList.tap_list_items.length !== 1 ? 's' : ''} activa{tapList.tap_list_items.length !== 1 ? 's' : ''}
-                </p>
-              )}
+              <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-4">
+                {tapList && (
+                  <p className="label-xs hidden text-muted-foreground sm:block">
+                    {tapList.tap_list_items.length} llave{tapList.tap_list_items.length !== 1 ? 's' : ''} activa{tapList.tap_list_items.length !== 1 ? 's' : ''}
+                  </p>
+                )}
+                <ShareTapListButton branchName={branch.name} />
+              </div>
             </div>
 
             {tapList && tapList.tap_list_items.length > 0 ? (
