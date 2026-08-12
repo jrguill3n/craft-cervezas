@@ -9,7 +9,7 @@ export function Hero() {
           <div className="label-xs flex items-center gap-4 text-muted-foreground">
             <span>Guadalajara · MX</span>
             <span className="h-px flex-1 bg-foreground/25" aria-hidden="true" />
-            <span>Est. 2016</span>
+            <span>Est. 2018</span>
           </div>
 
           <div className="mt-16 md:mt-auto md:pt-24">
