@@ -201,10 +201,11 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
       <div className={`flex h-full flex-col transition-opacity ${isPending ? 'opacity-60' : ''}`}>
 
         {/* ── Page header ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-5 xl:px-8">
+        <div className="flex items-end justify-between gap-4 px-4 pt-5 pb-4 md:items-center md:px-6 md:pt-8 md:pb-6 xl:px-8">
           <div className="min-w-0">
-            <p className="label-xs text-muted-foreground">Tap List</p>
-            <p className="mt-1 text-xs text-muted-foreground">{items.length} cerveza{items.length !== 1 ? 's' : ''}</p>
+            <p className="label-xs text-muted-foreground">PANEL DE ADMINISTRACIÓN</p>
+            <h1 className="display-tight mt-2 text-4xl text-foreground md:text-5xl">Tap List</h1>
+            <p className="mt-2 text-xs text-muted-foreground">{items.length} cerveza{items.length !== 1 ? 's' : ''}</p>
             {isEditing && <p className="mt-1 hidden text-xs font-semibold text-accent sm:block">ARRASTRA ⠿ PARA CAMBIAR EL ORDEN Y EL NÚMERO DE TAP</p>}
           </div>
 
