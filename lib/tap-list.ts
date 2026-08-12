@@ -1,8 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
-import type { TapListFull } from '@/lib/db-types'
+import type { TapListFull, TapListItemFull } from '@/lib/db-types'
 import { compareTapListItems } from '@/lib/tap-list-order'
 
 const PUBLIC_LOCATION_ORDER = ['americana', 'chapalita', 'providencia']
+
+type RawTapListItem = TapListItemFull & {
+  beers: TapListItemFull['beers'] & {
+    serving_options?: TapListItemFull['serving_options']
+  }
+}
+
+type RawTapList = Omit<TapListFull, 'tap_list_items'> & {
+  tap_list_items: RawTapListItem[]
+}
 
 /**
  * Returns the most recently published tap list for a given location slug.
@@ -52,29 +62,48 @@ export async function getPublishedTapList(slug: string): Promise<TapListFull | n
 export async function getAllPublishedTapLists(): Promise<TapListFull[]> {
   const supabase = await createClient()
 
-  const { data: locations, error } = await supabase
-    .from('locations')
-    .select('slug')
-    .eq('active', true)
-    .order('name')
+  const { data, error } = await supabase
+    .from('tap_lists')
+    .select(`
+      *,
+      locations!inner(*),
+      tap_list_items(
+        *,
+        beers(*, serving_options(*))
+      )
+    `)
+    .eq('status', 'published')
+    .eq('locations.active', true)
+    .order('published_at', { ascending: false })
 
   if (error) {
-    console.error('[tap-list] Could not load active locations:', error)
-    throw new Error('No se pudieron cargar las sucursales activas.')
+    console.error('[tap-list] Could not load published tap lists:', error)
+    throw new Error('No se pudieron cargar los tap lists publicados.')
   }
 
-  if (!locations?.length) return []
+  if (!data?.length) return []
 
-  const orderedLocations = locations.slice().sort((a: { slug: string }, b: { slug: string }) => {
-    const aIndex = PUBLIC_LOCATION_ORDER.indexOf(a.slug)
-    const bIndex = PUBLIC_LOCATION_ORDER.indexOf(b.slug)
+  const latestByLocation = new Map<string, TapListFull>()
+
+  for (const rawList of data as RawTapList[]) {
+    const list = rawList as TapListFull
+    const slug = list.locations.slug
+    if (latestByLocation.has(slug)) continue
+
+    list.tap_list_items = (rawList.tap_list_items ?? [])
+      .map((item) => ({
+        ...item,
+        serving_options: item.beers?.serving_options ?? [],
+      }))
+      .sort(compareTapListItems)
+
+    latestByLocation.set(slug, list)
+  }
+
+  return [...latestByLocation.values()].sort((a, b) => {
+    const aIndex = PUBLIC_LOCATION_ORDER.indexOf(a.locations.slug)
+    const bIndex = PUBLIC_LOCATION_ORDER.indexOf(b.locations.slug)
     return (aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex)
       - (bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex)
   })
-
-  const results = await Promise.all(
-    orderedLocations.map((l: { slug: string }) => getPublishedTapList(l.slug)),
-  )
-
-  return results.filter(Boolean) as TapListFull[]
 }
