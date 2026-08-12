@@ -264,16 +264,6 @@ export function BeersEditor({ beers }: Props) {
               placeholder="Ej. Caballo Blanco, Hercules..."
               className="min-w-0 flex-1 bg-transparent px-3 text-base text-foreground placeholder:text-foreground/25 focus:outline-none md:text-sm"
             />
-            {search ? (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                className="mr-1 inline-flex size-11 shrink-0 items-center justify-center text-foreground/40"
-                aria-label="Limpiar búsqueda"
-              >
-                <X className="size-4" aria-hidden="true" />
-              </button>
-            ) : null}
           </div>
         </div>
       </section>
