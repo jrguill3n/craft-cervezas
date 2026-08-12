@@ -161,49 +161,49 @@ export async function createBeer(formData: FormData) {
   if (!name || !brewery || !style) throw new Error('Nombre, cervecería y estilo son obligatorios.')
   if (!Number.isFinite(abv) || abv < 0 || abv > 100) throw new Error('El ABV debe estar entre 0 y 100.')
   if (!Number.isFinite(price) || price <= 0) throw new Error('El precio debe ser mayor a cero.')
-  const { data, error } = await supabase
+  const beerId = crypto.randomUUID()
+  const { error } = await supabase
     .from('beers')
     .insert({
+      id: beerId,
       name,
       brewery,
       style,
       abv,
     })
-    .select()
-    .single()
   if (error) throw new Error(error.message)
   const locationIds = await getBeerCreationLocationIds(supabase, profile)
   if (locationIds.length === 0) {
-    await supabase.from('beers').delete().eq('id', data.id)
+    await supabase.from('beers').delete().eq('id', beerId)
     throw new Error('No hay sucursales asignadas para esta cerveza.')
   }
 
   const { error: locationError } = await supabase
     .from('beer_locations')
     .upsert(
-      locationIds.map((locationId) => ({ beer_id: data.id, location_id: locationId })),
+      locationIds.map((locationId) => ({ beer_id: beerId, location_id: locationId })),
       { onConflict: 'beer_id,location_id', ignoreDuplicates: true },
     )
   if (locationError) {
-    await supabase.from('beers').delete().eq('id', data.id)
+    await supabase.from('beers').delete().eq('id', beerId)
     throw new Error(locationError.message)
   }
 
   const { error: priceError } = await supabase.from('serving_options').insert({
-    beer_id: data.id,
+    beer_id: beerId,
     label: 'Pinta',
     size: 'Pinta',
     price,
     display_order: 1,
   })
   if (priceError) {
-    await supabase.from('beers').delete().eq('id', data.id)
+    await supabase.from('beers').delete().eq('id', beerId)
     throw new Error(priceError.message)
   }
   revalidatePath('/admin')
   revalidatePath('/admin/beers')
   revalidatePath('/taplist', 'page')
-  return data
+  return { id: beerId, name, brewery, style, abv }
 }
 
 export async function updateBeer(id: string, formData: FormData) {
