@@ -2,6 +2,13 @@ import Link from 'next/link'
 import { CraftWordmark } from '@/components/craft-logo'
 import { branches, contact } from '@/lib/craft-content'
 
+const contactEmail = 'hola@craftcervezas.com'
+const socialLinks = contact.socials
+  .filter((social) => social.label !== 'WhatsApp')
+  .map((social) => social.label === 'Facebook'
+    ? { ...social, href: 'https://facebook.com/craftcervezas' }
+    : social)
+
 export function SiteFooter() {
   return (
     <footer id="contacto" className="border-t border-foreground/20 bg-background">
@@ -35,7 +42,7 @@ export function SiteFooter() {
           <div className="lg:col-span-3">
             <h2 className="label-xs text-muted-foreground">Redes</h2>
             <ul className="mt-5 flex flex-col gap-3">
-              {contact.socials.map((social) => (
+              {socialLinks.map((social) => (
                 <li key={social.label}>
                   <a
                     href={social.href}
@@ -55,13 +62,8 @@ export function SiteFooter() {
             <h2 className="label-xs text-muted-foreground">Contacto</h2>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>
-                <a href={`mailto:${contact.email}`} className="hover:text-accent">
-                  {contact.email}
-                </a>
-              </li>
-              <li>
-                <a href={`mailto:${contact.press}`} className="hover:text-accent">
-                  {contact.press}
+                <a href={`mailto:${contactEmail}`} className="hover:text-accent">
+                  {contactEmail}
                 </a>
               </li>
               <li className="text-muted-foreground">{contact.city}</li>
