@@ -184,7 +184,7 @@ export function BeersEditor({ beers }: Props) {
             {(
               [
                 ['name', 'NOMBRE', 'text', 'Ej. Hazy Jalisco'],
-                ['brewery', 'CERVECERÍA', 'text', 'Ej. Craft'],
+                ['brewery', 'CERVECERÍA', 'text', 'Ej. Cervecería local'],
                 ['style', 'ESTILO', 'text', 'Ej. New England IPA'],
                 ['abv', 'ABV (%)', 'number', '5.5'],
               ] as [keyof FormState, string, string, string][]

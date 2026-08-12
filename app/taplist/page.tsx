@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 export const dynamic = 'force-dynamic'
 
-const VALID_LOCATIONS = new Set<LocationFilter>(['americana', 'chapalita', 'providencia'])
+const VALID_LOCATIONS = new Set<LocationFilter>(['americana', 'chapalita', 'providencia', 'insurgente-gdl'])
 
 export default async function TapListsPage({
   searchParams,

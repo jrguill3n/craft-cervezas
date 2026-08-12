@@ -13,6 +13,10 @@ import type { ProfileRow } from '@/lib/db-types'
 type Props = {
   profile: Pick<ProfileRow, 'id' | 'full_name' | 'role'>
   supabaseConfig: SupabaseBrowserConfig
+  adminBrand?: {
+    title: string
+    subtitle: string
+  }
 }
 
 const navItems = [
@@ -20,7 +24,7 @@ const navItems = [
   { label: 'CERVEZAS', href: '/admin/beers' },
 ]
 
-export function AdminSidebar({ profile, supabaseConfig }: Props) {
+export function AdminSidebar({ profile, supabaseConfig, adminBrand = { title: 'CRAFT', subtitle: 'ADMIN' } }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -53,8 +57,8 @@ export function AdminSidebar({ profile, supabaseConfig }: Props) {
     <>
       <header className="relative z-30 flex min-h-16 shrink-0 w-full items-center justify-between border-b border-foreground/10 bg-background px-4 pt-[env(safe-area-inset-top)] xl:hidden">
         <div>
-          <span className="font-sans text-base font-bold tracking-[0.25em] text-foreground">CRAFT</span>
-          <p className="mt-0.5 text-[0.6rem] tracking-widest text-muted-foreground">ADMIN</p>
+          <span className="font-sans text-sm font-bold tracking-[0.16em] text-foreground sm:text-base">{adminBrand.title}</span>
+          <p className="mt-0.5 text-[0.6rem] tracking-widest text-muted-foreground">{adminBrand.subtitle}</p>
         </div>
         <button
           type="button"
@@ -86,8 +90,8 @@ export function AdminSidebar({ profile, supabaseConfig }: Props) {
       >
         <div className="mb-8 flex items-start justify-between xl:hidden">
           <div>
-            <span className="font-sans text-base font-bold tracking-[0.25em] text-foreground">CRAFT</span>
-            <p className="mt-0.5 text-[0.6rem] tracking-widest text-muted-foreground">ADMIN</p>
+            <span className="font-sans text-sm font-bold tracking-[0.16em] text-foreground sm:text-base">{adminBrand.title}</span>
+            <p className="mt-0.5 text-[0.6rem] tracking-widest text-muted-foreground">{adminBrand.subtitle}</p>
           </div>
           <button
             type="button"
@@ -101,11 +105,11 @@ export function AdminSidebar({ profile, supabaseConfig }: Props) {
 
         {/* Logo */}
         <div className="mb-10 hidden xl:block">
-          <span className="font-sans text-base font-bold tracking-[0.25em] text-foreground">
-            CRAFT
+          <span className="font-sans text-sm font-bold tracking-[0.16em] text-foreground">
+            {adminBrand.title}
           </span>
           <p className="mt-0.5 text-[0.6rem] tracking-widest text-muted-foreground">
-            ADMIN
+            {adminBrand.subtitle}
           </p>
         </div>
 

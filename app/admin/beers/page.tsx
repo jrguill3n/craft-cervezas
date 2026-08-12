@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { BeersEditor } from '@/components/admin/beers-editor'
 import type { BeerRow } from '@/lib/db-types'
 
-export const metadata = { title: 'Cervezas — Admin Craft' }
+export const metadata = { title: 'Cervezas — Admin' }
 export const dynamic = 'force-dynamic'
 
 export default async function AdminBeersPage() {

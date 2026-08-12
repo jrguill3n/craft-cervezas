@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
+const CRAFT_LOCATION_SLUGS = ['americana', 'chapalita', 'providencia']
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function requireAuth() {
@@ -18,6 +20,28 @@ async function requireAuth() {
   return { supabase, user, profile }
 }
 
+async function getBeerCreationLocationIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  profile: { id: string; role: 'super_admin' | 'location_manager' },
+) {
+  if (profile.role === 'super_admin') {
+    const { data, error } = await supabase
+      .from('locations')
+      .select('id')
+      .eq('active', true)
+      .in('slug', CRAFT_LOCATION_SLUGS)
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((location) => location.id as string)
+  }
+
+  const { data, error } = await supabase
+    .from('profile_locations')
+    .select('location_id')
+    .eq('profile_id', profile.id)
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((row) => row.location_id as string)
+}
+
 // ── Tap List ─────────────────────────────────────────────────────────────────
 
 export type TapListSaveItem = {
@@ -29,6 +53,15 @@ export type TapListSaveItem = {
 export async function saveAndPublishTapList(locationId: string, items: TapListSaveItem[]) {
   const { supabase } = await requireAuth()
   if (!locationId) throw new Error('Falta la sucursal.')
+
+  const { data: location, error: locationError } = await supabase
+    .from('locations')
+    .select('id, slug')
+    .eq('id', locationId)
+    .eq('active', true)
+    .maybeSingle()
+  if (locationError) throw new Error(locationError.message)
+  if (!location) throw new Error('No tienes permiso para administrar esta sucursal.')
 
   const tapNumbers = items
     .map((item) => item.tap_number)
@@ -48,6 +81,18 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
 
   const beerIds = [...new Set(items.map((item) => item.beer_id))]
   if (beerIds.length > 0) {
+    const { data: allowedBeers, error: allowedBeerError } = await supabase
+      .from('beer_locations')
+      .select('beer_id')
+      .eq('location_id', locationId)
+      .in('beer_id', beerIds)
+    if (allowedBeerError) throw new Error(allowedBeerError.message)
+
+    const allowedBeerIds = new Set((allowedBeers ?? []).map((row) => row.beer_id))
+    if (beerIds.some((beerId) => !allowedBeerIds.has(beerId))) {
+      throw new Error('Una o más cervezas no pertenecen al catálogo de esta sucursal.')
+    }
+
     const { data: catalogPrices, error: catalogError } = await supabase
       .from('serving_options')
       .select('beer_id, price')
@@ -72,7 +117,7 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
   const { data: list, error: listError } = await supabase
     .from('tap_lists')
     .insert({ location_id: locationId, status: 'draft' })
-    .select('id, locations(slug)')
+    .select('id')
     .single()
   if (listError || !list) throw new Error(listError?.message ?? 'No se pudo guardar el tap list.')
 
@@ -99,8 +144,7 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
     throw new Error(error instanceof Error ? error.message : 'No se pudo guardar el tap list.')
   }
 
-  const slug = (list.locations as unknown as { slug: string } | null)?.slug
-  if (slug) revalidatePath(`/${slug}`, 'page')
+  revalidatePath(`/${location.slug}`, 'page')
   revalidatePath('/taplist', 'page')
   revalidatePath('/admin')
 }
@@ -108,7 +152,7 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
 // ── Beer CRUD ─────────────────────────────────────────────────────────────────
 
 export async function createBeer(formData: FormData) {
-  const { supabase } = await requireAuth()
+  const { supabase, profile } = await requireAuth()
   const name = String(formData.get('name') ?? '').trim()
   const brewery = String(formData.get('brewery') ?? '').trim()
   const style = String(formData.get('style') ?? '').trim()
@@ -128,6 +172,23 @@ export async function createBeer(formData: FormData) {
     .select()
     .single()
   if (error) throw new Error(error.message)
+  const locationIds = await getBeerCreationLocationIds(supabase, profile)
+  if (locationIds.length === 0) {
+    await supabase.from('beers').delete().eq('id', data.id)
+    throw new Error('No hay sucursales asignadas para esta cerveza.')
+  }
+
+  const { error: locationError } = await supabase
+    .from('beer_locations')
+    .upsert(
+      locationIds.map((locationId) => ({ beer_id: data.id, location_id: locationId })),
+      { onConflict: 'beer_id,location_id', ignoreDuplicates: true },
+    )
+  if (locationError) {
+    await supabase.from('beers').delete().eq('id', data.id)
+    throw new Error(locationError.message)
+  }
+
   const { error: priceError } = await supabase.from('serving_options').insert({
     beer_id: data.id,
     label: 'Pinta',
@@ -156,6 +217,14 @@ export async function updateBeer(id: string, formData: FormData) {
   if (!name || !brewery || !style) throw new Error('Nombre, cervecería y estilo son obligatorios.')
   if (!Number.isFinite(abv) || abv < 0 || abv > 100) throw new Error('El ABV debe estar entre 0 y 100.')
   if (!Number.isFinite(price) || price <= 0) throw new Error('El precio debe ser mayor a cero.')
+  const { data: existingBeer, error: existingBeerError } = await supabase
+    .from('beers')
+    .select('id')
+    .eq('id', id)
+    .maybeSingle()
+  if (existingBeerError) throw new Error(existingBeerError.message)
+  if (!existingBeer) throw new Error('No tienes permiso para editar esta cerveza.')
+
   const { error } = await supabase
     .from('beers')
     .update({
@@ -184,7 +253,17 @@ export async function updateBeer(id: string, formData: FormData) {
 
 export async function deleteBeer(id: string) {
   const { supabase } = await requireAuth()
+  const { data: existingBeer, error: existingBeerError } = await supabase
+    .from('beers')
+    .select('id')
+    .eq('id', id)
+    .maybeSingle()
+  if (existingBeerError) throw new Error(existingBeerError.message)
+  if (!existingBeer) throw new Error('No tienes permiso para eliminar esta cerveza.')
+
   const { error } = await supabase.from('beers').delete().eq('id', id)
   if (error) throw new Error(error.message)
+  revalidatePath('/admin')
   revalidatePath('/admin/beers')
+  revalidatePath('/taplist', 'page')
 }

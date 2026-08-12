@@ -28,6 +28,12 @@ export type BeerRow = {
   updated_at: string
 }
 
+export type BeerLocationRow = {
+  beer_id: string
+  location_id: string
+  created_at: string
+}
+
 export type TapListRow = {
   id: string
   location_id: string

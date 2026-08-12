@@ -8,6 +8,7 @@ const FILTERS = [
   { label: 'Americana', value: 'americana' },
   { label: 'Chapalita', value: 'chapalita' },
   { label: 'Providencia', value: 'providencia' },
+  { label: 'Insurgente GDL', value: 'insurgente-gdl' },
 ] as const
 
 type LocationFilter = (typeof FILTERS)[number]['value']

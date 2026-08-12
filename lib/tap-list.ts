@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { TapListFull, TapListItemFull } from '@/lib/db-types'
 import { compareTapListItems } from '@/lib/tap-list-order'
 
-const PUBLIC_LOCATION_ORDER = ['americana', 'chapalita', 'providencia']
+const PUBLIC_LOCATION_ORDER = ['americana', 'chapalita', 'providencia', 'insurgente-gdl']
 
 type RawTapListItem = TapListItemFull & {
   beers: TapListItemFull['beers'] & {

@@ -4,7 +4,7 @@ import { TapListEditor } from '@/components/admin/tap-list-editor'
 import type { BeerRow, LocationRow, ProfileRow, TapListFull } from '@/lib/db-types'
 import { compareTapListItems } from '@/lib/tap-list-order'
 
-export const metadata = { title: 'Tap List — Admin Craft' }
+export const metadata = { title: 'Tap List — Admin' }
 export const dynamic = 'force-dynamic'
 
 export default async function AdminTapListPage({
@@ -43,6 +43,10 @@ export default async function AdminTapListPage({
   const { data: locations, error: locationsError } = await locationsQuery.order('name')
   if (locationsError) throw new Error(`No se pudieron cargar las sucursales: ${locationsError.message}`)
 
+  const initialLocationId = (locations ?? []).find((location) => location.slug === requestedLocation)?.id
+    ?? locations?.[0]?.id
+    ?? ''
+
   // The editor always starts from the currently published list. Changes stay
   // in the browser until the user explicitly saves and publishes them.
   const tapListsWithItems: TapListFull[] = []
@@ -73,12 +77,15 @@ export default async function AdminTapListPage({
     }
   }
 
-  // All beers for the "add beer" selector
-  const { data: allBeers, error: beersError } = await supabase
-    .from('beers')
-    .select('id, name, brewery, style, abv, description, created_at, updated_at, serving_options(price, display_order)')
-    .order('name')
-  if (beersError) throw new Error(`No se pudo cargar el catálogo de cervezas: ${beersError.message}`)
+  // Beers available for the active location in the "add beer" selector.
+  const { data: allBeers, error: beersError } = initialLocationId
+    ? await supabase
+      .from('beers')
+      .select('id, name, brewery, style, abv, description, created_at, updated_at, beer_locations!inner(location_id), serving_options(price, display_order)')
+      .eq('beer_locations.location_id', initialLocationId)
+      .order('name')
+    : { data: [], error: null }
+  if (beersError) throw new Error(`No se pudo cargar el catálogo de cervezas de la sucursal: ${beersError.message}`)
 
   const beersWithPrice = (allBeers ?? []).map((beer: any) => ({
     ...beer,
@@ -86,10 +93,6 @@ export default async function AdminTapListPage({
       .slice()
       .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)[0]?.price ?? null,
   }))
-  const initialLocationId = (locations ?? []).find((location) => location.slug === requestedLocation)?.id
-    ?? locations?.[0]?.id
-    ?? ''
-
   return (
     <TapListEditor
       locations={(locations ?? []) as LocationRow[]}
