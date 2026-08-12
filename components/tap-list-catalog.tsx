@@ -4,9 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { TapListFull } from '@/lib/db-types'
 
 const FILTERS = [
-  { label: 'Todas', value: 'todas' },
-  { label: 'Chapalita', value: 'chapalita' },
   { label: 'Americana', value: 'americana' },
+  { label: 'Chapalita', value: 'chapalita' },
   { label: 'Providencia', value: 'providencia' },
 ] as const
 
@@ -32,24 +31,21 @@ export function TapListCatalog({
   useEffect(() => {
     function syncFromHistory() {
       const value = new URL(window.location.href).searchParams.get('ubicacion')
-      setLocation(isLocationFilter(value) ? value : 'todas')
+      setLocation(isLocationFilter(value) ? value : 'americana')
     }
     window.addEventListener('popstate', syncFromHistory)
     return () => window.removeEventListener('popstate', syncFromHistory)
   }, [])
 
   const visibleLists = useMemo(
-    () => location === 'todas'
-      ? tapLists
-      : tapLists.filter((list) => list.locations.slug === location),
+    () => tapLists.filter((list) => list.locations.slug === location),
     [location, tapLists],
   )
 
   function selectLocation(nextLocation: LocationFilter) {
     setLocation(nextLocation)
     const url = new URL(window.location.href)
-    if (nextLocation === 'todas') url.searchParams.delete('ubicacion')
-    else url.searchParams.set('ubicacion', nextLocation)
+    url.searchParams.set('ubicacion', nextLocation)
     window.history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`)
   }
 
