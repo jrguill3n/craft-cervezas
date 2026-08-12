@@ -20,7 +20,10 @@ export async function login(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
+    password,
+  })
 
   if (error) {
     return { error: 'Correo o contraseña incorrectos.' }
