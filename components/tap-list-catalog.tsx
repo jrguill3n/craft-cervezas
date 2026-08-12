@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { ShareTapListButton } from '@/components/share-tap-list-button'
 import type { TapListFull } from '@/lib/db-types'
 
 const FILTERS = [
@@ -76,21 +77,24 @@ export function TapListCatalog({
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1600px] px-5 py-10 md:px-10 md:py-16">
+      <div id="tap-list" className="mx-auto max-w-[1600px] scroll-mt-20 px-5 py-10 md:px-10 md:py-16">
         {visibleLists.length > 0 ? (
           <div className="space-y-16 md:space-y-24">
             {visibleLists.map((list) => (
               <section key={list.id} aria-labelledby={`taplist-${list.locations.slug}`}>
-                <div className="flex items-end justify-between gap-5 border-b border-foreground/25 pb-5">
+                <div className="flex flex-col gap-5 border-b border-foreground/25 pb-5 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="label-xs text-accent">Sucursal</p>
                     <h2 id={`taplist-${list.locations.slug}`} className="display-tight mt-2 text-4xl md:text-6xl">
                       {list.locations.name}
                     </h2>
                   </div>
-                  <p className="label-xs text-muted-foreground">
-                    {list.tap_list_items.length} tap{list.tap_list_items.length !== 1 ? 's' : ''}
-                  </p>
+                  <div className="flex items-center justify-between gap-3 sm:justify-end">
+                    <p className="label-xs text-muted-foreground">
+                      {list.tap_list_items.length} tap{list.tap_list_items.length !== 1 ? 's' : ''}
+                    </p>
+                    <ShareTapListButton branchName={list.locations.name} branchSlug={list.locations.slug} />
+                  </div>
                 </div>
 
                 {list.tap_list_items.length > 0 ? (
