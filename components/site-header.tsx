@@ -24,21 +24,25 @@ export function SiteHeader() {
           <CraftWordmark width={176} priority />
         </Link>
 
-        <nav aria-label="Principal" className="hidden md:block">
+        <nav aria-label="Principal" className="hidden lg:block">
           <ul className="flex items-center gap-8">
             {navigation.map((item) => {
               const active = pathname === item.href
+              const className = cn(
+                'label-xs border-b border-transparent pb-1 font-medium transition-colors hover:text-accent',
+                active && 'border-accent text-accent',
+              )
               return (
                 <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      'label-xs border-b border-transparent pb-1 font-medium transition-colors hover:text-accent',
-                      active && 'border-accent text-accent',
-                    )}
-                  >
-                    {item.label}
-                  </Link>
+                  {item.href.startsWith('http') ? (
+                    <a href={item.href} target="_blank" rel="noreferrer" className={className}>
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link href={item.href} className={className}>
+                      {item.label}
+                    </Link>
+                  )}
                 </li>
               )
             })}
@@ -50,7 +54,7 @@ export function SiteHeader() {
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
           aria-controls="menu-movil"
-          className="label-xs flex items-center gap-2 border border-foreground/30 px-3 py-2 font-medium md:hidden"
+          className="label-xs flex min-h-11 items-center gap-2 border border-foreground/30 px-3 py-2 font-medium lg:hidden"
         >
           {open ? <X className="size-4" /> : <Menu className="size-4" />}
           {open ? 'Cerrar' : 'Menú'}
@@ -61,7 +65,7 @@ export function SiteHeader() {
         <nav
           id="menu-movil"
           aria-label="Principal móvil"
-          className="border-t border-foreground/20 md:hidden"
+          className="border-t border-foreground/20 lg:hidden"
         >
           <p className="label-xs px-5 pt-5 pb-1 text-muted-foreground">Sucursales</p>
           <ul>
@@ -81,13 +85,25 @@ export function SiteHeader() {
           <ul className="mt-4 border-t border-foreground/15">
             {secondaryNav.map((item) => (
               <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="label-xs block px-5 py-4 font-semibold"
-                >
-                  {item.label}
-                </Link>
+                {item.href.startsWith('http') ? (
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setOpen(false)}
+                    className="label-xs block px-5 py-4 font-semibold"
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="label-xs block px-5 py-4 font-semibold"
+                  >
+                    {item.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

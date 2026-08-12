@@ -38,7 +38,7 @@ export type Branch = {
 
 export const branches: Branch[] = [
   {
-    index: '01',
+    index: '03',
     slug: 'providencia',
     name: 'Providencia',
     neighborhood: 'Providencia, GDL',
@@ -87,7 +87,7 @@ export const branches: Branch[] = [
     ],
   },
   {
-    index: '02',
+    index: '01',
     slug: 'americana',
     name: 'Americana',
     neighborhood: 'Americana, GDL',
@@ -262,7 +262,7 @@ export const branches: Branch[] = [
     ],
   },
   {
-    index: '03',
+    index: '02',
     slug: 'chapalita',
     name: 'Chapalita',
     neighborhood: 'Chapalita, GDL',
@@ -309,7 +309,9 @@ export const branches: Branch[] = [
       { day: 'Viernes', title: 'Cierre de semana', detail: 'Pinta + hot dog por $160' },
     ],
   },
-]
+].sort((a, b) => ['americana', 'chapalita', 'providencia'].indexOf(a.slug) - ['americana', 'chapalita', 'providencia'].indexOf(b.slug))
+
+export const spotifyProfileUrl = 'https://open.spotify.com/user/kxg3ka40qtwukq3l5dpwya9n3'
 
 export const branchNav = branches.map((branch) => ({
   label: branch.name,
@@ -318,6 +320,7 @@ export const branchNav = branches.map((branch) => ({
 
 export const secondaryNav = [
   { label: 'Club Craft', href: '/club-craft' },
+  { label: 'Playlists', href: spotifyProfileUrl },
   { label: 'Contacto', href: '/#contacto' },
 ]
 
@@ -380,7 +383,7 @@ export const contact = {
     },
     {
       label: 'Spotify',
-      href: 'https://open.spotify.com/user/kxg3ka40qtwukq3l5dpwya9n3',
+      href: spotifyProfileUrl,
       handle: 'Playlists de Craft',
     },
     { label: 'Facebook', href: 'https://facebook.com', handle: '/craftcervezas' },
