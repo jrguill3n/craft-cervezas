@@ -5,17 +5,13 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { ChevronDown, Menu, X } from 'lucide-react'
 import { CraftWordmark } from '@/components/craft-logo'
-import { branchNav, spotifyProfileUrl } from '@/lib/craft-content'
+import { branchNav } from '@/lib/craft-content'
 import { cn } from '@/lib/utils'
 
 const tapListNav = branchNav.map((branch) => ({
   label: branch.label,
   href: `${branch.href.replace(/^\//, '/taplist?ubicacion=')}`,
 }))
-
-const mainNavigation = [
-  { label: 'Playlists', href: spotifyProfileUrl },
-]
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
@@ -26,12 +22,7 @@ export function SiteHeader() {
   const pathname = usePathname()
   const isBranchPage = branchNav.some((item) => item.href === pathname)
 
-  function isActive(href: string) {
-    if (href === '/#sucursales') return isBranchPage
-    return pathname === href
-  }
-
-  const desktopNavItemClassName = 'inline-flex min-h-11 items-center border-b border-transparent text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-foreground/75 transition-colors hover:text-accent'
+  const desktopNavItemClassName = 'inline-flex min-h-12 items-center border-b border-transparent text-[0.82rem] font-semibold uppercase tracking-[0.24em] text-foreground/80 transition-colors hover:text-accent'
   const mobileNavItemClassName = 'label-xs flex min-h-16 w-full items-center justify-between px-5 py-4 text-left text-base font-semibold tracking-[0.22em]'
 
   return (
@@ -47,7 +38,7 @@ export function SiteHeader() {
         </Link>
 
         <nav aria-label="Principal" className="hidden lg:block">
-          <ul className="flex items-center gap-6">
+          <ul className="flex items-center gap-10">
             <li className="relative">
               <button
                 type="button"
@@ -129,27 +120,6 @@ export function SiteHeader() {
                 </div>
               ) : null}
             </li>
-
-            {mainNavigation.map((item) => {
-              const active = isActive(item.href)
-              const className = cn(
-                desktopNavItemClassName,
-                active && 'border-accent text-accent',
-              )
-              return (
-                <li key={item.href}>
-                  {item.href.startsWith('http') ? (
-                    <a href={item.href} target="_blank" rel="noreferrer" className={className}>
-                      {item.label}
-                    </a>
-                  ) : (
-                    <Link href={item.href} className={className}>
-                      {item.label}
-                    </Link>
-                  )}
-                </li>
-              )
-            })}
           </ul>
         </nav>
 
@@ -249,33 +219,6 @@ export function SiteHeader() {
                 </ul>
               ) : null}
             </li>
-
-            {mainNavigation.map((item) => (
-              <li key={item.href}>
-                {item.href.startsWith('http') ? (
-                  <a
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => setOpen(false)}
-                    className="label-xs flex min-h-16 items-center px-5 py-4 text-base font-semibold tracking-[0.22em]"
-                  >
-                    {item.label}
-                  </a>
-                ) : (
-                  <Link
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      'display-tight block px-5 py-4 text-4xl',
-                      isActive(item.href) && 'text-accent',
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                )}
-              </li>
-            ))}
           </ul>
         </nav>
       ) : null}
