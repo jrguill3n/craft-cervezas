@@ -16,20 +16,6 @@ type Props = {
   initialLocationId: string
 }
 
-const BADGE_LABELS: Record<string, string> = {
-  new: 'NUEVO',
-  limited: 'LIMITADO',
-  guest: 'INVITADO',
-  house: 'CASA',
-}
-
-const BADGE_COLORS: Record<string, string> = {
-  new: 'text-green-400',
-  limited: 'text-amber-400',
-  guest: 'text-blue-400',
-  house: 'text-accent',
-}
-
 export function TapListEditor({ locations, tapLists, allBeers, profile, initialLocationId }: Props) {
   const router = useRouter()
   const [activeLocationId, setActiveLocationId] = useState(initialLocationId)
@@ -106,7 +92,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
     })
   }
 
-  function handleAddBeer(beerId: string, badge: string) {
+  function handleAddBeer(beerId: string) {
     if (editedItems.some((item) => item.beer_id === beerId)) {
       setMessage('Esa cerveza ya está en el tap list.')
       return false
@@ -126,7 +112,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
       tap_list_id: tapList?.id ?? 'local-list',
       beer_id: beer.id,
       tap_number: current.length + 1,
-      badge: (badge || null) as TapListItemFull['badge'],
+      badge: null,
       display_order: current.length,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -146,13 +132,6 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
 
   function handleRemoveItem(itemId: string) {
     setEditedItems((current) => renumber(current.filter((item) => item.id !== itemId)))
-  }
-
-  function handleBadgeChange(itemId: string, badge: string) {
-    setEditedItems((current) => current.map((item) => item.id === itemId ? {
-      ...item,
-      badge: (badge || null) as TapListItemFull['badge'],
-    } : item))
   }
 
   function moveItem(itemId: string, targetItemId: string) {
@@ -315,16 +294,9 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
                       <span className="w-28 shrink-0 text-right font-mono text-sm font-semibold text-foreground">
                         {item.serving_options[0]?.price == null ? 'PENDIENTE' : `$${Number(item.serving_options[0].price).toFixed(0)}`}
                       </span>
-                    </div>
-                    <div className={`mt-2.5 flex items-center gap-2 ${isEditing ? 'pl-[6.5rem]' : 'pl-12'}`}>
-                      <div className="relative min-w-0 flex-1">
-                        <select value={item.badge ?? ''} onChange={(event) => handleBadgeChange(item.id, event.target.value)} disabled={isPending || !isEditing} aria-label={`Badge de ${item.beers.name}`} className={`min-h-12 w-full appearance-none border border-foreground/20 bg-background px-3 pr-9 text-xs font-semibold tracking-wide disabled:opacity-60 ${item.badge ? BADGE_COLORS[item.badge] : 'text-foreground/55'}`}>
-                          <option value="">Sin badge</option>
-                          {Object.entries(BADGE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-accent" aria-hidden="true" />
-                      </div>
-                      <button onClick={() => handleRemoveItem(item.id)} disabled={isPending || !isEditing} className="inline-flex size-12 shrink-0 items-center justify-center border border-foreground/15 text-accent disabled:opacity-30" aria-label={`Quitar ${item.beers.name}`}><X className="size-4" aria-hidden="true" /></button>
+                      {isEditing && (
+                        <button onClick={() => handleRemoveItem(item.id)} disabled={isPending} className="inline-flex size-11 shrink-0 items-center justify-center text-foreground/40 transition-colors active:text-accent disabled:opacity-30" aria-label={`Quitar ${item.beers.name}`}><X className="size-4" aria-hidden="true" /></button>
+                      )}
                     </div>
                   </article>
                 ))}
@@ -337,7 +309,7 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
                     <th className="label-xs px-3 py-3 text-left text-muted-foreground">ESTILO</th>
                     <th className="label-xs px-3 py-3 text-left text-muted-foreground">ABV</th>
                     <th className="label-xs px-3 py-3 text-left text-muted-foreground">PRECIO</th>
-                    <th className="label-xs px-3 py-3 text-left text-muted-foreground">BADGE</th>
+                    <th className="w-16 px-3 py-3"><span className="sr-only">Acciones</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-foreground/5">
@@ -381,13 +353,9 @@ export function TapListEditor({ locations, tapLists, allBeers, profile, initialL
                         </span>
                       </td>
 
-                      {/* Badge selector + remove */}
+                      {/* Remove action */}
                       <td className="px-3 py-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <select value={item.badge ?? ''} onChange={(event) => handleBadgeChange(item.id, event.target.value)} disabled={isPending || !isEditing} className={`min-h-11 bg-transparent text-[0.65rem] font-semibold tracking-widest focus:outline-none disabled:opacity-40 ${item.badge ? BADGE_COLORS[item.badge] : 'text-foreground/30'}`}>
-                            <option value="">—</option>
-                            {Object.entries(BADGE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                          </select>
+                        <div className="flex justify-end">
                           <button onClick={() => handleRemoveItem(item.id)} disabled={isPending || !isEditing} aria-label={`Eliminar ${item.beers.name}`} className="inline-flex size-11 shrink-0 items-center justify-center text-foreground/40 transition-colors hover:text-accent disabled:opacity-30"><X className="size-4" aria-hidden="true" /></button>
                         </div>
                       </td>

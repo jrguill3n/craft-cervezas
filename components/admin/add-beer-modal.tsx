@@ -1,27 +1,18 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Search, ChevronDown } from 'lucide-react'
+import { X, Search } from 'lucide-react'
 import type { BeerRow } from '@/lib/db-types'
 import { useModalScrollLock } from './use-modal-scroll-lock'
 
 type Props = {
   beers: BeerRow[]
-  onAdd: (beerId: string, badge: string) => boolean
+  onAdd: (beerId: string) => boolean
   onClose: () => void
 }
 
-const BADGE_OPTIONS = [
-  { value: '', label: '—' },
-  { value: 'new', label: 'NUEVO' },
-  { value: 'limited', label: 'LIMITADO' },
-  { value: 'guest', label: 'INVITADO' },
-  { value: 'house', label: 'CASA' },
-]
-
 export function AddBeerModal({ beers, onAdd, onClose }: Props) {
   const [beerId, setBeerId] = useState('')
-  const [badge, setBadge] = useState('')
   const [query, setQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -57,7 +48,7 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
       setError('Esta cerveza necesita un precio válido en el catálogo de Cervezas.')
       return
     }
-    if (onAdd(beerId, badge)) {
+    if (onAdd(beerId)) {
       onClose()
     }
   }
@@ -152,22 +143,8 @@ export function AddBeerModal({ beers, onAdd, onClose }: Props) {
               </p>
             )}
 
-            <div className="grid gap-3">
-              <div className="flex flex-col gap-2">
-                <label className="label-xs text-foreground/50">BADGE</label>
-                <div className="relative">
-                  <select value={badge} onChange={(e) => setBadge(e.target.value)} className="min-h-12 w-full appearance-none border border-foreground/25 bg-background px-3 pr-10 text-sm font-semibold text-foreground focus:border-accent focus:outline-none">
-                    {BADGE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-accent" aria-hidden="true" />
-                </div>
-              </div>
-            </div>
-
             {selected && (
-              <div className="mt-3 flex min-h-12 items-center justify-between border border-foreground/15 px-3">
+              <div className="flex min-h-12 items-center justify-between border border-foreground/15 px-3">
                 <span className="label-xs text-foreground/50">PRECIO DEL CATÁLOGO</span>
                 <span className="font-mono text-sm font-semibold">
                   {selected.primary_price == null ? 'PENDIENTE' : `$${Number(selected.primary_price).toFixed(0)} MXN`}

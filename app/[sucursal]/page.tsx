@@ -9,13 +9,6 @@ import { ShareTapListButton } from '@/components/share-tap-list-button'
 import { branches, getBranch } from '@/lib/craft-content'
 import { getPublishedTapList } from '@/lib/tap-list'
 
-const TAP_BADGE_LABELS: Record<string, string> = {
-  new: 'NUEVO',
-  limited: 'LIMITADO',
-  guest: 'INVITADO',
-  house: 'CASA',
-}
-
 // Dynamic render so the Supabase tap list is always fresh
 export const dynamic = 'force-dynamic'
 
@@ -175,17 +168,12 @@ export default async function BranchPage({
                   >
                     {/* Mobile composition */}
                     <div className="md:hidden">
-                      <div className="flex min-h-5 items-center justify-between gap-4">
+                      <div className="flex min-h-5 items-center gap-4">
                         <span className="label-xs text-accent">
                           TAP {item.tap_number != null
                             ? String(item.tap_number).padStart(2, '0')
                             : String(i + 1).padStart(2, '0')}
                         </span>
-                        {item.badge && (
-                          <span className="label-xs border border-accent/40 px-2 py-1 text-accent">
-                            {TAP_BADGE_LABELS[item.badge] ?? item.badge.toUpperCase()}
-                          </span>
-                        )}
                       </div>
                       <h3 className="display-tight mt-4 text-[clamp(1.75rem,8vw,2.25rem)] leading-[0.95] text-balance">
                         {item.beers.name}
@@ -219,7 +207,6 @@ export default async function BranchPage({
                     </span>
                     <div className="hidden md:col-span-4 md:block">
                       <h3 className="display-tight text-3xl">{item.beers.name}</h3>
-                      {item.badge && <span className="label-xs mt-1 inline-block text-accent">{TAP_BADGE_LABELS[item.badge] ?? item.badge.toUpperCase()}</span>}
                     </div>
                     <p className="hidden text-sm md:col-span-3 md:block">{item.beers.style}</p>
                     <p className="hidden text-sm text-muted-foreground md:col-span-2 md:block">{item.beers.brewery}</p>
