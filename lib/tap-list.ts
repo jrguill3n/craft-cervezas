@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import type { TapListFull, TapListItemFull } from '@/lib/db-types'
 import { compareTapListItems } from '@/lib/tap-list-order'
 
-const PUBLIC_LOCATION_ORDER = ['americana', 'chapalita', 'providencia', 'insurgente-gdl']
+const PUBLIC_LOCATION_ORDER = ['americana', 'chapalita', 'providencia']
 
 type RawTapListItem = TapListItemFull & {
   beers: TapListItemFull['beers'] & {
@@ -20,7 +20,7 @@ type RawTapList = Omit<TapListFull, 'tap_list_items'> & {
  * `tap_lists_public_read` RLS policy).
  */
 export async function getPublishedTapList(slug: string): Promise<TapListFull | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from('tap_lists')
@@ -60,7 +60,7 @@ export async function getPublishedTapList(slug: string): Promise<TapListFull | n
  * Used by the public tap list section that shows all branches at once.
  */
 export async function getAllPublishedTapLists(): Promise<TapListFull[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from('tap_lists')
@@ -88,6 +88,7 @@ export async function getAllPublishedTapLists(): Promise<TapListFull[]> {
   for (const rawList of data as RawTapList[]) {
     const list = rawList as TapListFull
     const slug = list.locations.slug
+    if (!PUBLIC_LOCATION_ORDER.includes(slug)) continue
     if (latestByLocation.has(slug)) continue
 
     list.tap_list_items = (rawList.tap_list_items ?? [])
