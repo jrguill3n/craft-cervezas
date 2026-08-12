@@ -31,8 +31,8 @@ export function Hero() {
 
         <div className="relative aspect-4/3 md:col-span-5 md:aspect-auto md:min-h-[42rem]">
           <Image
-            src="/brand/craft-bar.jpg"
-            alt="Interior de Craft Cervezas con clientes en la barra y las mesas comunales"
+            src="/images/locations/americana/hero.webp"
+            alt="Fachada e interior nocturno de Craft Americana con clientes en la barra"
             fill
             priority
             sizes="(min-width: 768px) 42vw, 100vw"
