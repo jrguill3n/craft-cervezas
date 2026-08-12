@@ -101,6 +101,7 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
 
   const slug = (list.locations as unknown as { slug: string } | null)?.slug
   if (slug) revalidatePath(`/${slug}`, 'page')
+  revalidatePath('/taplist', 'page')
   revalidatePath('/admin')
 }
 
@@ -140,6 +141,7 @@ export async function createBeer(formData: FormData) {
   }
   revalidatePath('/admin')
   revalidatePath('/admin/beers')
+  revalidatePath('/taplist', 'page')
   return data
 }
 
@@ -177,6 +179,7 @@ export async function updateBeer(id: string, formData: FormData) {
   if (priceError) throw new Error(priceError.message)
   revalidatePath('/admin')
   revalidatePath('/admin/beers')
+  revalidatePath('/taplist', 'page')
 }
 
 export async function deleteBeer(id: string) {
