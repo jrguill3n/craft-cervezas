@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 export const dynamic = 'force-dynamic'
 
-const VALID_LOCATIONS = new Set<LocationFilter>(['todas', 'chapalita', 'americana', 'providencia'])
+const VALID_LOCATIONS = new Set<LocationFilter>(['americana', 'chapalita', 'providencia'])
 
 export default async function TapListsPage({
   searchParams,
@@ -21,7 +21,7 @@ export default async function TapListsPage({
   const { ubicacion } = await searchParams
   const initialLocation: LocationFilter = ubicacion && VALID_LOCATIONS.has(ubicacion as LocationFilter)
     ? ubicacion as LocationFilter
-    : 'todas'
+    : 'americana'
 
   let tapLists: TapListFull[] = []
   let loadFailed = false
