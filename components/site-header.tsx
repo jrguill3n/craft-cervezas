@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { ChevronDown, Menu, X } from 'lucide-react'
 import { CraftWordmark } from '@/components/craft-logo'
+import { BrewIllustration } from '@/components/brew-illustration'
 import { branchNav } from '@/lib/craft-content'
 import { cn } from '@/lib/utils'
 
@@ -28,14 +29,17 @@ export function SiteHeader() {
   return (
     <header className="border-b border-foreground/20 bg-background">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 py-6 md:px-10 md:py-7">
-        <Link
-          href="/"
-          aria-label="Craft, ir al inicio"
-          className="shrink-0 transition-opacity hover:opacity-70"
-          onClick={() => setOpen(false)}
-        >
-          <CraftWordmark width={176} priority />
-        </Link>
+        <div className="flex shrink-0 items-center gap-4">
+          <Link
+            href="/"
+            aria-label="Craft, ir al inicio"
+            className="transition-opacity hover:opacity-70"
+            onClick={() => setOpen(false)}
+          >
+            <CraftWordmark width={176} priority />
+          </Link>
+          <BrewIllustration width={42} className="hidden opacity-80 lg:block" />
+        </div>
 
         <nav aria-label="Principal" className="hidden lg:block">
           <ul className="flex items-center gap-10">

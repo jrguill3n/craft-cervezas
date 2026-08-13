@@ -14,11 +14,11 @@ export function Hero() {
 
           <div className="mt-16 md:mt-auto md:pt-24">
             <h1 className="display-tight text-[clamp(3.5rem,11vw,8.5rem)]">
-              Nos mueve
+              Las
               <br />
-              la
+              mejores
               <br />
-              cerveza
+              cervezas.
             </h1>
 
             <p className="mt-8 max-w-sm text-base leading-relaxed text-foreground/80 md:text-lg">

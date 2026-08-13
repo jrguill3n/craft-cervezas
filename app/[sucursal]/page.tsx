@@ -51,8 +51,7 @@ export default async function BranchPage({
                 {branch.name}
               </h1>
               <div className="md:col-span-4 md:col-start-9">
-                <p className="label-xs text-muted-foreground">{branch.tagline}</p>
-                <p className="mt-4 text-base leading-relaxed text-foreground/80">
+                <p className="text-base leading-relaxed text-foreground/80">
                   {branch.description}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">

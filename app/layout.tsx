@@ -18,7 +18,7 @@ const anton = Anton({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Craft Cervezas — Nos mueve la cerveza',
+    default: 'Craft Cervezas — Las mejores cervezas',
     template: '%s — Craft Cervezas',
   },
   description:
