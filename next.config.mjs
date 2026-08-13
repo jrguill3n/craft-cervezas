@@ -2,11 +2,6 @@
 const nextConfig = {
   images: {
     unoptimized: true,
-    // Portadas del feed de Instagram, servidas desde la CDN de Meta.
-    remotePatterns: [
-      { protocol: 'https', hostname: '**.cdninstagram.com' },
-      { protocol: 'https', hostname: '**.fbcdn.net' },
-    ],
   },
   async headers() {
     return [

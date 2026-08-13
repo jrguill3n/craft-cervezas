@@ -6,6 +6,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { branches, getBranch } from '@/lib/craft-content'
+import { siteName } from '@/lib/site'
 
 export async function generateMetadata({
   params,
@@ -15,9 +16,31 @@ export async function generateMetadata({
   const { sucursal } = await params
   const branch = getBranch(sucursal)
   if (!branch) return {}
-  return { // branch is defined here
+  return {
     title: branch.name,
     description: branch.description,
+    alternates: {
+      canonical: `/${branch.slug}`,
+    },
+    openGraph: {
+      title: `Craft ${branch.name}`,
+      description: branch.description,
+      url: `/${branch.slug}`,
+      siteName,
+      type: 'website',
+      images: [
+        {
+          url: branch.image,
+          alt: `Craft ${branch.name}`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Craft ${branch.name}`,
+      description: branch.description,
+      images: [branch.image],
+    },
   }
 }
 

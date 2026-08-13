@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Anton, Archivo } from 'next/font/google'
+import { siteDescription, siteName, siteOgImage, siteTitle, siteUrl } from '@/lib/site'
 import './globals.css'
 
 const archivo = Archivo({
@@ -17,13 +18,40 @@ const anton = Anton({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: 'Craft Cervezas — Las mejores cervezas',
+    default: siteTitle,
     template: '%s — Craft Cervezas',
   },
-  description:
-    'Las mejores cervezas, hechas para compartir historias. Tres barras en Guadalajara: Americana, Chapalita y Providencia.',
-  generator: 'v0.app',
+  description: siteDescription,
+  applicationName: siteName,
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: siteTitle,
+    description: siteDescription,
+    url: '/',
+    siteName,
+    locale: 'es_MX',
+    type: 'website',
+    images: [
+      {
+        url: siteOgImage,
+        alt: 'Craft Cervezas Americana',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteTitle,
+    description: siteDescription,
+    images: [siteOgImage],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   icons: {
     icon: [
       {

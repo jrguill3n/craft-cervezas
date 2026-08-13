@@ -3,14 +3,6 @@
  * Todo el texto vive aquí para poder reemplazarlo sin tocar componentes.
  */
 
-export type Tap = {
-  name: string
-  style: string
-  abv: string
-  ibu?: string
-  origin: string
-}
-
 export type MenuSection = {
   title: string
   items: { name: string; description?: string; price: string }[]
@@ -21,7 +13,6 @@ export type Branch = {
   slug: string
   name: string
   neighborhood: string
-  tagline: string
   description: string
   address: string
   mapsUrl: string
@@ -31,9 +22,7 @@ export type Branch = {
   hours: { days: string; time: string }[]
   image: string
   gallery?: { src: string; alt: string }[]
-  taps: Tap[]
   menu: MenuSection[]
-  promos: { day: string; title: string; detail: string }[]
 }
 
 export const branches: Branch[] = [
@@ -42,7 +31,6 @@ export const branches: Branch[] = [
     slug: 'providencia',
     name: 'Providencia',
     neighborhood: 'Providencia, GDL',
-    tagline: 'La barra larga',
     description:
       'Espacio acogedor pensado para pasar por unas cervezas para llevar o quedarte un rato a platicar.',
     address: 'Plaza Cantera, Av. Manuel Acuña 2995-B, Juan Manuel, 44680 Guadalajara, Jal.',
@@ -72,26 +60,13 @@ export const branches: Branch[] = [
         alt: 'Degustación de cerveza artesanal en la barra de Craft Providencia',
       },
     ],
-    taps: [
-      { name: 'Nube Baja', style: 'Hazy IPA', abv: '6.4%', ibu: '45', origin: 'Craft / GDL' },
-      { name: 'Piedra Lisa', style: 'Pilsner checa', abv: '4.8%', ibu: '32', origin: 'Craft / GDL' },
-      { name: 'Tinta', style: 'Stout de avena', abv: '5.9%', ibu: '38', origin: 'Craft / GDL' },
-      { name: 'Solar', style: 'Pale ale', abv: '5.2%', ibu: '30', origin: 'Colima' },
-      { name: 'Cuerda Floja', style: 'Sour de guayaba', abv: '4.2%', origin: 'Tlaquepaque' },
-      { name: 'Barril 09', style: 'Barrel aged barleywine', abv: '9.8%', origin: 'Craft / GDL' },
-    ],
     menu: [],
-    promos: [
-      { day: 'Martes', title: 'Dos por una', detail: 'Pintas de casa, 16:00 a 20:00' },
-      { day: 'Jueves', title: 'Barril invitado', detail: 'Cervecería independiente distinta cada semana' },
-    ],
   },
   {
     index: '01',
     slug: 'americana',
     name: 'Americana',
     neighborhood: 'Americana, GDL',
-    tagline: 'La terraza',
     description:
       '15 llaves de cerveza de barril y 200 opciones de etiqueta para degustar en un espacio amplio y abierto.',
     address: 'Av. de la Paz 1766, Local 2, Col. Americana, 44160 Guadalajara, Jal.',
@@ -121,13 +96,6 @@ export const branches: Branch[] = [
         src: '/images/locations/americana/barra.webp',
         alt: 'Cerveza recién servida desde las llaves de Craft Americana',
       },
-    ],
-    taps: [
-      { name: 'Lote Corto', style: 'West coast IPA', abv: '6.8%', ibu: '62', origin: 'Craft / GDL' },
-      { name: 'Patio', style: 'Saison de temporada', abv: '5.4%', ibu: '24', origin: 'Craft / GDL' },
-      { name: 'Chapultepec', style: 'Lager de maíz criollo', abv: '4.5%', ibu: '18', origin: 'Craft / GDL' },
-      { name: 'Ámbar 04', style: 'Vienna lager', abv: '5.1%', ibu: '26', origin: 'Zapopan' },
-      { name: 'Jamaica Wild', style: 'Wild ale', abv: '6.1%', origin: 'Craft / GDL' },
     ],
     menu: [
       {
@@ -256,17 +224,12 @@ export const branches: Branch[] = [
         ],
       },
     ],
-    promos: [
-      { day: 'Miércoles', title: 'Noche de lotes cortos', detail: 'Tres muestras de 200 ml por $120' },
-      { day: 'Domingo', title: 'Vinilos en el patio', detail: 'Selectores invitados de 14:00 a 20:00' },
-    ],
   },
   {
     index: '02',
     slug: 'chapalita',
     name: 'Chapalita',
     neighborhood: 'Chapalita, GDL',
-    tagline: 'El barrio',
     description:
       '10 llaves de cerveza de barril y 200 opciones de etiquetas en un espacio acogedor y con buena vibra.',
     address: 'Av. Tepeyac 497, Local 4, Chapalita, 45040 Guadalajara, Jal.',
@@ -297,17 +260,7 @@ export const branches: Branch[] = [
         alt: 'Cervezas y comida compartidas en una mesa de Craft Chapalita',
       },
     ],
-    taps: [
-      { name: 'Vecina', style: 'Blonde ale', abv: '4.6%', ibu: '20', origin: 'Craft / GDL' },
-      { name: 'Growler IPA', style: 'Session IPA', abv: '4.9%', ibu: '40', origin: 'Craft / GDL' },
-      { name: 'Trigo 12', style: 'Hefeweizen', abv: '5.3%', ibu: '14', origin: 'Craft / GDL' },
-      { name: 'Café Negro', style: 'Porter con café', abv: '6.2%', ibu: '35', origin: 'Craft / GDL' },
-    ],
     menu: [],
-    promos: [
-      { day: 'Lunes', title: 'Growler feliz', detail: '20% en rellenos todo el día' },
-      { day: 'Viernes', title: 'Cierre de semana', detail: 'Pinta + hot dog por $160' },
-    ],
   },
 ].sort((a, b) => ['americana', 'chapalita', 'providencia'].indexOf(a.slug) - ['americana', 'chapalita', 'providencia'].indexOf(b.slug))
 
@@ -317,58 +270,6 @@ export const branchNav = branches.map((branch) => ({
   label: branch.name,
   href: `/${branch.slug}`,
 }))
-
-export const secondaryNav = [
-  { label: 'Playlists', href: spotifyProfileUrl },
-  { label: 'Contacto', href: '/#contacto' },
-]
-
-export const navigation = [...branchNav, ...secondaryNav]
-
-/** Narrativa base tomada del manual de identidad. */
-export const intro = {
-  eyebrow: 'Defensores de lo craft',
-  statement: 'Las mejores cervezas.',
-  body: 'Cervezas hechas para compartir historias.',
-  pillars: [
-    {
-      marker: 'malta',
-      title: 'Curaduría',
-      detail:
-        'Selección nacional e internacional de las mejores cervecerías del mundo.',
-    },
-    {
-      marker: 'lupulo',
-      title: 'Cultura cervecera',
-      detail:
-        'Nos encanta compartir nuestra pasión por la cerveza, acércate a la barra.',
-    },
-    {
-      marker: 'hazy',
-      title: 'Comunidad',
-      detail:
-        'La cerveza nos une. Siempre hay algo por descubrir, brindemos juntos.',
-    },
-  ],
-} as const
-
-export const clubBenefits = [
-  {
-    index: '01',
-    title: '6 pintas + 1 gratis',
-    detail: 'Cada seis pintas registradas, la séptima va por nuestra cuenta en cualquier sucursal.',
-  },
-  {
-    index: '02',
-    title: 'Puntos por consumo',
-    detail: 'Acumulas puntos por cada consumo y los cambias por cerveza, comida o merch.',
-  },
-  {
-    index: '03',
-    title: 'Tarjeta digital',
-    detail: 'Tu membresía vive en Apple Wallet y Google Wallet. Sin plásticos, sin apps extra.',
-  },
-]
 
 export const contact = {
   email: 'hola@craftcervezas.com',

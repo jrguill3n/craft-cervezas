@@ -1,12 +1,36 @@
 import type { Metadata } from 'next'
 import { getPublishedTapList } from '@/lib/tap-list'
 import type { TapListFull } from '@/lib/db-types'
+import { siteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: {
     absolute: 'Insurgente GDL | Tap List & Soul Burger Lab',
   },
   description: 'Tap List actual de Insurgente GDL y menú de Soul Burger Lab.',
+  alternates: {
+    canonical: '/taplist-insurgente-gdl',
+  },
+  openGraph: {
+    title: 'Insurgente GDL | Tap List & Soul Burger Lab',
+    description: 'Tap List actual de Insurgente GDL y menú de Soul Burger Lab.',
+    url: `${siteUrl}/taplist-insurgente-gdl`,
+    siteName: 'Insurgente GDL',
+    locale: 'es_MX',
+    type: 'website',
+    images: [
+      {
+        url: '/brand/insurgente/insurgente-owl.png',
+        alt: 'Insurgente GDL',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Insurgente GDL | Tap List & Soul Burger Lab',
+    description: 'Tap List actual de Insurgente GDL y menú de Soul Burger Lab.',
+    images: ['/brand/insurgente/insurgente-owl.png'],
+  },
   robots: {
     index: true,
     follow: true,

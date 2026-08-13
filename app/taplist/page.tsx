@@ -3,11 +3,34 @@ import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { TapListCatalog, type LocationFilter } from '@/components/tap-list-catalog'
 import type { TapListFull } from '@/lib/db-types'
+import { siteDescription, siteName, siteOgImage } from '@/lib/site'
 import { getAllPublishedTapLists } from '@/lib/tap-list'
 
 export const metadata: Metadata = {
   title: 'Tap Lists',
   description: 'Cervezas disponibles en barril en las barras de Craft Cervezas.',
+  alternates: {
+    canonical: '/taplist',
+  },
+  openGraph: {
+    title: 'Tap Lists — Craft Cervezas',
+    description: siteDescription,
+    url: '/taplist',
+    siteName,
+    type: 'website',
+    images: [
+      {
+        url: siteOgImage,
+        alt: 'Tap Lists de Craft Cervezas',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Tap Lists — Craft Cervezas',
+    description: siteDescription,
+    images: [siteOgImage],
+  },
 }
 export const dynamic = 'force-dynamic'
 
