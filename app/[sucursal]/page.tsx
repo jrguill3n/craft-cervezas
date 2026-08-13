@@ -112,9 +112,6 @@ export default async function BranchPage({
                     Así se vive {branch.name}
                   </h2>
                 </div>
-                <p className="max-w-md text-sm leading-relaxed text-foreground/70 md:col-span-5 md:col-start-8">
-                  Una barra cercana, cerveza bien servida y mesas hechas para quedarse un rato más.
-                </p>
               </div>
 
               <ul className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-12 md:gap-4 md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
