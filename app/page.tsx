@@ -1,6 +1,7 @@
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { Hero } from '@/components/home/hero'
+import { CurationPillars } from '@/components/home/curation-pillars'
 import { branches, contact } from '@/lib/craft-content'
 import { siteDescription, siteName, siteUrl } from '@/lib/site'
 
@@ -37,6 +38,7 @@ export default function HomePage() {
       />
       <main>
         <Hero />
+        <CurationPillars />
       </main>
       <SiteFooter />
     </>
