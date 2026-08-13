@@ -7,7 +7,7 @@ import { getAllPublishedTapLists } from '@/lib/tap-list'
 
 export const metadata: Metadata = {
   title: 'Tap Lists',
-  description: 'Cervezas disponibles hoy en las barras de Craft Cervezas.',
+  description: 'Cervezas disponibles en barril en las barras de Craft Cervezas.',
 }
 export const dynamic = 'force-dynamic'
 
@@ -40,7 +40,7 @@ export default async function TapListsPage({
           <p className="label-xs text-accent">En barra hoy</p>
           <h1 className="display-tight mt-4 text-[clamp(3.5rem,10vw,8rem)]">Tap Lists</h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/70 md:text-lg">
-            Cervezas disponibles hoy. Selecciona una sucursal para ver qué hay en barra.
+            Cervezas disponibles en barril. Selecciona una sucursal para ver qué está conectado en nuestros grifos.
           </p>
         </section>
         {loadFailed ? (

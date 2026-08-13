@@ -17,8 +17,7 @@ export function SiteFooter() {
           <div className="sm:col-span-2 lg:col-span-4">
             <CraftWordmark width={240} />
             <p className="mt-8 max-w-xs text-sm leading-relaxed text-foreground/70">
-              Cerveza independiente, buena comida y mejores encuentros. Tres barras en
-              Guadalajara.
+              Cervezas hechas para compartir historias. Tres barras en Guadalajara.
             </p>
           </div>
 

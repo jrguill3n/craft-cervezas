@@ -44,7 +44,7 @@ export const branches: Branch[] = [
     neighborhood: 'Providencia, GDL',
     tagline: 'La barra larga',
     description:
-      'La primera barra. Doce llaves rotativas, cocina abierta hasta el cierre y la mesa comunal donde empezó todo.',
+      'Espacio acogedor pensado para pasar por unas cervezas para llevar o quedarte un rato a platicar.',
     address: 'Plaza Cantera, Av. Manuel Acuña 2995-B, Juan Manuel, 44680 Guadalajara, Jal.',
     mapsUrl: 'https://maps.app.goo.gl/w2uMvwmraLbCVLyt6?g_st=ic',
     mapEmbedQuery: 'CRAFT Providencia, Plaza Cantera, Av. Manuel Acuña 2995-B, Juan Manuel, 44680 Guadalajara, Jal.',
@@ -93,7 +93,7 @@ export const branches: Branch[] = [
     neighborhood: 'Americana, GDL',
     tagline: 'La terraza',
     description:
-      'Casona intervenida, patio abierto y la carta más experimental. Aquí probamos los lotes pequeños antes que nadie.',
+      '15 llaves de cerveza de barril y 200 opciones de etiqueta para degustar en un espacio amplio y abierto.',
     address: 'Av. de la Paz 1766, Local 2, Col. Americana, 44160 Guadalajara, Jal.',
     mapsUrl: 'https://maps.app.goo.gl/B7rdZxEviALVKT8D8?g_st=ic',
     mapEmbedQuery: 'CRAFT Americana, Av. de la Paz 1766, Local 2, Col. Americana, 44160 Guadalajara, Jal.',
@@ -268,7 +268,7 @@ export const branches: Branch[] = [
     neighborhood: 'Chapalita, GDL',
     tagline: 'El barrio',
     description:
-      'La barra de vecinos. Formato pequeño, servicio rápido y growlers para llevar la cerveza a casa.',
+      '10 llaves de cerveza de barril y 200 opciones de etiquetas en un espacio acogedor y con buena vibra.',
     address: 'Av. Tepeyac 497, Local 4, Chapalita, 45040 Guadalajara, Jal.',
     mapsUrl: 'https://maps.app.goo.gl/dMcAEpsZSzTAp5SZ9?g_st=ic',
     mapEmbedQuery: 'CRAFT Chapalita, Av. Tepeyac 497, Local 4, Chapalita, 45040 Guadalajara, Jal.',
@@ -328,26 +328,26 @@ export const navigation = [...branchNav, ...secondaryNav]
 /** Narrativa base tomada del manual de identidad. */
 export const intro = {
   eyebrow: 'Defensores de lo craft',
-  statement: 'Nos apasiona la cerveza y compartirla dio motivo a un movimiento.',
-  body: 'Somos promotores del craft y nos resistimos a lo comercial sin calidad. Apostamos por las propuestas de productores independientes y ponemos a disposición de la comunidad una curaduría de cervezas de sabor.',
+  statement: 'Las mejores cervezas.',
+  body: 'Cervezas hechas para compartir historias.',
   pillars: [
     {
       marker: 'malta',
       title: 'Curaduría',
       detail:
-        'Selección nacional e internacional de cervecerías independientes, revisada barril por barril.',
+        'Selección nacional e internacional de las mejores cervecerías del mundo.',
     },
     {
       marker: 'lupulo',
       title: 'Cultura cervecera',
       detail:
-        'Información y contexto en la barra: de dónde viene cada cerveza y por qué vale la pena.',
+        'Nos encanta compartir nuestra pasión por la cerveza, acércate a la barra.',
     },
     {
       marker: 'hazy',
       title: 'Comunidad',
       detail:
-        'Una invitación al descubrimiento, tanto para conocedores como para quien empieza.',
+        'La cerveza nos une. Siempre hay algo por descubrir, brindemos juntos.',
     },
   ],
 } as const

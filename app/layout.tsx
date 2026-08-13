@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: '%s — Craft Cervezas',
   },
   description:
-    'Cerveza artesanal independiente, buena comida y mejores encuentros. Tres barras en Guadalajara: Providencia, Americana y Chapalita.',
+    'Las mejores cervezas, hechas para compartir historias. Tres barras en Guadalajara: Americana, Chapalita y Providencia.',
   generator: 'v0.app',
   icons: {
     icon: [
