@@ -22,7 +22,7 @@ export function Hero() {
             </h1>
 
             <p className="mt-8 max-w-sm text-base leading-relaxed text-foreground/80 md:text-lg">
-              Cervezas hechas para compartir historias.
+              Hechas para compartir historias.
             </p>
 
             <BranchFinder className="mt-10" />
