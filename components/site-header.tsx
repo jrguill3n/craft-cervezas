@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { ChevronDown, Menu, X } from 'lucide-react'
 import { CraftWordmark } from '@/components/craft-logo'
-import { BrewIllustration } from '@/components/brew-illustration'
 import { branchNav } from '@/lib/craft-content'
 import { cn } from '@/lib/utils'
 
@@ -38,7 +37,6 @@ export function SiteHeader() {
           >
             <CraftWordmark width={176} priority />
           </Link>
-          <BrewIllustration width={42} className="hidden opacity-80 lg:block" />
         </div>
 
         <nav aria-label="Principal" className="hidden lg:block">
