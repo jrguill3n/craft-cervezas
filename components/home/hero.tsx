@@ -13,25 +13,13 @@ export function Hero() {
           </div>
 
           <div className="mt-16 md:mt-auto md:pt-24">
-            <div className="grid items-end gap-6 sm:grid-cols-[minmax(0,1fr)_auto] md:gap-8">
-              <h1 className="display-tight text-[clamp(3.5rem,11vw,8.5rem)]">
-                Las
-                <br />
-                mejores
-                <br />
-                cervezas.
-              </h1>
-              <Image
-                src="/brand/craft-bottle-character.svg"
-                alt=""
-                aria-hidden="true"
-                width={660}
-                height={900}
-                priority
-                sizes="(min-width: 768px) 180px, 34vw"
-                className="pointer-events-none h-36 w-auto sm:h-44 md:h-48 lg:h-56"
-              />
-            </div>
+            <h1 className="display-tight text-[clamp(3.5rem,11vw,8.5rem)]">
+              Las
+              <br />
+              mejores
+              <br />
+              cervezas.
+            </h1>
 
             <p className="mt-8 max-w-sm text-base leading-relaxed text-foreground/80 md:text-lg">
               Hechas para compartir historias.
