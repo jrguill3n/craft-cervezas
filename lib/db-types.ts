@@ -64,6 +64,17 @@ export type ServingOptionRow = {
   display_order: number
 }
 
+export type PromotionRow = {
+  id: string
+  title: string
+  image_url: string
+  instagram_url: string
+  sort_order: number
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
 // Joined shapes used in the UI
 export type TapListItemFull = TapListItemRow & {
   beers: BeerRow

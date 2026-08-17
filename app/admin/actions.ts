@@ -19,6 +19,14 @@ async function requireAuth() {
   return { supabase, user, profile }
 }
 
+async function requireSuperAdmin() {
+  const context = await requireAuth()
+  if (context.profile.role !== 'super_admin') {
+    throw new Error('Solo super admins pueden administrar promociones.')
+  }
+  return context
+}
+
 async function getBeerCreationLocationIds(
   supabase: Awaited<ReturnType<typeof createClient>>,
   profile: { id: string; role: 'super_admin' | 'location_manager' },
@@ -263,4 +271,117 @@ export async function deleteBeer(id: string) {
   revalidatePath('/admin')
   revalidatePath('/admin/beers')
   revalidatePath('/taplist', 'page')
+}
+
+// ── Promotions ───────────────────────────────────────────────────────────────
+
+function parsePromotionForm(formData: FormData) {
+  const title = String(formData.get('title') ?? '').trim()
+  const image_url = String(formData.get('image_url') ?? '').trim()
+  const instagram_url = String(formData.get('instagram_url') ?? '').trim()
+  const sort_order = Number(formData.get('sort_order'))
+  const active = String(formData.get('active') ?? 'false') === 'true'
+
+  if (!title) throw new Error('El título es obligatorio.')
+  if (title.length > 80) throw new Error('El título debe ser corto.')
+  if (!image_url) throw new Error('Sube o selecciona un póster.')
+  if (!Number.isInteger(sort_order) || sort_order < 1 || sort_order > 6) {
+    throw new Error('El orden debe ser un número del 1 al 6.')
+  }
+
+  let url: URL
+  try {
+    url = new URL(instagram_url)
+  } catch {
+    throw new Error('El link de Instagram no es válido.')
+  }
+
+  const host = url.hostname.toLowerCase()
+  if (url.protocol !== 'https:' || (host !== 'instagram.com' && host !== 'www.instagram.com')) {
+    throw new Error('El link debe ser de instagram.com.')
+  }
+
+  return { title, image_url, instagram_url: url.toString(), sort_order, active }
+}
+
+async function assertPromotionLimits(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: { sort_order: number; active: boolean },
+  currentId?: string,
+) {
+  if (!input.active) return
+
+  let activeQuery = supabase
+    .from('promotions')
+    .select('id')
+    .eq('active', true)
+  let orderQuery = supabase
+    .from('promotions')
+    .select('id')
+    .eq('active', true)
+    .eq('sort_order', input.sort_order)
+
+  if (currentId) {
+    activeQuery = activeQuery.neq('id', currentId)
+    orderQuery = orderQuery.neq('id', currentId)
+  }
+
+  const { data: activePromotions, error: activeError } = await activeQuery
+  if (activeError) throw new Error(activeError.message)
+  if ((activePromotions ?? []).length >= 6) {
+    throw new Error('Solo puede haber 6 promociones activas. Desactiva o elimina una antes.')
+  }
+
+  const { data: orderConflict, error: orderError } = await orderQuery.limit(1)
+  if (orderError) throw new Error(orderError.message)
+  if ((orderConflict ?? []).length > 0) {
+    throw new Error('Ya existe una promoción activa con ese orden.')
+  }
+}
+
+export async function createPromotion(formData: FormData) {
+  const { supabase } = await requireSuperAdmin()
+  const input = parsePromotionForm(formData)
+  await assertPromotionLimits(supabase, input)
+
+  const { error } = await supabase
+    .from('promotions')
+    .insert(input)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/')
+  revalidatePath('/admin/promotions')
+}
+
+export async function updatePromotion(id: string, formData: FormData) {
+  const { supabase } = await requireSuperAdmin()
+  if (!id) throw new Error('Falta la promoción.')
+  const input = parsePromotionForm(formData)
+  await assertPromotionLimits(supabase, input, id)
+
+  const { error } = await supabase
+    .from('promotions')
+    .update(input)
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/')
+  revalidatePath('/admin/promotions')
+}
+
+export async function deletePromotion(id: string) {
+  const { supabase } = await requireSuperAdmin()
+  if (!id) throw new Error('Falta la promoción.')
+
+  const { error } = await supabase
+    .from('promotions')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/')
+  revalidatePath('/admin/promotions')
 }

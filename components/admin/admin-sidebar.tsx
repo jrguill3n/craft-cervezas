@@ -22,6 +22,7 @@ type Props = {
 const navItems = [
   { label: 'TAP LIST', href: '/admin' },
   { label: 'CERVEZAS', href: '/admin/beers' },
+  { label: 'PROMOCIONES', href: '/admin/promotions', superAdminOnly: true },
 ]
 
 export function AdminSidebar({ profile, supabaseConfig, adminBrand = { title: 'CRAFT', subtitle: 'ADMIN' } }: Props) {
@@ -115,7 +116,9 @@ export function AdminSidebar({ profile, supabaseConfig, adminBrand = { title: 'C
 
         {/* Nav */}
         <nav className="flex flex-1 flex-col gap-1">
-          {navItems.map((item) => {
+          {navItems
+            .filter((item) => !item.superAdminOnly || profile.role === 'super_admin')
+            .map((item) => {
             const active =
               item.href === '/admin'
                 ? pathname === '/admin'

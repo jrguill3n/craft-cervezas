@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
+const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+  : undefined
+
 const nextConfig = {
   images: {
     unoptimized: true,
+    remotePatterns: supabaseHostname
+      ? [
+          {
+            protocol: 'https',
+            hostname: supabaseHostname,
+            pathname: '/storage/v1/object/public/promotions/**',
+          },
+        ]
+      : [],
   },
   async headers() {
     return [
