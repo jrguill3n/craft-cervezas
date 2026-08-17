@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 900" role="img" aria-label="Botella personaje de Craft">
-  <g fill="none" stroke="#050505" stroke-linecap="square" stroke-linejoin="miter">
+  <g fill="none" stroke="#f7f2e8" stroke-linecap="square" stroke-linejoin="miter">
     <path
       d="M386 42h82v214h34c48 0 88 40 88 88v280c0 42-31 78-72 84l46 61h-78l-35-46v106H252l16-61c13-49 57-83 107-83h39V708h-30c-56 0-101-45-101-101V344c0-47 38-86 85-88h18V42Z"
       stroke-width="22"
@@ -24,16 +24,16 @@
 
   <path
     d="M18 318c63-50 132-54 201-105l124 234-18 10-114-216c-63 45-122 52-177 104L18 318Z"
-    fill="#050505"
+    fill="#f7f2e8"
   />
   <path
     d="M218 213l124 234"
     fill="none"
-    stroke="#050505"
+    stroke="#f7f2e8"
     stroke-width="18"
     stroke-linecap="square"
   />
-  <g fill="#fff" transform="translate(80 274) rotate(-20)">
+  <g fill="#050505" transform="translate(80 274) rotate(-20)">
     <path d="M0 56C0 24 20 0 54 0c20 0 36 7 47 20L79 43C73 34 65 30 55 30c-13 0-21 10-21 26s8 26 22 26c10 0 19-5 25-15l22 23c-11 14-28 22-50 22C20 112 0 88 0 56Z" />
     <path d="M108 4h51c27 0 44 15 44 39 0 14-6 25-17 31l23 34h-38l-18-29h-12v29h-33V4Zm48 49c9 0 14-4 14-12s-5-12-14-12h-15v24h15Z" />
     <path d="M247 4h34l42 104h-36l-6-17h-36l-6 17h-35L247 4Zm25 61-9-28-9 28h18Z" />
@@ -43,11 +43,11 @@
 
   <path
     d="M312 420c38-59 95-88 162-88s124 29 163 88c-39 59-96 88-163 88s-124-29-162-88Z"
-    fill="#050505"
+    fill="#f7f2e8"
   />
   <path
     d="M348 420c28-37 70-58 126-58s98 21 126 58c-28 37-70 58-126 58s-98-21-126-58Z"
-    fill="#fff"
+    fill="#f7f2e8"
   />
   <circle cx="474" cy="420" r="61" fill="#050505" />
   <path
