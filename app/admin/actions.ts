@@ -2,8 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-
-const CRAFT_LOCATION_SLUGS = ['americana', 'chapalita', 'providencia']
+import { getManageableLocationIds } from '@/lib/admin-scope'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,22 +23,7 @@ async function getBeerCreationLocationIds(
   supabase: Awaited<ReturnType<typeof createClient>>,
   profile: { id: string; role: 'super_admin' | 'location_manager' },
 ) {
-  if (profile.role === 'super_admin') {
-    const { data, error } = await supabase
-      .from('locations')
-      .select('id')
-      .eq('active', true)
-      .in('slug', CRAFT_LOCATION_SLUGS)
-    if (error) throw new Error(error.message)
-    return (data ?? []).map((location) => location.id as string)
-  }
-
-  const { data, error } = await supabase
-    .from('profile_locations')
-    .select('location_id')
-    .eq('profile_id', profile.id)
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => row.location_id as string)
+  return getManageableLocationIds(supabase, profile)
 }
 
 // ── Tap List ─────────────────────────────────────────────────────────────────
@@ -51,8 +35,13 @@ export type TapListSaveItem = {
 }
 
 export async function saveAndPublishTapList(locationId: string, items: TapListSaveItem[]) {
-  const { supabase } = await requireAuth()
+  const { supabase, profile } = await requireAuth()
   if (!locationId) throw new Error('Falta la sucursal.')
+
+  const manageableLocationIds = await getManageableLocationIds(supabase, profile)
+  if (!manageableLocationIds.includes(locationId)) {
+    throw new Error('No tienes permiso para administrar esta sucursal.')
+  }
 
   const { data: location, error: locationError } = await supabase
     .from('locations')
@@ -207,7 +196,7 @@ export async function createBeer(formData: FormData) {
 }
 
 export async function updateBeer(id: string, formData: FormData) {
-  const { supabase } = await requireAuth()
+  const { supabase, profile } = await requireAuth()
   if (!id) throw new Error('Falta la cerveza que se quiere actualizar.')
   const name = String(formData.get('name') ?? '').trim()
   const brewery = String(formData.get('brewery') ?? '').trim()
@@ -217,10 +206,14 @@ export async function updateBeer(id: string, formData: FormData) {
   if (!name || !brewery || !style) throw new Error('Nombre, cervecería y estilo son obligatorios.')
   if (!Number.isFinite(abv) || abv < 0 || abv > 100) throw new Error('El ABV debe estar entre 0 y 100.')
   if (!Number.isFinite(price) || price <= 0) throw new Error('El precio debe ser mayor a cero.')
+  const manageableLocationIds = await getManageableLocationIds(supabase, profile)
+  if (manageableLocationIds.length === 0) throw new Error('No tienes sucursales asignadas.')
+
   const { data: existingBeer, error: existingBeerError } = await supabase
     .from('beers')
-    .select('id')
+    .select('id, beer_locations!inner(location_id)')
     .eq('id', id)
+    .in('beer_locations.location_id', manageableLocationIds)
     .maybeSingle()
   if (existingBeerError) throw new Error(existingBeerError.message)
   if (!existingBeer) throw new Error('No tienes permiso para editar esta cerveza.')
@@ -252,11 +245,15 @@ export async function updateBeer(id: string, formData: FormData) {
 }
 
 export async function deleteBeer(id: string) {
-  const { supabase } = await requireAuth()
+  const { supabase, profile } = await requireAuth()
+  const manageableLocationIds = await getManageableLocationIds(supabase, profile)
+  if (manageableLocationIds.length === 0) throw new Error('No tienes sucursales asignadas.')
+
   const { data: existingBeer, error: existingBeerError } = await supabase
     .from('beers')
-    .select('id')
+    .select('id, beer_locations!inner(location_id)')
     .eq('id', id)
+    .in('beer_locations.location_id', manageableLocationIds)
     .maybeSingle()
   if (existingBeerError) throw new Error(existingBeerError.message)
   if (!existingBeer) throw new Error('No tienes permiso para eliminar esta cerveza.')

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { TapListEditor } from '@/components/admin/tap-list-editor'
 import type { BeerRow, LocationRow, ProfileRow, TapListFull } from '@/lib/db-types'
 import { compareTapListItems } from '@/lib/tap-list-order'
+import { getManageableLocations } from '@/lib/admin-scope'
 
 export const metadata = { title: 'Tap List — Admin' }
 export const dynamic = 'force-dynamic'
@@ -28,29 +29,17 @@ export default async function AdminTapListPage({
 
   if (!profile?.active) redirect('/auth/login')
 
-  // Locations this user can manage
-  let locationsQuery = supabase.from('locations').select('*').eq('active', true)
-  if (profile.role !== 'super_admin') {
-    const { data: pl } = await supabase
-      .from('profile_locations')
-      .select('location_id')
-      .eq('profile_id', user.id)
-    const ids = (pl ?? []).map((r: { location_id: string }) => r.location_id)
-    if (ids.length === 0) return <p className="p-10 text-muted-foreground">Sin locaciones asignadas.</p>
-    locationsQuery = locationsQuery.in('id', ids)
-  }
+  const locations = await getManageableLocations(supabase, profile)
+  if (locations.length === 0) return <p className="p-10 text-muted-foreground">Sin locaciones asignadas.</p>
 
-  const { data: locations, error: locationsError } = await locationsQuery.order('name')
-  if (locationsError) throw new Error(`No se pudieron cargar las sucursales: ${locationsError.message}`)
-
-  const initialLocationId = (locations ?? []).find((location) => location.slug === requestedLocation)?.id
-    ?? locations?.[0]?.id
+  const initialLocationId = locations.find((location) => location.slug === requestedLocation)?.id
+    ?? locations[0]?.id
     ?? ''
 
   // The editor always starts from the currently published list. Changes stay
   // in the browser until the user explicitly saves and publishes them.
   const tapListsWithItems: TapListFull[] = []
-  for (const loc of locations ?? []) {
+  for (const loc of locations) {
     const { data: tapList, error: tapListError } = await supabase
       .from('tap_lists')
       .select(`
@@ -95,7 +84,7 @@ export default async function AdminTapListPage({
   }))
   return (
     <TapListEditor
-      locations={(locations ?? []) as LocationRow[]}
+      locations={locations as LocationRow[]}
       tapLists={tapListsWithItems}
       allBeers={beersWithPrice as BeerRow[]}
       profile={profile as ProfileRow}

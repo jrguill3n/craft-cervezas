@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { BeersEditor } from '@/components/admin/beers-editor'
 import type { BeerRow } from '@/lib/db-types'
+import { getManageableLocationIds } from '@/lib/admin-scope'
 
 export const metadata = { title: 'Cervezas — Admin' }
 export const dynamic = 'force-dynamic'
@@ -29,37 +30,15 @@ export default async function AdminBeersPage() {
     return <BeersEditor beers={[]} />
   }
 
-  const isSuperAdmin = profile.role === 'super_admin'
-  let locationIds: string[] = []
-
-  if (!isSuperAdmin) {
-    const { data: assignedLocations, error: assignedLocationsError } = await supabase
-      .from('profile_locations')
-      .select('location_id')
-      .eq('profile_id', profile.id)
-
-    if (assignedLocationsError) {
-      throw new Error(`No se pudieron cargar las sucursales asignadas: ${assignedLocationsError.message}`)
-    }
-
-    locationIds = (assignedLocations ?? []).map((row) => row.location_id as string)
-
-    if (locationIds.length === 0) {
-      return <BeersEditor beers={[]} />
-    }
+  const locationIds = await getManageableLocationIds(supabase, profile)
+  if (locationIds.length === 0) {
+    return <BeersEditor beers={[]} />
   }
-
-  const beersSelect = isSuperAdmin
-    ? 'id, name, brewery, style, abv, description, created_at, updated_at, serving_options(price, display_order)'
-    : 'id, name, brewery, style, abv, description, created_at, updated_at, beer_locations!inner(location_id), serving_options(price, display_order)'
 
   let beersQuery: any = supabase
     .from('beers')
-    .select(beersSelect)
-
-  if (!isSuperAdmin) {
-    beersQuery = beersQuery.in('beer_locations.location_id', locationIds)
-  }
+    .select('id, name, brewery, style, abv, description, created_at, updated_at, beer_locations!inner(location_id), serving_options(price, display_order)')
+    .in('beer_locations.location_id', locationIds)
 
   const { data: beers, error } = await beersQuery
     .order('name')
