@@ -29,7 +29,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative aspect-4/3 md:col-span-5 md:aspect-auto md:min-h-[42rem]">
+        <div className="relative aspect-4/3 overflow-hidden md:col-span-5 md:aspect-auto md:min-h-[42rem]">
           <Image
             src="/images/locations/americana/hero.webp"
             alt="Fachada e interior nocturno de Craft Americana con clientes en la barra"
@@ -37,6 +37,16 @@ export function Hero() {
             priority
             sizes="(min-width: 768px) 42vw, 100vw"
             className="object-cover"
+          />
+          <Image
+            src="/brand/craft-bottle-character.svg"
+            alt=""
+            aria-hidden="true"
+            width={660}
+            height={900}
+            priority
+            sizes="(min-width: 768px) 38vw, 46vw"
+            className="pointer-events-none absolute right-4 bottom-0 z-10 h-auto w-[46vw] max-w-[13rem] md:right-[6%] md:w-[38vw] md:max-w-[34rem]"
           />
         </div>
       </div>
