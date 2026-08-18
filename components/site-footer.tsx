@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { CraftWordmark } from '@/components/craft-logo'
-import { InstagramLinkFallback } from '@/components/instagram-link-fallback'
 import { branches, contact } from '@/lib/craft-content'
 import { normalizeInstagramUrl } from '@/lib/instagram'
 
@@ -56,9 +55,6 @@ export function SiteFooter() {
                     {social.label}
                   </a>
                   <p className="text-sm text-muted-foreground">{social.handle}</p>
-                  {social.label === 'Instagram' ? (
-                    <InstagramLinkFallback url={social.href} className="mt-1 max-w-48" />
-                  ) : null}
                 </li>
               ))}
             </ul>
