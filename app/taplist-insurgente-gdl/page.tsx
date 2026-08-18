@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { InstagramLinkFallback } from '@/components/instagram-link-fallback'
 import { getPublishedTapList } from '@/lib/tap-list'
 import type { TapListFull } from '@/lib/db-types'
 import { normalizeInstagramUrl } from '@/lib/instagram'
@@ -341,10 +340,6 @@ export default async function InsurgenteGdlPage() {
             >
               @insurgentebrew_gdl
             </a>
-            <InstagramLinkFallback
-              url={INSTAGRAM_URL}
-              className="mt-2 max-w-56 text-white/45 [&_button]:text-white [&_button:hover]:text-white"
-            />
           </div>
           <img
             src={INSURGENTE_OWL}
