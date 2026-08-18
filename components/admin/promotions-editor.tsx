@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Trash2, X } from 'lucide-react'
 import type { PromotionRow } from '@/lib/db-types'
 import { createPromotion, deletePromotion, updatePromotion } from '@/app/admin/actions'
+import { normalizeInstagramUrl } from '@/lib/instagram'
 import {
   createClient,
   type SupabaseBrowserConfig,
@@ -38,7 +39,7 @@ function promotionToForm(promotion: PromotionRow): FormState {
   return {
     title: promotion.title,
     image_url: promotion.image_url,
-    instagram_url: promotion.instagram_url,
+    instagram_url: normalizeInstagramUrl(promotion.instagram_url),
     sort_order: String(promotion.sort_order),
     active: promotion.active,
   }
@@ -287,6 +288,7 @@ export function PromotionsEditor({ promotions, supabaseConfig }: Props) {
                     inputMode="url"
                     value={form.instagram_url}
                     onChange={(event) => setField('instagram_url', event.target.value)}
+                    onBlur={() => setField('instagram_url', normalizeInstagramUrl(form.instagram_url))}
                     placeholder="https://www.instagram.com/p/..."
                     className="min-h-12 border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-foreground/25 focus:border-foreground focus:outline-none md:min-h-11 md:text-sm"
                   />
@@ -403,7 +405,7 @@ export function PromotionsEditor({ promotions, supabaseConfig }: Props) {
                     </span>
                   </div>
                   <h2 className="mt-3 text-lg font-semibold leading-tight">{promotion.title}</h2>
-                  <p className="mt-2 truncate text-xs text-muted-foreground">{promotion.instagram_url}</p>
+                  <p className="mt-2 truncate text-xs text-muted-foreground">{normalizeInstagramUrl(promotion.instagram_url)}</p>
                 </div>
               </button>
               <div className="flex border-t border-foreground/10">

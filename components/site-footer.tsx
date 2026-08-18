@@ -1,13 +1,17 @@
 import Link from 'next/link'
 import { CraftWordmark } from '@/components/craft-logo'
+import { InstagramLinkFallback } from '@/components/instagram-link-fallback'
 import { branches, contact } from '@/lib/craft-content'
+import { normalizeInstagramUrl } from '@/lib/instagram'
 
 const contactEmail = 'hola@craftcervezas.com'
 const socialLinks = contact.socials
   .filter((social) => social.label !== 'WhatsApp')
   .map((social) => social.label === 'Facebook'
     ? { ...social, href: 'https://facebook.com/craftcervezas' }
-    : social)
+    : social.label === 'Instagram'
+      ? { ...social, href: normalizeInstagramUrl(social.href) }
+      : social)
 
 export function SiteFooter() {
   return (
@@ -46,12 +50,15 @@ export function SiteFooter() {
                   <a
                     href={social.href}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="text-lg transition-colors hover:text-accent"
                   >
                     {social.label}
                   </a>
                   <p className="text-sm text-muted-foreground">{social.handle}</p>
+                  {social.label === 'Instagram' ? (
+                    <InstagramLinkFallback url={social.href} className="mt-1 max-w-48" />
+                  ) : null}
                 </li>
               ))}
             </ul>

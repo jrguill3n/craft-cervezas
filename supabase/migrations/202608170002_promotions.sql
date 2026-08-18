@@ -142,21 +142,21 @@ with seed(title, image_url, instagram_url, sort_order, active) as (
     (
       'Craft To Go · 4 Pack',
       '/brand/promotions/craft-to-go-4pack.png',
-      'https://www.instagram.com/p/DbJszluFasi/?hl=en&img_index=1',
+      'https://www.instagram.com/p/DbJszluFasi/',
       1,
       true
     ),
     (
       'Sábado 6x5 para llevar',
       '/brand/promotions/sabado-6x5.png',
-      'https://www.instagram.com/p/DTjOz4FFTGl/?hl=en',
+      'https://www.instagram.com/p/DTjOz4FFTGl/',
       2,
       true
     ),
     (
       'Miércoles 3x2 en chela de barril',
       '/brand/promotions/miercoles-3x2.png',
-      'https://www.instagram.com/p/DObuWqREp-1/?hl=en',
+      'https://www.instagram.com/p/DObuWqREp-1/',
       3,
       true
     )
@@ -175,21 +175,21 @@ with seed(title, image_url, instagram_url, sort_order, active) as (
     (
       'Craft To Go · 4 Pack',
       '/brand/promotions/craft-to-go-4pack.png',
-      'https://www.instagram.com/p/DbJszluFasi/?hl=en&img_index=1',
+      'https://www.instagram.com/p/DbJszluFasi/',
       1,
       true
     ),
     (
       'Sábado 6x5 para llevar',
       '/brand/promotions/sabado-6x5.png',
-      'https://www.instagram.com/p/DTjOz4FFTGl/?hl=en',
+      'https://www.instagram.com/p/DTjOz4FFTGl/',
       2,
       true
     ),
     (
       'Miércoles 3x2 en chela de barril',
       '/brand/promotions/miercoles-3x2.png',
-      'https://www.instagram.com/p/DObuWqREp-1/?hl=en',
+      'https://www.instagram.com/p/DObuWqREp-1/',
       3,
       true
     )

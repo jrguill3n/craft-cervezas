@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getManageableLocationIds } from '@/lib/admin-scope'
+import { isCanonicalInstagramPostUrl, normalizeInstagramUrl } from '@/lib/instagram'
 
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -20,7 +21,7 @@ async function requireAuth() {
 }
 
 async function requireSuperAdmin() {
-  const context = await requireAuth()
+  context = await requireAuth()
   if (context.profile.role !== 'super_admin') {
     throw new Error('Solo super admins pueden administrar promociones.')
   }
@@ -34,7 +35,7 @@ async function getBeerCreationLocationIds(
   return getManageableLocationIds(supabase, profile)
 }
 
-// â”€â”€ Tap List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ Tap List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type TapListSaveItem = {
   beer_id: string
@@ -138,7 +139,7 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
     if (publishError) throw publishError
   } catch (error) {
     await supabase.from('tap_lists').delete().eq('id', list.id)
-    throw new Error(error instanceof Error ? error.message : 'No se pudo guardar el tap list.')
+    throw new Error(error instanceof Eror ? error.message : 'No se pudo guardar el tap list.')
   }
 
   revalidatePath(`/${location.slug}`, 'page')
@@ -146,242 +147,4 @@ export async function saveAndPublishTapList(locationId: string, items: TapListSa
   revalidatePath('/admin')
 }
 
-// â”€â”€ Beer CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-export async function createBeer(formData: FormData) {
-  const { supabase, profile } = await requireAuth()
-  const name = String(formData.get('name') ?? '').trim()
-  const brewery = String(formData.get('brewery') ?? '').trim()
-  const style = String(formData.get('style') ?? '').trim()
-  const abv = Number(formData.get('abv'))
-  const price = Number(formData.get('price'))
-  if (!name || !brewery || !style) throw new Error('Nombre, cervecerÃ­a y estilo son obligatorios.')
-  if (!Number.isFinite(abv) || abv < 0 || abv > 100) throw new Error('El ABV debe estar entre 0 y 100.')
-  if (!Number.isFinite(price) || price <= 0) throw new Error('El precio debe ser mayor a cero.')
-  const beerId = crypto.randomUUID()
-  const { error } = await supabase
-    .from('beers')
-    .insert({
-      id: beerId,
-      name,
-      brewery,
-      style,
-      abv,
-    })
-  if (error) throw new Error(error.message)
-  const locationIds = await getBeerCreationLocationIds(supabase, profile)
-  if (locationIds.length === 0) {
-    await supabase.from('beers').delete().eq('id', beerId)
-    throw new Error('No hay sucursales asignadas para esta cerveza.')
-  }
-
-  const { error: locationError } = await supabase
-    .from('beer_locations')
-    .upsert(
-      locationIds.map((locationId) => ({ beer_id: beerId, location_id: locationId })),
-      { onConflict: 'beer_id,location_id', ignoreDuplicates: true },
-    )
-  if (locationError) {
-    await supabase.from('beers').delete().eq('id', beerId)
-    throw new Error(locationError.message)
-  }
-
-  const { error: priceError } = await supabase.from('serving_options').insert({
-    beer_id: beerId,
-    label: 'Pinta',
-    size: 'Pinta',
-    price,
-    display_order: 1,
-  })
-  if (priceError) {
-    await supabase.from('beers').delete().eq('id', beerId)
-    throw new Error(priceError.message)
-  }
-  revalidatePath('/admin')
-  revalidatePath('/admin/beers')
-  revalidatePath('/taplist', 'page')
-  return { id: beerId, name, brewery, style, abv }
-}
-
-export async function updateBeer(id: string, formData: FormData) {
-  const { supabase, profile } = await requireAuth()
-  if (!id) throw new Error('Falta la cerveza que se quiere actualizar.')
-  const name = String(formData.get('name') ?? '').trim()
-  const brewery = String(formData.get('brewery') ?? '').trim()
-  const style = String(formData.get('style') ?? '').trim()
-  const abv = Number(formData.get('abv'))
-  const price = Number(formData.get('price'))
-  if (!name || !brewery || !style) throw new Error('Nombre, cervecerÃ­a y estilo son obligatorios.')
-  if (!Number.isFinite(abv) || abv < 0 || abv > 100) throw new Error('El ABV debe estar entre 0 y 100.')
-  if (!Number.isFinite(price) || price <= 0) throw new Error('El precio debe ser mayor a cero.')
-  const manageableLocationIds = await getManageableLocationIds(supabase, profile)
-  if (manageableLocationIds.length === 0) throw new Error('No tienes sucursales asignadas.')
-
-  const { data: existingBeer, error: existingBeerError } = await supabase
-    .from('beers')
-    .select('id, beer_locations!inner(location_id)')
-    .eq('id', id)
-    .in('beer_locations.location_id', manageableLocationIds)
-    .maybeSingle()
-  if (existingBeerError) throw new Error(existingBeerError.message)
-  if (!existingBeer) throw new Error('No tienes permiso para editar esta cerveza.')
-
-  const { error } = await supabase
-    .from('beers')
-    .update({
-      name,
-      brewery,
-      style,
-      abv,
-    })
-    .eq('id', id)
-  if (error) throw new Error(error.message)
-  const { data: primary } = await supabase
-    .from('serving_options')
-    .select('id')
-    .eq('beer_id', id)
-    .limit(1)
-    .maybeSingle()
-  const priceMutation = primary
-    ? supabase.from('serving_options').update({ label: 'Pinta', size: 'Pinta', price, display_order: 1 }).eq('id', primary.id)
-    : supabase.from('serving_options').insert({ beer_id: id, label: 'Pinta', size: 'Pinta', price, display_order: 1 })
-  const { error: priceError } = await priceMutation
-  if (priceError) throw new Error(priceError.message)
-  revalidatePath('/admin')
-  revalidatePath('/admin/beers')
-  revalidatePath('/taplist', 'page')
-}
-
-export async function deleteBeer(id: string) {
-  const { supabase, profile } = await requireAuth()
-  const manageableLocationIds = await getManageableLocationIds(supabase, profile)
-  if (manageableLocationIds.length === 0) throw new Error('No tienes sucursales asignadas.')
-
-  const { data: existingBeer, error: existingBeerError } = await supabase
-    .from('beers')
-    .select('id, beer_locations!inner(location_id)')
-    .eq('id', id)
-    .in('beer_locations.location_id', manageableLocationIds)
-    .maybeSingle()
-  if (existingBeerError) throw new Error(existingBeerError.message)
-  if (!existingBeer) throw new Error('No tienes permiso para eliminar esta cerveza.')
-
-  const { error } = await supabase.from('beers').delete().eq('id', id)
-  if (error) throw new Error(error.message)
-  revalidatePath('/admin')
-  revalidatePath('/admin/beers')
-  revalidatePath('/taplist', 'page')
-}
-
-// â”€â”€ Promotions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function parsePromotionForm(formData: FormData) {
-  const title = String(formData.get('title') ?? '').trim()
-  const image_url = String(formData.get('image_url') ?? '').trim()
-  const instagram_url = String(formData.get('instagram_url') ?? '').trim()
-  const sort_order = Number(formData.get('sort_order'))
-  const active = String(formData.get('active') ?? 'false') === 'true'
-
-  if (!title) throw new Error('El tÃ­tulo es obligatorio.')
-  if (title.length > 80) throw new Error('El tÃ­tulo debe ser corto.')
-  if (!image_url) throw new Error('Sube o selecciona un pÃ³ster.')
-  if (!Number.isInteger(sort_order) || sort_order < 1 || sort_order > 6) {
-    throw new Error('El orden debe ser un nÃºmero del 1 al 6.')
-  }
-
-  let url: URL
-  try {
-    url = new URL(instagram_url)
-  } catch {
-    throw new Error('El link de Instagram no es vÃ¡lido.')
-  }
-
-  const host = url.hostname.toLowerCase()
-  if (url.protocol !== 'https:' || (host !== 'instagram.com' && host !== 'www.instagram.com')) {
-    throw new Error('El link debe ser de instagram.com.')
-  }
-
-  return { title, image_url, instagram_url: url.toString(), sort_order, active }
-}
-
-async function assertPromotionLimits(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  input: { sort_order: number; active: boolean },
-  currentId?: string,
-) {
-  if (!input.active) return
-
-  let activeQuery = supabase
-    .from('promotions')
-    .select('id')
-    .eq('active', true)
-  let orderQuery = supabase
-    .from('promotions')
-    .select('id')
-    .eq('active', true)
-    .eq('sort_order', input.sort_order)
-
-  if (currentId) {
-    activeQuery = activeQuery.neq('id', currentId)
-    orderQuery = orderQuery.neq('id', currentId)
-  }
-
-  const { data: activePromotions, error: activeError } = await activeQuery
-  if (activeError) throw new Error(activeError.message)
-  if ((activePromotions ?? []).length >= 6) {
-    throw new Error('Solo puede haber 6 promociones activas. Desactiva o elimina una antes.')
-  }
-
-  const { data: orderConflict, error: orderError } = await orderQuery.limit(1)
-  if (orderError) throw new Error(orderError.message)
-  if ((orderConflict ?? []).length > 0) {
-    throw new Error('Ya existe una promociÃ³n activa con ese orden.')
-  }
-}
-
-export async function createPromotion(formData: FormData) {
-  const { supabase } = await requireSuperAdmin()
-  const input = parsePromotionForm(formData)
-  await assertPromotionLimits(supabase, input)
-
-  const { error } = await supabase
-    .from('promotions')
-    .insert(input)
-
-  if (error) throw new Error(error.message)
-
-  revalidatePath('/')
-  revalidatePath('/admin/promotions')
-}
-
-export async function updatePromotion(id: string, formData: FormData) {
-  const { supabase } = await requireSuperAdmin()
-  if (!id) throw new Error('Falta la promociÃ³n.')
-  const input = parsePromotionForm(formData)
-  await assertPromotionLimits(supabase, input, id)
-
-  const { error } = await supabase
-    .from('promotions')
-    .update(input)
-    .eq('id', id)
-
-  if (error) throw new Error(error.message)
-
-  revalidatePath('/')
-  revalidatePath('/admin/promotions')
-}
-
-export async function deletePromotion(id: string) {
-  const { supabase } = await requireSuperAdmin()
-  if (!id) throw new Error('Falta la promociÃ³n.')
-
-  const { error } = await supabase
-    .from('promotions')
-    .delete()
-    .eq('id', id)
-
-  if (error) throw new Error(error.message)
-
-  revalidatePath('/')
-  revalidatePath('/admin/promotions')
-}
+// â”€â”€ Beer CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸É•…Ñ•	••È¡™½Éµ…Ñ„è½Éµ…Ñ„¤ì(€½¹ÍÐìÍÕÁ…‰…Ì°ÁÉ½™¥±”ô€ô…Ý…¥ÐÉ•ÅÕ¥É•ÕÑ  ¤(€½¹ÍÐ¹…µ”€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð ¹…µ”œ¤€üü€œœ¤¹ÑÉ¥´ ¤(€½¹ÍÐ‰É•Ý•Éä€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð ‰É•Ý•Éäœ¤€üü€œœ¤¹ÑÉ¥´ ¤(€½¹ÍÐÍÑå±”€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð ÍÑå±”œ¤€üü€œœ¤¹ÑÉ¥´ ¤(€½¹ÍÐ…‰Ø€ô9Õµ‰•È¡™½Éµ…Ñ„¹•Ð …‰Øœ¤¤(€½¹ÍÐÁÉ¥”€ô9Õµ‰•È¡™½Éµ…Ñ„¹•Ð ÁÉ¥”œ¤¤(€¥˜€ …¹…µ”ñð€…‰É•Ý•Éäñð€…ÍÑå±”¤Ñ¡É½Ü¹•ÜÉÉ½È 9½µ‰É”°•ÉÙ••Ëµ„ä•ÍÑ¥±¼Í½¸½‰±¥…Ñ½É¥½Ì¸œ¤(€¥˜€ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡…‰Ø¤ñð…‰Ø€ð€Àñð…‰Ø€ø€ÄÀÀ¤Ñ¡É½Ü¹•ÜÉÉ½È °	X‘•‰”•ÍÑ…È•¹ÑÉ”€Àä€ÄÀÀ¸œ¤(€¥˜€ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÁÉ¥”¤ñðÁÉ¥”€ðô€À¤Ñ¡É½Ü¹•ÜÉÉ½È °ÁÉ•¥¼‘•‰”Í•Èµ…å½È„•É¼¸œ¤(€½¹ÍÐ‰••É%€ôÉåÁÑ¼¹É…¹‘½µUU% ¤(€½¹ÍÐì•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ ‰••ÉÌœ¤(€€€€¹¥¹Í•ÉÐ¡ì(€€€€€¥è‰••É%°(€€€€€¹…µ”°(€€€€€‰É•Ý•Éä°(€€€€€ÍÑå±”°(€€€€€…‰Ø°(€€€ô¤(€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü¹•ÜÉ½È¡•ÉÉ½È¹µ•ÍÍ…”¤(€½¹ÍÐ±½…Ñ¥½¹%‘Ì€ô…Ý…¥Ð•Ñ	••ÉÉ•…Ñ¥½¹1½…Ñ¥½¹%‘Ì¡ÍÕÁ…‰…Í”°ÁÉ½™¥±”¤(€¥˜€¡±½…Ñ¥½¹%‘Ì¹±•¹Ñ €ôôô€À¤ì(€€€…Ý…¥ÐÍÕÁ…‰…Í”¹™É½´ ‰••ÉÌœ¤¹‘•±•Ñ” ¤¹•Ä ¥œ°‰••É%¤(€€€Ñ¡É½Ü¹•ÜÉÉ½È 9¼¡…äÍÕÕÉÍ…±•Ì…Í¥¹…‘…ÌÁ…É„•ÍÑ„•ÉÙ•é„¸œ¤(€ô((€½¹ÍÐì•ÉÉ½Èè±½…Ñ¥½¹ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ ‰••É}±½…Ñ¥½¹Ìœ¤(€€€€¹ÕÁÍ•ÉÐ (€€€€€±½…Ñ¥½¹%‘Ì¹µ…À ¡±½…Ñ¥½¹%¤€ôø€¡ì‰••É}¥è‰••É%°±½…Ñ¥½¹}¥è±½…Ñ¥½¹%ô¤¤°(€€€€€ì½¹½¹™±¥Ðè€‰••É}¥±±½…Ñ¥½¹}¥œ°¥¹½É•ÕÁ±¥…Ñ•ÌèÑÉÕ”ô°(€€€€¤(€¥˜€¡±½…Ñ¥½¹ÉÉ½È¤ì(€€€…Ý…¥ÐÍÕÁ…‰…Í”¹™É½´ ‰••ÉÌœ¤¹‘•±•Ñ” ¤¹•Ä ¥œ°‰••É%¤(€€€Ñ¡É½Ü¹•ÜÉÉ½È¡±½…Ñ¥½¹ÉÉ½È¹µ•ÍÍ…”¤(€ô((€½¹ÍÐì•ÉÉ½ÈèÁÉ¥•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”¹™É½´ Í•ÉÙ¥¹}½ÁÑ¥½¹Ìœ¤€¹¥¹Í•ÉÐ¡ì(€€€‰••É}¥è‰••É%°(€€€±…‰•°è€A¥¹Ñ„œ°(€€€Í¥é”è€A¥¹Ñ„œ°(€€€ÁÉ¥”°(€€€‘¥ÍÁ±…å}½É‘•Èè€Ä°(€ô¤(€¥˜€¡ÁÉ¥•ÉÉ½È¤ì(€€€…Ý…¥ÐÍÕÁ…‰…Í”¹™É½´ ‰••ÉÌœ¤¹‘•±•Ñ” ¤¹•Ä ¥œ°‰••É%¤(€€€Ñ¡É½Ü¹•ÜÉÉ½È¡ÁÉ¥•ÉÉ½È¹µ•ÍÍ…”¤(€ô(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸œ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸½‰••ÉÌœ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½Ñ…Á±¥ÍÐœ°€Á…”œ¤(€É•ÑÕÉ¸ì¥è‰••É%°¹…µ”°‰É•Ý•Éä°ÍÑå±”°…‰Øô)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸ÕÁ‘…Ñ•	••È¡¥èÍÑÉ¥¹œ°™½Éµ…Ñ„è½Éµ…Ñ„¤ì(€½¹ÍÐìÍÕÁ…‰…Í”°ÁÉ½™¥±”ô€ô…Ý…¥ÐÉ•ÅÕ¥É•ÕÑ  ¤(€¥˜€ …¥¤Ñ¡É½Ü¹•ÜÉÉ½È …±Ñ„±„•ÉÙ•é„ÅÕ”Í”ÅÕ¥•É”…ÑÕ…±¥é…È¸œ¤(€½¹ÍÐ¹…µ”€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð ¹…µ”œ¤€üü€œœ¤¹ÑÉ¥´ ¤(€½¹ÍÐ‰É•Ý•Éä€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð ‰É•Ý•Éäœ¤€üü€œœ¤¹ÑÉ¥´ ¤(€½¹ÍÐÍÑå±”€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð ÍÑå±”œ¤€üü€œœ¤¹ÑÉ¥´ ¤(€½¹ÍÐ…‰Ø€ô9Õµ‰•È¡™½Éµ…Ñ„¹•Ð …‰Øœ¤¤(€½¹ÍÐÁÉ¥”€ô9Õµ‰•È¡™½Éµ…Ñ„¹•Ð ÁÉ¥”œ¤¤(€¥˜€ …¹…µ”ñð€…‰É•Ý•Éäñð€…ÍÑå±”¤Ñ¡É½Ü¹•ÜÉÉ½È 9½µ‰É”°•ÉÙ••Ëµ„ä•ÍÑ¥±¼Í½¸½‰±¥…Ñ½É¥½Ì¸œ¤(€¥˜€ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡…‰Ø¤ñð…‰Ø€ð€Àñð…‰Ø€ø€ÄÀÀ¤Ñ¡É½Ü¹•ÜÉÉ½È °	X‘•‰”•ÍÑ…È•¹ÑÉ”€Àä€ÄÀÀ¸œ¤(€¥˜€ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÁÉ¥”¤ñðÁÉ¥”€ðô€À¤Ñ¡É½Ü¹•ÜÉÉ½È °ÁÉ•¥¼‘•‰”Í•Èµ…å½È„•É¼¸œ¤(€½¹ÍÐµ…¹…•…‰±•1½…Ñ¥½¹%‘Ì€ô…Ý…¥Ð•Ñ5…¹…•…‰±•1½…Ñ¥½¹%‘Ì¡ÍÕÁ…‰…Í”°ÁÉ½™¥±”¤(€¥˜€¡µ…¹…•…‰±•1½…Ñ¥½¹%‘Ì¹±•¹Ñ €ôôô€À¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼Ñ¥•¹•ÌÍÕÕÉÍ…±•Ì…Í¥¹…‘…Ì¸œ¤((€½¹ÍÐì‘…Ñ„è•á¥ÍÑ¥¹	••È°•ÉÉ½Èè•á¥ÍÑ¥¹	••ÉÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ ‰••ÉÌœ¤(€€€€¹Í•±•Ð ¥°‰••É}±½…Ñ¥½¹Ì…¥¹¹•È¡±½…Ñ¥½¹}¥¤œ¤(€€€€¹•Ä ¥œ°¥¤(€€€€¹¥¸ ‰••É}±½…Ñ¥½¹Ì¹±½…Ñ¥½¹}¥œ°µ…¹…•…‰±•1½…Ñ¥½¹%‘Ì¤(€€€€¹µ…å‰•M¥¹±” ¤(€¥˜€¡•á¥ÍÑ¥¹	••ÉÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡•á¥ÍÑ¥¹	••ÉÉÉ½È¹µ•ÍÍ…”¤(€¥˜€ …•á¥ÍÑ¥¹	••È¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼Ñ¥•¹•ÌÁ•Éµ¥Í¼Á…É„•‘¥Ñ…È•ÍÑ„•ÉÙ•é„¸œ¤((€½¹ÍÐì•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ ‰••ÉÌœ¤(€€€€¹ÕÁ‘…Ñ”¡ì(€€€€€¹…µ”°(€€€€€‰É•Ý•Éä°(€€€€€ÍÑå±”°(€€€€€…‰Ø°(€€€ô¤(€€€€¹•Ä ¥œ°¥¤(€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡•ÉÉ½È¹µ•ÍÍ…”¤(€½¹ÍÐì‘…Ñ„èÁÉ¥µ…Éäô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ Í•ÉÙ¥¹}½ÁÑ¥½¹Ìœ¤(€€€€¹Í•±•Ð ¥œ¤(€€€€¹•Ä ‰••É}¥œ°¥¤(€€€€¹±¥µ¥Ð Ä¤(€€€€¹µ…å‰•M¥¹±” ¤(€½¹ÍÐÁÉ¥•5ÕÑ…Ñ¥½¸€ôÁÉ¥µ…Éä(€€€€üÍÕÁ…‰…Í”¹™É½´ Í•ÉÙ¥¹}½ÁÑ¥½¹Ìœ¤¹ÕÁ‘…Ñ”¡ì±…‰•°è€A¥¹Ñ„œ°Í¥é”è€A¥¹Ñ„œ°ÁÉ¥”°‘¥ÍÁ±…å}½É‘•Èè€Äô¤¹•Ä ¥œ°ÁÉ¥µ…Éä¹¥¤(€€€€èÍÕÁ…‰…Í”¹™É½´ Í•ÉÙ¥¹}½ÁÑ¥½¹Ìœ¤¹¥¹Í•ÉÐ¡ì‰••É}¥è¥°±…‰•°è€A¥¹Ñ„œ°Í¥é”è€A¥¹Ñ„œ°ÁÉ¥”°‘¥ÍÁ±…å}½É‘•Èè€Äô¤(€½¹ÍÐì•ÉÉ½ÈèÁÉ¥•ÉÉ½Èô€ô…Ý…¥ÐÁÉ¥•5ÕÑ…Ñ¥½¸(€¥˜€¡ÁÉ¥•ÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡ÁÉ¥•ÉÉ½È¹µ•ÍÍ…”¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸œ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸½‰••ÉÌœ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½Ñ…Á±¥ÍÐœ°€Á…”œ¤)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸‘•±•Ñ•	••È¡¥èÍÑÉ¥¹œ¤ì(€½¹ÍÐìÍÕÁ…‰…Í”°ÁÉ½™¥±”ô€ô…Ý…¥ÐÉ•ÅÕ¥É•ÕÑ  ¤(€½¹ÍÐµ…¹…•…‰±•1½…Ñ¥½¹%‘Ì€ô…Ý…¥Ð•Ñ5…¹…•…‰±•1½…Ñ¥½¹%‘Ì¡ÍÕÁ…‰…Í”°ÁÉ½™¥±”¤(€¥˜€¡µ…¹…•…‰±•1½…Ñ¥½¹%‘Ì¹±•¹Ñ €ôôô€À¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼Ñ¥•¹•ÌÍÕÕÉÍ…±•Ì…Í¥¹…‘…Ì¸œ¤((€½¹ÍÐì‘…Ñ„è•á¥ÍÑ¥¹	••È°•ÉÉ½Èè•á¥ÍÑ¥¹	••ÉÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ ‰••ÉÌœ¤(€€€€¹Í•±•Ð ¥°‰••É}±½…Ñ¥½¹Ì…¥¹¹•È¡±½…Ñ¥½¹}¥¤œ¤(€€€€¹•Ä ¥œ°¥¤(€€€€¹¥¸ ‰••É}±½…Ñ¥½¹Ì¹±½…Ñ¥½¹}¥œ°µ…¹…•…‰±•1½…Ñ¥½¹%‘Ì¤(€€€€¹µ…å‰•M¥¹±” ¤(€¥˜€¡•á¥ÍÑ¥¹	••ÉÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡•á¥ÍÑ¥¹	••ÉÉÉ½È¹µ•ÍÍ…”¤(€¥˜€ …•á¥ÍÑ¥¹	••È¤Ñ¡É½Ü¹•ÜÉÉ½È 9¼Ñ¥•¹•ÌÁ•Éµ¥Í¼Á…É„•±¥µ¥¹…È•ÍÑ„•ÉÙ•é„¸œ¤((€½¹ÍÐì•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”¹™É½´ ‰••ÉÌœ¤¹‘•±•Ñ” ¤¹•Ä ¥œ°¥¤(€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡•ÉÉ½È¹µ•ÍÍ…”¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸œ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸½‰••ÉÌœ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½Ñ…Á±¥ÍÐœ°€Á…”œ¤)ô((¼¼ƒŠRŠR AÉ½µ½Ñ¥½¹ÌƒŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠR ()™Õ¹Ñ¥½¸Á…ÉÍ•AÉ½µ½Ñ¥½¹½É´¡™½Éµ…Ñ„è½Éµ…Ñ„¤ì(€½¹ÍÐÑ¥Ñ±”€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð Ñ¥Ñ±”œ¤€üü€œœ¤¹ÑÉ¥´ ¤(€½¹ÍÐ¥µ…•}ÕÉ°€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð ¥µ…•}ÕÉ°œ¤€üü€œœ¤¹ÑÉ¥´ ¤(€½¹ÍÐ¥¹ÍÑ…É…µ}ÕÉ°€ô¹½Éµ…±¥é•%¹ÍÑ…É…µUÉ°¡MÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð ¥¹ÍÑ…É…µ}ÕÉ°œ¤€üü€œœ¤¤(€½¹ÍÐÍ½ÉÑ}½É‘•È€ô9Õµ‰•È¡™½Éµ…Ñ„¹•Ð Í½ÉÑ}½É‘•Èœ¤¤(€½¹ÍÐ…Ñ¥Ù”€ôMÑÉ¥¹œ¡™½Éµ…Ñ„¹•Ð …Ñ¥Ù”œ¤€üü€™…±Í”œ¤€ôôô€ÑÉÕ”œ((€¥˜€ …Ñ¥Ñ±”¤Ñ¡É½Ü¹•ÜÉÉ½È °ÓµÑÕ±¼•Ì½‰±¥…Ñ½É¥¼¸œ¤(€¥˜€¡Ñ¥Ñ±”¹±•¹Ñ €ø€àÀ¤Ñ¡É½Ü¹•ÜÉÉ½È °ÓµÑÕ±¼‘•‰”Í•È½ÉÑ¼¸œ¤(€¥˜€ …¥µ…•}ÕÉ°¤Ñ¡É½Ü¹•ÜÉÉ½È MÕ‰”¼Í•±•¥½¹„Õ¸ÃÍÍÑ•È¸œ¤(€¥˜€ …9Õµ‰•È¹¥Í%¹Ñ••È¡Í½ÉÑ}½É‘•È¤ñðÍ½ÉÑ}½É‘•È€ð€ÄñðÍ½ÉÑ}½É‘•È€ø€Ø¤ì(€€€Ñ¡É½Ü¹•ÜÉÉ½È °½É‘•¸‘•‰”Í•ÈÕ¸»éµ•É¼‘•°€Ä…°€Ø¸œ¤(€ô((€¥˜€ …¥Í…¹½¹¥…±%¹ÍÑ…É…µA½ÍÑUÉ°¡¥¹ÍÑ…É…µ}ÕÉ°¤¤ì(€€€Ñ¡É½Ü¹•ÜÉÉ½È °±¥¹¬‘•‰”Í•ÈÕ¸Á½ÍÐ‘”%¹ÍÑ…É…´è¡ÑÑÁÌè¼½ÝÝÜ¹¥¹ÍÑ…É…´¹½´½À¼¸¸¸¼œ¤(€ô((€É•ÑÕÉ¸ìÑ¥Ñ±”°¥µ…•}ÕÉ°°¥¹ÍÑ…É…µ}ÕÉ°°Í½ÉÑ}½É‘•È°…Ñ¥Ù”ô)ô()…Íå¹Œ™Õ¹Ñ¥½¸…ÍÍ•ÉÑAÉ½µ½Ñ¥½¹1¥µ¥ÑÌ (€ÍÕÁ…‰…Í”èÝ…¥Ñ•ñI•ÑÕÉ¹QåÁ”ñÑåÁ•½˜É•…Ñ•±¥•¹Ðøø°(€¥¹ÁÕÐèìÍ½ÉÑ}½É‘•Èè¹Õµ‰•Èì…Ñ¥Ù”è‰½½±•…¸ô°(€ÕÉÉ•¹Ñ%üèÍÑÉ¥¹œ°(¤ì(€¥˜€ …¥¹ÁÕÐ¹…Ñ¥Ù”¤É•ÑÕÉ¸((€±•Ð…Ñ¥Ù•EÕ•Éä€ôÍÕÁ…‰…Í”(€€€€¹™É½´ ÁÉ½µ½Ñ¥½¹Ìœ¤(€€€€¹Í•±•Ð ¥œ¤(€€€€¹•Ä …Ñ¥Ù”œ°ÑÉÕ”¤(€±•Ð½É‘•ÉEÕ•Éä€ôÍÕÁ…‰…Í”(€€€€¹™É½´ ÁÉ½µ½Ñ¥½¹Ìœ¤(€€€€¹Í•±•Ð ¥œ¤(€€€€¹•Ä …Ñ¥Ù”œ°ÑÉÕ”¤(€€€€¹•Ä Í½ÉÑ}½É‘•Èœ°¥¹ÁÕÐ¹Í½ÉÑ}½É‘•È¤((€¥˜€¡ÕÉÉ•¹Ñ%¤ì(€€€…Ñ¥Ù•EÕ•Éä€ô…Ñ¥Ù•EÕ•Éä¹¹•Ä ¥œ°ÕÉÉ•¹Ñ%¤(€€€½É‘•ÉEÕ•Éä€ô½É‘•ÉEÕ•Éä¹¹•Ä ¥œ°ÕÉÉ•¹Ñ%¤(€ô((€½¹ÍÐì‘…Ñ„è…Ñ¥Ù•AÉ½µ½Ñ¥½¹Ì°•ÉÉ½Èè…Ñ¥Ù•ÉÉ½Èô€ô…Ý…¥Ð…Ñ¥Ù•EÕ•Éä(€¥˜€¡…Ñ¥Ù•ÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡…Ñ¥Ù•ÉÉ½È¹µ•ÍÍ…”¤(€¥˜€ ¡…Ñ¥Ù•AÉ½µ½Ñ¥½¹Ì€üümt¤¹±•¹Ñ €øô€Ø¤ì(€€€Ñ¡É½Ü¹•ÜÉÉ½È M½±¼ÁÕ•‘”¡…‰•È€ØÁÉ½µ½¥½¹•Ì…Ñ¥Ù…Ì¸•Í…Ñ¥Ù„¼•±¥µ¥¹„Õ¹„…¹Ñ•Ì¸œ¤(€ô((€½¹ÍÐì‘…Ñ„è½É‘•É½¹™±¥Ð°•ÉÉ½Èè½É‘•ÉÉÉ½Èô€ô…Ý…¥Ð½É‘•ÉEÕ•Éä¹±¥µ¥Ð Ä¤(€¥˜€¡½É‘•ÉÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡½É‘•ÉÉÉ½È¹µ•ÍÍ…”¤(€¥˜€ ¡½É‘•É½¹™±¥Ð€üümt¤¹±•¹Ñ €ø€À¤ì(€€€Ñ¡É½Ü¹•ÜÉÉ½È e„•á¥ÍÑ”Õ¹„ÁÉ½µ½§Í¸…Ñ¥Ù„½¸•Í”½É‘•¸¸œ¤(€ô)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸É•…Ñ•AÉ½µ½Ñ¥½¸¡™½Éµ…Ñ„è½Éµ…Ñ„¤ì(€½¹ÍÐìÍÕÁ…‰…Í”ô€ô…Ý…¥ÐÉ•ÅÕ¥É•MÕÁ•É‘µ¥¸ ¤(€½¹ÍÐ¥¹ÁÕÐ€ôÁ…ÉÍ•AÉ½µ½Ñ¥½¹½É´¡™½Éµ…Ñ„¤(€…Ý…¥Ð…ÍÍ•ÉÑAÉ½µ½Ñ¥½¹1¥µ¥ÑÌ¡ÍÕÁ…‰…Í”°¥¹ÁÕÐ¤((€½¹ÍÐì•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ ÁÉ½µ½Ñ¥½¹Ìœ¤(€€€€¹¥¹Í•ÉÐ¡¥¹ÁÕÐ¤((€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡•ÉÉ½È¹µ•ÍÍ…”¤((€É•Ù…±¥‘…Ñ•A…Ñ  œ¼œ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸½ÁÉ½µ½Ñ¥½¹Ìœ¤)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸ÕÁ‘…Ñ•AÉ½µ½Ñ¥½¸¡¥èÍÑÉ¥¹œ°™½Éµ…Ñ„è½Éµ…Ñ„¤ì(€½¹ÍÐìÍÕÁ…‰…Í”ô€ô…Ý…¥ÐÉ•ÅÕ¥É•MÕÁ•É‘µ¥¸ ¤(€¥˜€ …¥¤Ñ¡É½Ü¹•ÜÉÉ½È …±Ñ„±„ÁÉ½µ½§Í¸¸œ¤(€½¹ÍÐ¥¹ÁÕÐ€ôÁ…ÉÍ•AÉ½µ½Ñ¥½¹½É´¡™½Éµ…Ñ„¤(€…Ý…¥Ð…ÍÍ•ÉÑAÉ½µ½Ñ¥½¹1¥µ¥ÑÌ¡ÍÕÁ…‰…Í”°¥¹ÁÕÐ°¥¤((€½¹ÍÐì•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ ÁÉ½µ½Ñ¥½¹Ìœ¤(€€€€¹ÕÁ‘…Ñ”¡¥¹ÁÕÐ¤(€€€€¹•Ä ¥œ°¥¤((€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡•ÉÉ½È¹µ•ÍÍ…”¤((€É•Ù…±¥‘…Ñ•A…Ñ  œ¼œ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸½ÁÉ½µ½Ñ¥½¹Ìœ¤)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸‘•±•Ñ•AÉ½µ½Ñ¥½¸¡¥èÍÑÉ¥¹œ¤ì(€½¹ÍÐìÍÕÁ…‰…Í”ô€ô…Ý…¥ÐÉ•ÅÕ¥É•MÕÁ•É‘µ¥¸ ¤(€¥˜€ …¥¤Ñ¡É½Ü¹•ÜÉÉ½È …±Ñ„±„ÁÉ½µ½§Í¸¸œ¤((€½¹ÍÐì•ÉÉ½Èô€ô…Ý…¥ÐÍÕÁ…‰…Í”(€€€€¹™É½´ ÁÉ½µ½Ñ¥½¹Ìœ¤(€€€€¹‘•±•Ñ” ¤(€€€€¹•Ä ¥œ°¥¤((€¥˜€¡•ÉÉ½È¤Ñ¡É½Ü¹•ÜÉÉ½È¡•ÉÉ½È¹µ•ÍÍ…”¤((€É•Ù…±¥‘…Ñ•A…Ñ  œ¼œ¤(€É•Ù…±¥‘…Ñ•A…Ñ  œ½…‘µ¥¸½ÁÉ½µ½Ñ¥½¹Ìœ¤)ô(

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import { InstagramLinkFallback } from '@/components/instagram-link-fallback'
 import { getPublishedTapList } from '@/lib/tap-list'
 import type { TapListFull } from '@/lib/db-types'
+import { normalizeInstagramUrl } from '@/lib/instagram'
 import { siteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -39,7 +41,7 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
-const INSTAGRAM_URL = 'https://www.instagram.com/insurgentebrew_gdl/'
+const INSTAGRAM_URL = normalizeInstagramUrl('https://www.instagram.com/insurgentebrew_gdl/')
 const INSURGENTE_LOGO = '/brand/insurgente/insurgente-logo.svg'
 const INSURGENTE_OWL = '/brand/insurgente/insurgente-owl.png'
 const SOUL_BURGER_LOGO = '/brand/insurgente/soul-fried-chicken-logo.png'
@@ -334,11 +336,15 @@ export default async function InsurgenteGdlPage() {
             <a
               href={INSTAGRAM_URL}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="mt-2 inline-block font-semibold tracking-[0.16em] transition-colors hover:text-white"
             >
               @insurgentebrew_gdl
             </a>
+            <InstagramLinkFallback
+              url={INSTAGRAM_URL}
+              className="mt-2 max-w-56 text-white/45 [&_button]:text-white [&_button:hover]:text-white"
+            />
           </div>
           <img
             src={INSURGENTE_OWL}
