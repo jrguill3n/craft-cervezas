@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { InstagramLinkFallback } from '@/components/instagram-link-fallback'
 import type { PromotionRow } from '@/lib/db-types'
 import { normalizeInstagramUrl } from '@/lib/instagram'
 import { createPublicClient } from '@/lib/supabase/public'
@@ -28,31 +27,28 @@ function PromotionPoster({ promotion }: { promotion: PromotionRow }) {
   const instagramUrl = normalizeInstagramUrl(promotion.instagram_url)
 
   return (
-    <div>
-      <a
-        href={instagramUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`${promotion.title}, abrir en Instagram`}
-        className="group block"
-      >
-        <div className="relative aspect-[4/5] overflow-hidden border border-foreground/15 bg-foreground/5">
-          <Image
-            src={promotion.image_url}
-            alt={promotion.title}
-            fill
-            sizes="(min-width: 1280px) 15vw, (min-width: 768px) 30vw, 72vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            unoptimized={promotion.image_url.startsWith('http')}
-          />
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-4">
-          <h3 className="truncate text-sm font-semibold text-foreground">{promotion.title}</h3>
-          <span className="label-xs shrink-0 text-accent">IG ↗</span>
-        </div>
-      </a>
-      <InstagramLinkFallback url={instagramUrl} className="mt-2" />
-    </div>
+    <a
+      href={instagramUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${promotion.title}, abrir en Instagram`}
+      className="group block"
+    >
+      <div className="relative aspect-[4/5] overflow-hidden border border-foreground/15 bg-foreground/5">
+        <Image
+          src={promotion.image_url}
+          alt={promotion.title}
+          fill
+          sizes="(min-width: 1280px) 15vw, (min-width: 768px) 30vw, 72vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          unoptimized={promotion.image_url.startsWith('http')}
+        />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-4">
+        <h3 className="truncate text-sm font-semibold text-foreground">{promotion.title}</h3>
+        <span className="label-xs shrink-0 text-accent">IG ↗</span>
+      </div>
+    </a>
   )
 }
 
