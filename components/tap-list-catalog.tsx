@@ -10,6 +10,12 @@ const FILTERS = [
   { label: 'Providencia', value: 'providencia' },
 ] as const
 
+const mexicoCityDateTime = new Intl.DateTimeFormat('es-MX', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'America/Mexico_City',
+})
+
 type LocationFilter = (typeof FILTERS)[number]['value']
 
 function isLocationFilter(value: string | null): value is LocationFilter {
@@ -90,9 +96,16 @@ export function TapListCatalog({
                     </h2>
                   </div>
                   <div className="flex items-center justify-between gap-3 sm:justify-end">
-                    <p className="label-xs text-muted-foreground">
-                      {list.tap_list_items.length} tap{list.tap_list_items.length !== 1 ? 's' : ''}
-                    </p>
+                    <div className="text-right">
+                      <p className="label-xs text-muted-foreground">
+                        {list.tap_list_items.length} tap{list.tap_list_items.length !== 1 ? 's' : ''}
+                      </p>
+                      {list.published_at ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Última actualización {mexicoCityDateTime.format(new Date(list.published_at))} · Hora del centro
+                        </p>
+                      ) : null}
+                    </div>
                     <ShareTapListButton branchName={list.locations.name} branchSlug={list.locations.slug} />
                   </div>
                 </div>
