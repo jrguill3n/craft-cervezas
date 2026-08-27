@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { getPublishedTapList } from '@/lib/tap-list'
 import type { TapListFull } from '@/lib/db-types'
 import { normalizeInstagramUrl } from '@/lib/instagram'
@@ -44,6 +45,12 @@ const INSTAGRAM_URL = normalizeInstagramUrl('https://www.instagram.com/insurgent
 const INSURGENTE_LOGO = '/brand/insurgente/insurgente-logo.svg'
 const INSURGENTE_OWL = '/brand/insurgente/insurgente-owl.png'
 const SOUL_BURGER_LOGO = '/brand/insurgente/soul-fried-chicken-logo.png'
+
+const mexicoCityDateTime = new Intl.DateTimeFormat('es-MX', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'America/Mexico_City',
+})
 
 type MenuItem = {
   name: string
@@ -185,10 +192,19 @@ function TapListSection({
             <p className="font-serif text-sm italic text-black/60">Sé un Insurgente, toma artesanal</p>
             <h2 className="mt-2 text-4xl font-black leading-none tracking-[0.06em] md:text-6xl">TAP LIST</h2>
           </div>
-          {tapList?.tap_list_items?.length ? (
-            <p className="pb-1 font-mono text-xs uppercase tracking-[0.18em] text-black/45">
-              {tapList.tap_list_items.length} taps
-            </p>
+          {tapList ? (
+            <div className="pb-1 text-right">
+              {tapList.tap_list_items.length ? (
+                <p className="font-mono text-xs uppercase tracking-[0.18em] text-black/45">
+                  {tapList.tap_list_items.length} taps
+                </p>
+              ) : null}
+              {tapList.published_at ? (
+                <p className="mt-1 max-w-44 text-xs leading-tight text-black/45 md:max-w-none">
+                  Última actualización {mexicoCityDateTime.format(new Date(tapList.published_at))} · Hora del centro
+                </p>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
@@ -298,7 +314,27 @@ function SoulBurgerSection() {
   )
 }
 
-export default async function InsurgenteGdlPage() {
+function TapListFallback() {
+  return (
+    <section className="px-4 pb-10 md:px-10 md:pb-16">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-3 flex items-end justify-between gap-5">
+          <div>
+            <p className="font-serif text-sm italic text-black/60">Sé un Insurgente, toma artesanal</p>
+            <h2 className="mt-2 text-4xl font-black leading-none tracking-[0.06em] md:text-6xl">TAP LIST</h2>
+          </div>
+        </div>
+        <div className="border-y-4 border-black bg-[#f8f7f2] px-4 py-10 shadow-[0_12px_0_#111] md:px-6">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-black/45">
+            Cargando tap list…
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+async function PublishedTapListSection() {
   let tapList: TapListFull | null = null
   let loadFailed = false
 
@@ -309,6 +345,10 @@ export default async function InsurgenteGdlPage() {
     console.error('[insurgente-gdl] Could not load published tap list:', error)
   }
 
+  return <TapListSection tapList={tapList} loadFailed={loadFailed} />
+}
+
+export default function InsurgenteGdlPage() {
   return (
     <main className="min-h-dvh bg-[#f3f1ec] text-black">
       <header className="px-5 pt-8 pb-5 text-center md:px-10 md:pt-12 md:pb-8">
@@ -325,7 +365,9 @@ export default async function InsurgenteGdlPage() {
         </div>
       </header>
 
-      <TapListSection tapList={tapList} loadFailed={loadFailed} />
+      <Suspense fallback={<TapListFallback />}>
+        <PublishedTapListSection />
+      </Suspense>
       <SoulBurgerSection />
 
       <footer className="bg-black px-5 py-5 text-[#f3f1ec] md:px-10">
