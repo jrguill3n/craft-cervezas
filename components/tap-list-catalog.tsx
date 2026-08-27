@@ -10,9 +10,8 @@ const FILTERS = [
   { label: 'Providencia', value: 'providencia' },
 ] as const
 
-const mexicoCityDateTime = new Intl.DateTimeFormat('es-MX', {
+const mexicoCityDate = new Intl.DateTimeFormat('es-MX', {
   dateStyle: 'medium',
-  timeStyle: 'short',
   timeZone: 'America/Mexico_City',
 })
 
@@ -102,7 +101,7 @@ export function TapListCatalog({
                       </p>
                       {list.published_at ? (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Última actualización {mexicoCityDateTime.format(new Date(list.published_at))} · Hora del centro
+                          Última actualización {mexicoCityDate.format(new Date(list.published_at))}
                         </p>
                       ) : null}
                     </div>
