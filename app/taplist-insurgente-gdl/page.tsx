@@ -46,9 +46,8 @@ const INSURGENTE_LOGO = '/brand/insurgente/insurgente-logo.svg'
 const INSURGENTE_OWL = '/brand/insurgente/insurgente-owl.png'
 const SOUL_BURGER_LOGO = '/brand/insurgente/soul-fried-chicken-logo.png'
 
-const mexicoCityDateTime = new Intl.DateTimeFormat('es-MX', {
+const mexicoCityDate = new Intl.DateTimeFormat('es-MX', {
   dateStyle: 'medium',
-  timeStyle: 'short',
   timeZone: 'America/Mexico_City',
 })
 
@@ -201,7 +200,7 @@ function TapListSection({
               ) : null}
               {tapList.published_at ? (
                 <p className="mt-1 max-w-44 text-xs leading-tight text-black/45 md:max-w-none">
-                  Última actualización {mexicoCityDateTime.format(new Date(tapList.published_at))} · Hora del centro
+                  Última actualización {mexicoCityDate.format(new Date(tapList.published_at))}
                 </p>
               ) : null}
             </div>
