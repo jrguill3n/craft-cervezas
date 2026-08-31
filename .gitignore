@@ -9,6 +9,14 @@ __v0_jsx-dev-runtime.ts
 # Environment variables
 .env*.local
 
+# Apple Wallet certificates / secrets
+*.p12
+*.pem
+*.cer
+*.key
+*.mobileprovision
+pass-certificates/
+
 # Common ignores
 node_modules
 .next/

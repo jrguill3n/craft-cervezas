@@ -75,6 +75,61 @@ export type PromotionRow = {
   updated_at: string
 }
 
+export type ClubMemberRow = {
+  id: string
+  member_code: string
+  first_name: string
+  last_name: string | null
+  phone: string
+  email: string | null
+  birth_date: string | null
+  points_balance: number
+  status: 'active' | 'inactive'
+  created_at: string
+  updated_at: string
+  last_activity_at: string | null
+}
+
+export type ClubMemberPublicRow = Pick<ClubMemberRow, 'member_code' | 'first_name' | 'points_balance' | 'status'>
+
+export type ClubMemberScannerRow = Pick<ClubMemberRow, 'id' | 'member_code' | 'first_name' | 'last_name' | 'points_balance' | 'status'>
+
+export type PointsTransactionRow = {
+  id: string
+  member_id: string
+  transaction_type: 'earn' | 'redeem' | 'adjustment' | 'expiration'
+  points: number
+  balance_after: number
+  reference_type: string | null
+  reference_id: string | null
+  reason: string | null
+  metadata: Record<string, unknown>
+  created_by: string | null
+  created_at: string
+}
+
+export type RewardRow = {
+  id: string
+  name: string
+  description: string | null
+  points_cost: number
+  image_url: string | null
+  active: boolean
+  stock_optional: number | null
+  created_at: string
+  updated_at: string
+}
+
+export type RedemptionRow = {
+  id: string
+  member_id: string
+  reward_id: string
+  points_spent: number
+  redeemed_by: string | null
+  points_transaction_id: string
+  created_at: string
+}
+
 // Joined shapes used in the UI
 export type TapListItemFull = TapListItemRow & {
   beers: BeerRow
@@ -84,4 +139,9 @@ export type TapListItemFull = TapListItemRow & {
 export type TapListFull = TapListRow & {
   locations: LocationRow
   tap_list_items: TapListItemFull[]
+}
+
+export type PointsTransactionWithMember = PointsTransactionRow & {
+  club_members: Pick<ClubMemberRow, 'id' | 'member_code' | 'first_name' | 'last_name' | 'phone'> | null
+  created_by_profile?: Pick<ProfileRow, 'id' | 'full_name'> | null
 }

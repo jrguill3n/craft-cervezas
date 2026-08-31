@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AdminSidebar } from '@/components/admin/admin-sidebar'
+import { canManageClubCraft } from '@/lib/admin-scope'
 
 export const metadata = {
   title: 'Admin',
@@ -56,10 +57,16 @@ export default async function AdminLayout({
   const adminBrand = insurgenteOnly
     ? { title: 'INSURGENTE GDL', subtitle: 'ADMIN' }
     : { title: 'CRAFT', subtitle: 'ADMIN' }
+  const showClubCraft = await canManageClubCraft(supabase, profile)
 
   return (
     <div className="flex h-dvh min-h-0 min-w-0 flex-col overflow-hidden bg-background xl:flex-row">
-      <AdminSidebar profile={profile} supabaseConfig={{ url, anonKey }} adminBrand={adminBrand} />
+      <AdminSidebar
+        profile={profile}
+        supabaseConfig={{ url, anonKey }}
+        adminBrand={adminBrand}
+        showClubCraft={showClubCraft}
+      />
       <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none xl:overflow-y-auto">
         {children}
       </main>

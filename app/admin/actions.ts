@@ -2,7 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { getManageableLocationIds } from '@/lib/admin-scope'
+import { canManageClubCraft, getManageableLocationIds } from '@/lib/admin-scope'
+import { calculateClubCraftEarnPoints } from '@/lib/club-craft-points'
+import { createClubCraftQrPayload, parseClubCraftQrPayload } from '@/lib/club-craft-qr'
+import { isCanonicalInstagramPostUrl, normalizeInstagramUrl } from '@/lib/instagram'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -27,11 +30,101 @@ async function requireSuperAdmin() {
   return context
 }
 
+async function requireClubCraftAdmin() {
+  const context = await requireAuth()
+  const allowed = await canManageClubCraft(context.supabase, context.profile)
+  if (!allowed) {
+    throw new Error('No tienes permiso para administrar Club Craft.')
+  }
+  return context
+}
+
 async function getBeerCreationLocationIds(
   supabase: Awaited<ReturnType<typeof createClient>>,
   profile: { id: string; role: 'super_admin' | 'location_manager' },
 ) {
   return getManageableLocationIds(supabase, profile)
+}
+
+function normalizePhone(value: FormDataEntryValue | null) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return ''
+  const startsWithPlus = raw.startsWith('+')
+  const digits = raw.replace(/\D/g, '')
+  return `${startsWithPlus ? '+' : ''}${digits}`
+}
+
+function normalizeOptionalText(value: FormDataEntryValue | null) {
+  const text = String(value ?? '').trim()
+  return text || null
+}
+
+function parseClubMemberForm(formData: FormData) {
+  const first_name = String(formData.get('first_name') ?? '').trim()
+  const last_name = normalizeOptionalText(formData.get('last_name'))
+  const phone = normalizePhone(formData.get('phone'))
+  const email = normalizeOptionalText(formData.get('email'))?.toLowerCase() ?? null
+  const birth_date = normalizeOptionalText(formData.get('birth_date'))
+
+  if (!first_name) throw new Error('El nombre es obligatorio.')
+  if (!phone || phone.replace(/\D/g, '').length < 7) {
+    throw new Error('Agrega un teléfono válido.')
+  }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('Agrega un correo válido.')
+  }
+  if (birth_date && Number.isNaN(Date.parse(`${birth_date}T00:00:00`))) {
+    throw new Error('Agrega una fecha de nacimiento válida.')
+  }
+
+  return { first_name, last_name, phone, email, birth_date }
+}
+
+function parseRewardForm(formData: FormData) {
+  const name = String(formData.get('name') ?? '').trim()
+  const description = normalizeOptionalText(formData.get('description'))
+  const image_url = normalizeOptionalText(formData.get('image_url'))
+  const points_cost = Number(formData.get('points_cost'))
+  const stockValue = normalizeOptionalText(formData.get('stock_optional'))
+  const stock_optional = stockValue === null ? null : Number(stockValue)
+  const active = String(formData.get('active') ?? 'false') === 'true'
+
+  if (!name) throw new Error('El nombre de la recompensa es obligatorio.')
+  if (!Number.isInteger(points_cost) || points_cost <= 0) {
+    throw new Error('El costo en puntos debe ser mayor a cero.')
+  }
+  if (stockValue !== null && (!Number.isInteger(Number(stockValue)) || Number(stockValue) < 0)) {
+    throw new Error('El stock debe ser un número entero positivo o quedar vacío.')
+  }
+
+  return { name, description, image_url, points_cost, stock_optional, active }
+}
+
+function parsePositiveMoney(value: FormDataEntryValue | null) {
+  const amount = Number(String(value ?? '').replace(',', '.'))
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('Agrega un monto elegible válido.')
+  }
+  return amount
+}
+
+function parsePositiveInteger(value: FormDataEntryValue | null, message: string) {
+  const points = Number(value)
+  if (!Number.isInteger(points) || points <= 0) {
+    throw new Error(message)
+  }
+  return points
+}
+
+function parseRpcRow<T>(data: T[] | T | null) {
+  return Array.isArray(data) ? data[0] : data
+}
+
+function handlePointsRpcError(error: { code?: string; message: string }) {
+  if (error.code === '23505') {
+    throw new Error('Esa referencia ya fue registrada en Club Craft.')
+  }
+  throw new Error(error.message)
 }
 
 // ── Tap List ─────────────────────────────────────────────────────────────────
@@ -273,12 +366,221 @@ export async function deleteBeer(id: string) {
   revalidatePath('/taplist', 'page')
 }
 
+// ── Club Craft ───────────────────────────────────────────────────────────────
+
+export async function createClubMember(formData: FormData) {
+  const { supabase } = await requireClubCraftAdmin()
+  const input = parseClubMemberForm(formData)
+
+  const { data: duplicate, error: duplicateError } = await supabase
+    .from('club_members')
+    .select('id')
+    .eq('phone', input.phone)
+    .maybeSingle()
+  if (duplicateError) throw new Error(duplicateError.message)
+  if (duplicate) throw new Error('Ya existe un miembro con ese teléfono.')
+
+  const { data, error } = await supabase
+    .from('club_members')
+    .insert(input)
+    .select('id')
+    .single()
+
+  if (error) {
+    if (error.code === '23505') throw new Error('Ya existe un miembro con ese teléfono.')
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/admin/club/members')
+  return { id: data.id as string }
+}
+
+export async function updateClubMember(id: string, formData: FormData) {
+  const { supabase } = await requireClubCraftAdmin()
+  if (!id) throw new Error('Falta el miembro.')
+  const input = parseClubMemberForm(formData)
+  const status = String(formData.get('status') ?? 'active')
+  if (status !== 'active' && status !== 'inactive') {
+    throw new Error('El estatus no es válido.')
+  }
+
+  const { data: duplicate, error: duplicateError } = await supabase
+    .from('club_members')
+    .select('id')
+    .eq('phone', input.phone)
+    .neq('id', id)
+    .maybeSingle()
+  if (duplicateError) throw new Error(duplicateError.message)
+  if (duplicate) throw new Error('Ya existe otro miembro con ese teléfono.')
+
+  const { error } = await supabase
+    .from('club_members')
+    .update({ ...input, status })
+    .eq('id', id)
+
+  if (error) {
+    if (error.code === '23505') throw new Error('Ya existe otro miembro con ese teléfono.')
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/admin/club/members')
+  revalidatePath(`/admin/club/members/${id}`)
+}
+
+export async function setClubMemberStatus(id: string, status: 'active' | 'inactive') {
+  const { supabase } = await requireClubCraftAdmin()
+  if (!id) throw new Error('Falta el miembro.')
+  if (status !== 'active' && status !== 'inactive') throw new Error('El estatus no es válido.')
+
+  const { error } = await supabase
+    .from('club_members')
+    .update({ status })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/club/members')
+  revalidatePath(`/admin/club/members/${id}`)
+}
+
+export async function registerClubPurchase(memberId: string, formData: FormData) {
+  const { supabase } = await requireClubCraftAdmin()
+  if (!memberId) throw new Error('Falta el miembro.')
+
+  const eligiblePurchaseAmount = parsePositiveMoney(formData.get('eligible_purchase_amount'))
+  const points = calculateClubCraftEarnPoints(eligiblePurchaseAmount)
+  if (points <= 0) {
+    throw new Error('El monto elegible no genera puntos suficientes.')
+  }
+
+  const referenceId = normalizeOptionalText(formData.get('reference_id'))
+  const note = normalizeOptionalText(formData.get('note'))
+
+  const { data, error } = await supabase.rpc('create_club_points_transaction', {
+    p_member_id: memberId,
+    p_transaction_type: 'earn',
+    p_points: points,
+    p_reference_type: 'manual_purchase',
+    p_reference_id: referenceId,
+    p_reason: note ?? 'Compra manual',
+    p_metadata: {
+      eligible_purchase_amount: eligiblePurchaseAmount,
+      note,
+    },
+  })
+
+  if (error) handlePointsRpcError(error)
+
+  revalidatePath('/admin/club/members')
+  revalidatePath(`/admin/club/members/${memberId}`)
+  revalidatePath('/admin/club/points-transactions')
+
+  return parseRpcRow(data)
+}
+
+export async function adjustClubPoints(memberId: string, formData: FormData) {
+  const { supabase } = await requireClubCraftAdmin()
+  if (!memberId) throw new Error('Falta el miembro.')
+
+  const direction = String(formData.get('direction') ?? 'add')
+  if (direction !== 'add' && direction !== 'remove') {
+    throw new Error('El tipo de ajuste no es válido.')
+  }
+
+  const amount = parsePositiveInteger(formData.get('points'), 'Agrega una cantidad de puntos válida.')
+  const reason = normalizeOptionalText(formData.get('reason'))
+  if (!reason) throw new Error('El motivo es obligatorio para ajustar puntos.')
+
+  const points = direction === 'remove' ? -amount : amount
+
+  const { data, error } = await supabase.rpc('create_club_points_transaction', {
+    p_member_id: memberId,
+    p_transaction_type: 'adjustment',
+    p_points: points,
+    p_reference_type: 'manual_adjustment',
+    p_reference_id: normalizeOptionalText(formData.get('reference_id')),
+    p_reason: reason,
+    p_metadata: {
+      direction,
+    },
+  })
+
+  if (error) handlePointsRpcError(error)
+
+  revalidatePath('/admin/club/members')
+  revalidatePath(`/admin/club/members/${memberId}`)
+  revalidatePath('/admin/club/points-transactions')
+
+  return parseRpcRow(data)
+}
+
+export async function redeemClubReward(memberId: string, rewardId: string) {
+  const { supabase } = await requireClubCraftAdmin()
+  if (!memberId) throw new Error('Falta el miembro.')
+  if (!rewardId) throw new Error('Falta la recompensa.')
+
+  const { data, error } = await supabase.rpc('redeem_club_reward', {
+    p_member_id: memberId,
+    p_reward_id: rewardId,
+  })
+
+  if (error) handlePointsRpcError(error)
+
+  revalidatePath('/admin/club/members')
+  revalidatePath(`/admin/club/members/${memberId}`)
+  revalidatePath('/admin/club/points-transactions')
+  revalidatePath('/admin/club/rewards')
+
+  return parseRpcRow(data)
+}
+
+export async function lookupClubMemberByQr(payload: string) {
+  const { supabase } = await requireClubCraftAdmin()
+  const memberCode = parseClubCraftQrPayload(payload)
+  if (!memberCode) throw new Error('El QR o código no es válido.')
+
+  const { data, error } = await supabase.rpc('get_admin_club_member_by_qr', {
+    p_payload: createClubCraftQrPayload(memberCode),
+  })
+
+  if (error) throw new Error(error.message)
+  const member = parseRpcRow(data)
+  if (!member) throw new Error('No encontramos un miembro con ese código.')
+
+  return member
+}
+
+export async function createReward(formData: FormData) {
+  const { supabase } = await requireClubCraftAdmin()
+  const input = parseRewardForm(formData)
+
+  const { error } = await supabase.from('rewards').insert(input)
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/club/rewards')
+}
+
+export async function updateReward(id: string, formData: FormData) {
+  const { supabase } = await requireClubCraftAdmin()
+  if (!id) throw new Error('Falta la recompensa.')
+  const input = parseRewardForm(formData)
+
+  const { error } = await supabase
+    .from('rewards')
+    .update(input)
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/club/rewards')
+}
+
 // ── Promotions ───────────────────────────────────────────────────────────────
 
 function parsePromotionForm(formData: FormData) {
   const title = String(formData.get('title') ?? '').trim()
   const image_url = String(formData.get('image_url') ?? '').trim()
-  const instagram_url = String(formData.get('instagram_url') ?? '').trim()
+  const instagram_url = normalizeInstagramUrl(String(formData.get('instagram_url') ?? ''))
   const sort_order = Number(formData.get('sort_order'))
   const active = String(formData.get('active') ?? 'false') === 'true'
 
@@ -289,19 +591,11 @@ function parsePromotionForm(formData: FormData) {
     throw new Error('El orden debe ser un número del 1 al 6.')
   }
 
-  let url: URL
-  try {
-    url = new URL(instagram_url)
-  } catch {
-    throw new Error('El link de Instagram no es válido.')
+  if (!isCanonicalInstagramPostUrl(instagram_url)) {
+    throw new Error('El link debe ser un post de Instagram: https://www.instagram.com/p/.../')
   }
 
-  const host = url.hostname.toLowerCase()
-  if (url.protocol !== 'https:' || (host !== 'instagram.com' && host !== 'www.instagram.com')) {
-    throw new Error('El link debe ser de instagram.com.')
-  }
-
-  return { title, image_url, instagram_url: url.toString(), sort_order, active }
+  return { title, image_url, instagram_url, sort_order, active }
 }
 
 async function assertPromotionLimits(

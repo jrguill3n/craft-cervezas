@@ -17,6 +17,7 @@ type Props = {
     title: string
     subtitle: string
   }
+  showClubCraft?: boolean
 }
 
 const navItems = [
@@ -25,7 +26,19 @@ const navItems = [
   { label: 'PROMOCIONES', href: '/admin/promotions', superAdminOnly: true },
 ]
 
-export function AdminSidebar({ profile, supabaseConfig, adminBrand = { title: 'CRAFT', subtitle: 'ADMIN' } }: Props) {
+const clubCraftItems = [
+  { label: 'MIEMBROS', href: '/admin/club/members' },
+  { label: 'SCANNER', href: '/admin/club/scanner' },
+  { label: 'TRANSACCIONES', href: '/admin/club/points-transactions' },
+  { label: 'RECOMPENSAS', href: '/admin/club/rewards' },
+]
+
+export function AdminSidebar({
+  profile,
+  supabaseConfig,
+  adminBrand = { title: 'CRAFT', subtitle: 'ADMIN' },
+  showClubCraft = false,
+}: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -138,6 +151,32 @@ export function AdminSidebar({ profile, supabaseConfig, adminBrand = { title: 'C
               </Link>
             )
           })}
+          {showClubCraft ? (
+            <div className="mt-6 border-t border-foreground/10 pt-5">
+              <p className="px-3 pb-2 text-[0.6rem] font-semibold uppercase tracking-[0.24em] text-foreground/35">
+                Club Craft
+              </p>
+              <div className="flex flex-col gap-1">
+                {clubCraftItems.map((item) => {
+                  const active = pathname.startsWith(item.href)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex min-h-10 items-center px-3 py-2 text-[0.68rem] font-semibold tracking-widest transition-colors ${
+                        active
+                          ? 'bg-foreground text-background'
+                          : 'text-foreground/50 hover:text-foreground'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
         </nav>
 
         {/* Footer */}

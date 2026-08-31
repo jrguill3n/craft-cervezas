@@ -34,6 +34,28 @@ export async function getManageableLocationIds(
   return locations.map((location) => location.id)
 }
 
+export async function canManageClubCraft(
+  supabase: SupabaseClient,
+  profile: AdminProfile,
+) {
+  if (profile.role === 'super_admin') return true
+
+  const { data, error } = await supabase
+    .from('profile_locations')
+    .select('locations(slug, active)')
+    .eq('profile_id', profile.id)
+
+  if (error) throw new Error(`No se pudo validar acceso a Club Craft: ${error.message}`)
+
+  return (data ?? []).some((row: any) => {
+    const location = Array.isArray(row.locations) ? row.locations[0] : row.locations
+    return Boolean(
+      location?.active &&
+      CRAFT_LOCATION_SLUGS.includes(location.slug as (typeof CRAFT_LOCATION_SLUGS)[number]),
+    )
+  })
+}
+
 async function getAssignedLocationIds(supabase: SupabaseClient, profileId: string) {
   const { data, error } = await supabase
     .from('profile_locations')
@@ -44,4 +66,3 @@ async function getAssignedLocationIds(supabase: SupabaseClient, profileId: strin
 
   return (data ?? []).map((row) => row.location_id as string)
 }
-
