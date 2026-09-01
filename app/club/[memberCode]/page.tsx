@@ -1,6 +1,7 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { createClubCraftQrPayload, createClubCraftQrSvg, normalizeClubMemberCode } from '@/lib/club-craft-qr'
+import { createClubCraftPublicQrSvg, normalizeClubMemberCode } from '@/lib/club-craft-qr'
 import type { ClubMemberPublicRow } from '@/lib/db-types'
 import { createClient } from '@/lib/supabase/server'
 
@@ -33,6 +34,14 @@ async function getPublicMember(memberCode: string) {
   return (row ?? null) as ClubMemberPublicRow | null
 }
 
+async function getRequestOrigin() {
+  const requestHeaders = await headers()
+  const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host')
+  if (!host) return null
+  const proto = requestHeaders.get('x-forwarded-proto') ?? 'https'
+  return `${proto}://${host}`
+}
+
 export default async function ClubMemberPage({
   params,
 }: {
@@ -42,8 +51,7 @@ export default async function ClubMemberPage({
   const member = await getPublicMember(memberCode)
   if (!member) notFound()
 
-  const qr = createClubCraftQrSvg(member.member_code, { size: 220 })
-  const qrPayload = createClubCraftQrPayload(member.member_code)
+  const qr = createClubCraftPublicQrSvg(member.member_code, { size: 264, origin: await getRequestOrigin() })
 
   return (
     <main className="min-h-dvh bg-background px-4 py-8 text-foreground">
@@ -61,8 +69,11 @@ export default async function ClubMemberPage({
           <p className="mt-5 label-xs text-muted-foreground">MIEMBRO</p>
           <p className="mt-2 font-mono text-sm">{member.member_code}</p>
 
-          <div className="mt-6 bg-white p-4" dangerouslySetInnerHTML={{ __html: qr.svg }} />
-          <p className="mt-4 break-all font-mono text-[0.65rem] text-foreground/35">{qrPayload}</p>
+          <div
+            className="mt-6 flex justify-center bg-white p-4 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full [&_svg]:max-w-[264px]"
+            dangerouslySetInnerHTML={{ __html: qr.svg }}
+          />
+          <p className="mt-4 break-all font-mono text-[0.65rem] text-foreground/35">{qr.payload}</p>
         </section>
 
         {member.status === 'inactive' ? (
