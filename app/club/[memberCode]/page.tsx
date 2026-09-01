@@ -1,8 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { createClubCraftQrSvg, normalizeClubMemberCode } from '@/lib/club-craft-qr'
-import { buildClubCraftPassPreview, getAppleWalletConfigStatus, getPublicWalletStatusMessage } from '@/lib/apple-wallet'
+import { createClubCraftQrPayload, createClubCraftQrSvg, normalizeClubMemberCode } from '@/lib/club-craft-qr'
 import type { ClubMemberPublicRow } from '@/lib/db-types'
 import { createClient } from '@/lib/supabase/server'
 
@@ -16,7 +14,7 @@ export async function generateMetadata({
   const { memberCode } = await params
   return {
     title: `Club Craft ${normalizeClubMemberCode(memberCode)}`,
-    description: 'Tarjeta Club Craft para Apple Wallet.',
+    description: 'Tarjeta digital Club Craft con QR de miembro.',
     robots: {
       index: false,
       follow: false,
@@ -35,7 +33,7 @@ async function getPublicMember(memberCode: string) {
   return (row ?? null) as ClubMemberPublicRow | null
 }
 
-export default async function ClubMemberWalletPage({
+export default async function ClubMemberPage({
   params,
 }: {
   params: Promise<{ memberCode: string }>
@@ -44,9 +42,8 @@ export default async function ClubMemberWalletPage({
   const member = await getPublicMember(memberCode)
   if (!member) notFound()
 
-  const walletStatus = getAppleWalletConfigStatus()
-  const preview = buildClubCraftPassPreview(member)
   const qr = createClubCraftQrSvg(member.member_code, { size: 220 })
+  const qrPayload = createClubCraftQrPayload(member.member_code)
 
   return (
     <main className="min-h-dvh bg-background px-4 py-8 text-foreground">
@@ -65,30 +62,16 @@ export default async function ClubMemberWalletPage({
           <p className="mt-2 font-mono text-sm">{member.member_code}</p>
 
           <div className="mt-6 bg-white p-4" dangerouslySetInnerHTML={{ __html: qr.svg }} />
-          <p className="mt-4 break-all font-mono text-[0.65rem] text-foreground/35">{preview.barcodeMessage}</p>
+          <p className="mt-4 break-all font-mono text-[0.65rem] text-foreground/35">{qrPayload}</p>
         </section>
 
         {member.status === 'inactive' ? (
           <div className="border border-accent/40 bg-accent/10 p-4 text-sm text-accent">
             Esta cuenta Club Craft está inactiva. Habla con el equipo de Craft para más información.
           </div>
-        ) : walletStatus.configured ? (
-          <a
-            href={`/club/${member.member_code}/pass`}
-            className="inline-flex items-center justify-center self-center transition-opacity hover:opacity-85"
-            aria-label="Add to Apple Wallet"
-          >
-            <Image
-              src="/brand/apple-wallet/add-to-apple-wallet.svg"
-              alt="Add to Apple Wallet"
-              width={212}
-              height={66}
-              priority
-            />
-          </a>
         ) : (
           <div className="border border-foreground/10 p-4 text-sm text-muted-foreground">
-            {getPublicWalletStatusMessage()}
+            Guarda esta página o toma screenshot del QR para acumular puntos en barra.
           </div>
         )}
 

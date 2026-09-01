@@ -135,7 +135,7 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
   const [adjustmentForm, setAdjustmentForm] = useState(EMPTY_ADJUSTMENT)
   const [form, setForm] = useState<FormState>(() => memberToForm(member))
   const [origin, setOrigin] = useState('')
-  const [copiedWalletLink, setCopiedWalletLink] = useState(false)
+  const [copiedPublicLink, setCopiedPublicLink] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -144,8 +144,8 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
   const purchasePoints = calculateClubCraftEarnPoints(purchaseAmount)
   const selectedRewardBalanceAfter = selectedReward ? member.points_balance - selectedReward.points_cost : null
   const qr = createClubCraftQrSvg(member.member_code, { size: 280 })
-  const walletPath = `/club/${member.member_code}`
-  const walletUrl = origin ? `${origin}${walletPath}` : walletPath
+  const publicPath = `/club/${member.member_code}`
+  const publicUrl = origin ? `${origin}${publicPath}` : publicPath
 
   function updateField(field: keyof FormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value as FormState[keyof FormState] }))
@@ -255,11 +255,11 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
     })
   }
 
-  async function copyWalletLink() {
+  async function copyPublicLink() {
     if (!navigator.clipboard) return
-    await navigator.clipboard.writeText(walletUrl)
-    setCopiedWalletLink(true)
-    window.setTimeout(() => setCopiedWalletLink(false), 1800)
+    await navigator.clipboard.writeText(publicUrl)
+    setCopiedPublicLink(true)
+    window.setTimeout(() => setCopiedPublicLink(false), 1800)
   }
 
   useEffect(() => {
@@ -602,29 +602,23 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
           </section>
 
           <section className="border border-foreground/10 p-4 md:p-6">
-            <h2 className="label-xs mb-5 text-muted-foreground">WALLET</h2>
+            <h2 className="label-xs mb-5 text-muted-foreground">LINK PÚBLICO</h2>
             <p className="text-sm text-muted-foreground">
-              Link público de inscripción para Apple Wallet. Solo muestra nombre, puntos y código.
+              Página personal del miembro. Solo muestra nombre, puntos y código QR.
             </p>
-            <Link href={walletPath} target="_blank" className="mt-4 block break-all font-mono text-xs text-foreground hover:text-accent">
-              {walletUrl}
+            <Link href={publicPath} target="_blank" className="mt-4 block break-all font-mono text-xs text-foreground hover:text-accent">
+              {publicUrl}
             </Link>
             <div className="mt-5 grid gap-2">
               <button
                 type="button"
-                onClick={copyWalletLink}
+                onClick={copyPublicLink}
                 className="min-h-11 border border-foreground/20 px-4 text-xs font-semibold tracking-widest text-foreground hover:border-foreground"
               >
-                {copiedWalletLink ? 'LINK COPIADO' : 'COPIAR LINK'}
+                {copiedPublicLink ? 'LINK COPIADO' : 'COPIAR LINK'}
               </button>
-              <a
-                href={`/club/${member.member_code}/pass`}
-                className="inline-flex min-h-11 items-center justify-center bg-foreground px-4 text-xs font-semibold tracking-widest text-background hover:bg-foreground/80"
-              >
-                DESCARGAR PASS
-              </a>
               <p className="text-xs text-foreground/40">
-                Si Apple Wallet no está configurado, la descarga mostrará un mensaje seguro de configuración pendiente.
+                El cliente puede guardar este link o tomar screenshot del QR para usarlo en barra.
               </p>
             </div>
           </section>
