@@ -6,11 +6,14 @@ import { Search, X } from 'lucide-react'
 import {
   adjustClubPoints,
   lookupClubMemberByQr,
+  previewClubPosterPurchase,
   redeemClubReward,
+  registerClubPosterPurchase,
   registerClubPurchase,
 } from '@/app/admin/actions'
 import { calculateClubCraftEarnPoints } from '@/lib/club-craft-points'
 import { createClubCraftQrPayload, parseClubCraftQrPayload } from '@/lib/club-craft-qr'
+import type { PosterPurchasePreview } from '@/lib/poster'
 import type { ClubMemberScannerRow, RewardRow } from '@/lib/db-types'
 
 type Props = {
@@ -23,6 +26,10 @@ const EMPTY_PURCHASE = {
   eligible_purchase_amount: '',
   reference_id: '',
   note: '',
+}
+
+const EMPTY_POSTER_PURCHASE = {
+  transaction_id: '',
 }
 
 const EMPTY_ADJUSTMENT = {
@@ -38,8 +45,32 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
   maximumFractionDigits: 2,
 })
 
+const dateTimeFormatter = new Intl.DateTimeFormat('es-MX', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'America/Mexico_City',
+})
+
+const percentFormatter = new Intl.NumberFormat('es-MX', {
+  style: 'percent',
+  maximumFractionDigits: 1,
+})
+
 function fullName(member: Pick<ClubMemberScannerRow, 'first_name' | 'last_name'>) {
   return [member.first_name, member.last_name].filter(Boolean).join(' ')
+}
+
+function formatPosterDateTime(value: string | null) {
+  if (!value) return '—'
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/)
+  if (match) {
+    const [, year, month, day, hour, minute] = match
+    return hour && minute ? `${day}/${month}/${year}, ${hour}:${minute}` : `${day}/${month}/${year}`
+  }
+  return dateTimeFormatter.format(new Date(value))
 }
 
 function formDataFromObject(values: Record<string, string>) {
@@ -58,7 +89,10 @@ export function ClubScanner({ rewards }: Props) {
   const [message, setMessage] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<ScannerAction>(null)
   const [selectedReward, setSelectedReward] = useState<RewardRow | null>(null)
+  const [purchaseMode, setPurchaseMode] = useState<'poster' | 'manual'>('poster')
   const [purchaseForm, setPurchaseForm] = useState(EMPTY_PURCHASE)
+  const [posterPurchaseForm, setPosterPurchaseForm] = useState(EMPTY_POSTER_PURCHASE)
+  const [posterPreview, setPosterPreview] = useState<(PosterPurchasePreview & { alreadyRegistered: boolean }) | null>(null)
   const [adjustmentForm, setAdjustmentForm] = useState(EMPTY_ADJUSTMENT)
   const [isPending, startTransition] = useTransition()
 
@@ -79,6 +113,8 @@ export function ClubScanner({ rewards }: Props) {
       setMember(result as ClubMemberScannerRow)
       setActiveAction(null)
       setSelectedReward(null)
+      setPosterPurchaseForm(EMPTY_POSTER_PURCHASE)
+      setPosterPreview(null)
       setMessage(null)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No encontramos ese miembro.')
@@ -98,6 +134,8 @@ export function ClubScanner({ rewards }: Props) {
     setActiveAction(null)
     setSelectedReward(null)
     setPurchaseForm(EMPTY_PURCHASE)
+    setPosterPurchaseForm(EMPTY_POSTER_PURCHASE)
+    setPosterPreview(null)
     setAdjustmentForm(EMPTY_ADJUSTMENT)
   }
 
@@ -119,6 +157,36 @@ export function ClubScanner({ rewards }: Props) {
         refreshMemberByCurrentCode()
       } catch (error) {
         setMessage(error instanceof Error ? error.message : 'No se pudo registrar la compra.')
+      }
+    })
+  }
+
+  function handlePosterPreview() {
+    if (!member || memberInactive) return
+    setMessage(null)
+    setPosterPreview(null)
+    startTransition(async () => {
+      try {
+        const preview = await previewClubPosterPurchase(posterPurchaseForm.transaction_id)
+        setPosterPreview(preview)
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'No se pudo consultar el ticket de Poster.')
+      }
+    })
+  }
+
+  function handlePosterPurchase() {
+    if (!member || memberInactive) return
+    startTransition(async () => {
+      try {
+        await registerClubPosterPurchase(member.id, posterPurchaseForm.transaction_id)
+        setPosterPurchaseForm(EMPTY_POSTER_PURCHASE)
+        setPosterPreview(null)
+        setActiveAction(null)
+        setMessage('Ticket Poster registrado.')
+        refreshMemberByCurrentCode()
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'No se pudo registrar el ticket de Poster.')
       }
     })
   }
@@ -323,17 +391,132 @@ export function ClubScanner({ rewards }: Props) {
 
               {activeAction === 'purchase' && !memberInactive ? (
                 <div className="mt-5 border border-foreground/10 p-4">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <Field label="COMPRA ELEGIBLE" value={purchaseForm.eligible_purchase_amount} onChange={(value) => setPurchaseForm((prev) => ({ ...prev, eligible_purchase_amount: value }))} placeholder="500" inputMode="decimal" />
-                    <Field label="REFERENCIA" value={purchaseForm.reference_id} onChange={(value) => setPurchaseForm((prev) => ({ ...prev, reference_id: value }))} placeholder="Ticket opcional" />
-                    <Field label="NOTA" value={purchaseForm.note} onChange={(value) => setPurchaseForm((prev) => ({ ...prev, note: value }))} placeholder="Opcional" />
+                  <div className="mb-4 grid grid-cols-2 gap-2 md:inline-grid md:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPurchaseMode('poster')
+                        setMessage(null)
+                      }}
+                      className={`min-h-11 border px-4 text-xs font-semibold tracking-widest ${
+                        purchaseMode === 'poster'
+                          ? 'border-accent bg-accent text-background'
+                          : 'border-foreground/15 text-foreground/60 hover:border-foreground/40 hover:text-foreground'
+                      }`}
+                    >
+                      POSTER
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPurchaseMode('manual')
+                        setMessage(null)
+                      }}
+                      className={`min-h-11 border px-4 text-xs font-semibold tracking-widest ${
+                        purchaseMode === 'manual'
+                          ? 'border-accent bg-accent text-background'
+                          : 'border-foreground/15 text-foreground/60 hover:border-foreground/40 hover:text-foreground'
+                      }`}
+                    >
+                      MANUAL
+                    </button>
                   </div>
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    Compra elegible: {Number.isFinite(purchaseAmount) && purchaseAmount > 0 ? currencyFormatter.format(purchaseAmount) : '—'} · Puntos a generar: <span className="text-accent">+{purchasePoints}</span>
-                  </p>
-                  <button onClick={handlePurchase} disabled={isPending || purchasePoints <= 0} className="mt-4 min-h-12 w-full bg-foreground px-4 text-xs font-semibold tracking-widest text-background disabled:opacity-40">
-                    CONFIRMAR COMPRA
-                  </button>
+
+                  {purchaseMode === 'poster' ? (
+                    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
+                      <div className="space-y-4">
+                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                          <Field
+                            label="ID DE TICKET POSTER"
+                            value={posterPurchaseForm.transaction_id}
+                            onChange={(value) => {
+                              setPosterPurchaseForm({ transaction_id: value })
+                              setPosterPreview(null)
+                            }}
+                            placeholder="Ej. 100498"
+                            inputMode="numeric"
+                          />
+                          <button
+                            type="button"
+                            onClick={handlePosterPreview}
+                            disabled={isPending || !posterPurchaseForm.transaction_id.trim()}
+                            className="min-h-12 self-end border border-foreground/20 px-5 text-xs font-semibold tracking-widest text-foreground hover:border-foreground disabled:opacity-40"
+                          >
+                            {isPending ? 'CONSULTANDO…' : 'CALCULAR'}
+                          </button>
+                        </div>
+
+                        {posterPreview ? (
+                          <div className="border border-foreground/10">
+                            <div className="grid gap-3 border-b border-foreground/10 p-4 text-sm md:grid-cols-3">
+                              <Info label="Ticket" value={posterPreview.transactionId} mono />
+                              <Info label="Sucursal Poster" value={posterPreview.spotName ?? posterPreview.spotId ?? '—'} />
+                              <Info label="Fecha cierre" value={formatPosterDateTime(posterPreview.closedAt)} />
+                            </div>
+                            <div className="divide-y divide-foreground/10">
+                              {posterPreview.eligibleItems.map((item, index) => (
+                                <div key={`${item.productId ?? item.productName}-${index}`} className="grid gap-2 p-4 text-xs md:grid-cols-[minmax(0,1fr)_7rem_5rem] md:items-start">
+                                  <div>
+                                    <p className="font-semibold text-foreground">{item.productName}</p>
+                                    <p className="mt-1 text-foreground/45">
+                                      {item.rootCategoryName ?? 'Sin categoría'} · {percentFormatter.format(item.pointsRate)}
+                                    </p>
+                                  </div>
+                                  <p className="font-mono text-foreground/70 md:text-right">{currencyFormatter.format(item.eligibleAmount)}</p>
+                                  <p className="font-mono font-semibold text-emerald-300 md:text-right">+{item.points}</p>
+                                </div>
+                              ))}
+                              {posterPreview.eligibleItems.length === 0 ? (
+                                <div className="p-4 text-sm text-muted-foreground">No hay productos elegibles en este ticket.</div>
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="border border-foreground/10 p-4 text-sm text-muted-foreground">
+                            Escanea el QR del cliente, ingresa el ticket Poster y confirma la acumulación sin salir del scanner.
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border border-foreground/10 p-4">
+                        <p className="text-sm text-muted-foreground">Total ticket</p>
+                        <p className="mt-1 font-mono text-xl text-foreground">
+                          {posterPreview ? currencyFormatter.format(posterPreview.totalPaid) : '—'}
+                        </p>
+                        <p className="mt-4 text-sm text-muted-foreground">Compra elegible</p>
+                        <p className="mt-1 font-mono text-xl text-foreground">
+                          {posterPreview ? currencyFormatter.format(posterPreview.eligibleAmount) : '—'}
+                        </p>
+                        <p className="mt-4 text-sm text-muted-foreground">Puntos a generar</p>
+                        <p className="mt-1 font-mono text-3xl font-semibold text-accent">+{posterPreview?.points ?? 0}</p>
+                        {posterPreview?.alreadyRegistered ? (
+                          <p className="mt-3 text-xs text-accent">Este ticket ya fue registrado.</p>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={handlePosterPurchase}
+                          disabled={isPending || !posterPreview || posterPreview.alreadyRegistered || posterPreview.points <= 0}
+                          className="mt-5 min-h-12 w-full bg-foreground px-4 text-xs font-semibold tracking-widest text-background disabled:opacity-40"
+                        >
+                          {isPending ? 'GUARDANDO…' : 'CONFIRMAR TICKET POSTER'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <Field label="COMPRA ELEGIBLE" value={purchaseForm.eligible_purchase_amount} onChange={(value) => setPurchaseForm((prev) => ({ ...prev, eligible_purchase_amount: value }))} placeholder="500" inputMode="decimal" />
+                        <Field label="REFERENCIA" value={purchaseForm.reference_id} onChange={(value) => setPurchaseForm((prev) => ({ ...prev, reference_id: value }))} placeholder="Ticket opcional" />
+                        <Field label="NOTA" value={purchaseForm.note} onChange={(value) => setPurchaseForm((prev) => ({ ...prev, note: value }))} placeholder="Opcional" />
+                      </div>
+                      <p className="mt-4 text-sm text-muted-foreground">
+                        Compra elegible: {Number.isFinite(purchaseAmount) && purchaseAmount > 0 ? currencyFormatter.format(purchaseAmount) : '—'} · Puntos a generar: <span className="text-accent">+{purchasePoints}</span>
+                      </p>
+                      <button onClick={handlePurchase} disabled={isPending || purchasePoints <= 0} className="mt-4 min-h-12 w-full bg-foreground px-4 text-xs font-semibold tracking-widest text-background disabled:opacity-40">
+                        CONFIRMAR COMPRA
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : null}
 
@@ -407,6 +590,15 @@ function ActionButton({ active, onClick, children }: { active: boolean; onClick:
     >
       {children}
     </button>
+  )
+}
+
+function Info({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div>
+      <dt className="label-xs text-foreground/35">{label}</dt>
+      <dd className={`mt-1 text-sm text-foreground ${mono ? 'font-mono' : ''}`}>{value}</dd>
+    </div>
   )
 }
 

@@ -107,6 +107,16 @@ function formatDateTime(value: string | null) {
   return dateTimeFormatter.format(new Date(value))
 }
 
+function formatPosterDateTime(value: string | null) {
+  if (!value) return '—'
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/)
+  if (match) {
+    const [, year, month, day, hour, minute] = match
+    return hour && minute ? `${day}/${month}/${year}, ${hour}:${minute}` : `${day}/${month}/${year}`
+  }
+  return formatDateTime(value)
+}
+
 function statusLabel(status: ClubMemberRow['status']) {
   return status === 'active' ? 'Activo' : 'Inactivo'
 }
@@ -474,7 +484,7 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
                         <div className="grid gap-3 border-b border-foreground/10 p-4 text-sm md:grid-cols-3">
                           <Info label="Ticket" value={posterPreview.transactionId} mono />
                           <Info label="Sucursal Poster" value={posterPreview.spotName ?? posterPreview.spotId ?? '—'} />
-                          <Info label="Fecha cierre" value={posterPreview.closedAt ? formatDateTime(posterPreview.closedAt) : '—'} />
+                          <Info label="Fecha cierre" value={formatPosterDateTime(posterPreview.closedAt)} />
                         </div>
                         <div className="divide-y divide-foreground/10">
                           {posterPreview.eligibleItems.map((item, index) => (
