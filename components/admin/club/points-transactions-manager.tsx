@@ -50,6 +50,7 @@ function formatReference(transaction: PointsTransactionWithMember) {
   if (!transaction.reference_type && !transaction.reference_id) return transaction.reason ?? '—'
   const typeLabels: Record<string, string> = {
     manual_purchase: 'Compra manual',
+    poster_transaction: 'Ticket Poster',
     manual_adjustment: 'Ajuste manual',
     reward: 'Recompensa',
   }

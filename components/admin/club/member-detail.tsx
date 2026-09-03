@@ -6,13 +6,16 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Pencil, X } from 'lucide-react'
 import {
   adjustClubPoints,
+  previewClubPosterPurchase,
   redeemClubReward,
+  registerClubPosterPurchase,
   registerClubPurchase,
   setClubMemberStatus,
   updateClubMember,
 } from '@/app/admin/actions'
 import { calculateClubCraftEarnPoints } from '@/lib/club-craft-points'
 import { createClubCraftQrPayload, createClubCraftQrSvg } from '@/lib/club-craft-qr'
+import type { PosterPurchasePreview } from '@/lib/poster'
 import type { ClubMemberRow, PointsTransactionWithMember, RewardRow } from '@/lib/db-types'
 
 type Props = {
@@ -36,6 +39,10 @@ const EMPTY_PURCHASE = {
   eligible_purchase_amount: '',
   reference_id: '',
   note: '',
+}
+
+const EMPTY_POSTER_PURCHASE = {
+  transaction_id: '',
 }
 
 const EMPTY_ADJUSTMENT = {
@@ -65,6 +72,11 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
   style: 'currency',
   currency: 'MXN',
   maximumFractionDigits: 2,
+})
+
+const percentFormatter = new Intl.NumberFormat('es-MX', {
+  style: 'percent',
+  maximumFractionDigits: 1,
 })
 
 const transactionTypeLabels: Record<PointsTransactionWithMember['transaction_type'], string> = {
@@ -114,6 +126,7 @@ function formatReference(transaction: PointsTransactionWithMember) {
   if (!transaction.reference_type && !transaction.reference_id) return '—'
   const typeLabels: Record<string, string> = {
     manual_purchase: 'Compra manual',
+    poster_transaction: 'Ticket Poster',
     manual_adjustment: 'Ajuste manual',
     reward: 'Recompensa',
   }
@@ -131,7 +144,10 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
   const [editing, setEditing] = useState(false)
   const [activeAction, setActiveAction] = useState<PointsAction>(null)
   const [selectedReward, setSelectedReward] = useState<RewardRow | null>(null)
+  const [purchaseMode, setPurchaseMode] = useState<'poster' | 'manual'>('poster')
   const [purchaseForm, setPurchaseForm] = useState(EMPTY_PURCHASE)
+  const [posterPurchaseForm, setPosterPurchaseForm] = useState(EMPTY_POSTER_PURCHASE)
+  const [posterPreview, setPosterPreview] = useState<(PosterPurchasePreview & { alreadyRegistered: boolean }) | null>(null)
   const [adjustmentForm, setAdjustmentForm] = useState(EMPTY_ADJUSTMENT)
   const [form, setForm] = useState<FormState>(() => memberToForm(member))
   const [origin, setOrigin] = useState('')
@@ -161,6 +177,8 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
     setActiveAction(null)
     setSelectedReward(null)
     setPurchaseForm(EMPTY_PURCHASE)
+    setPosterPurchaseForm(EMPTY_POSTER_PURCHASE)
+    setPosterPreview(null)
     setAdjustmentForm(EMPTY_ADJUSTMENT)
     setActionError(null)
   }
@@ -220,6 +238,32 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
         router.refresh()
       } catch (err) {
         setActionError(err instanceof Error ? err.message : 'No se pudo registrar la compra.')
+      }
+    })
+  }
+
+  function handlePosterPreview() {
+    setActionError(null)
+    setPosterPreview(null)
+    startTransition(async () => {
+      try {
+        const preview = await previewClubPosterPurchase(posterPurchaseForm.transaction_id)
+        setPosterPreview(preview)
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : 'No se pudo consultar el ticket de Poster.')
+      }
+    })
+  }
+
+  function handlePosterPurchase() {
+    setActionError(null)
+    startTransition(async () => {
+      try {
+        await registerClubPosterPurchase(member.id, posterPurchaseForm.transaction_id)
+        closeAction()
+        router.refresh()
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : 'No se pudo registrar el ticket de Poster.')
       }
     })
   }
@@ -368,49 +412,164 @@ export function MemberDetail({ member, transactions, rewards }: Props) {
           </div>
 
           {activeAction === 'purchase' ? (
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field
-                  label="COMPRA ELEGIBLE"
-                  required
-                  value={purchaseForm.eligible_purchase_amount}
-                  onChange={(value) => setPurchaseForm((prev) => ({ ...prev, eligible_purchase_amount: value }))}
-                  placeholder="500"
-                  inputMode="decimal"
-                />
-                <Field
-                  label="REFERENCIA"
-                  value={purchaseForm.reference_id}
-                  onChange={(value) => setPurchaseForm((prev) => ({ ...prev, reference_id: value }))}
-                  placeholder="Ticket / referencia opcional"
-                />
-                <label className="flex flex-col gap-1 md:col-span-2">
-                  <span className="label-xs text-foreground/60">NOTA</span>
-                  <textarea
-                    value={purchaseForm.note}
-                    onChange={(event) => setPurchaseForm((prev) => ({ ...prev, note: event.target.value }))}
-                    rows={3}
-                    placeholder="Opcional"
-                    className="border border-foreground/20 bg-transparent px-4 py-3 text-base text-foreground placeholder:text-foreground/25 focus:border-foreground focus:outline-none md:text-sm"
-                  />
-                </label>
-              </div>
-              <div className="border border-foreground/10 p-4">
-                <p className="text-sm text-muted-foreground">Compra elegible</p>
-                <p className="mt-1 font-mono text-xl text-foreground">
-                  {Number.isFinite(purchaseAmount) && purchaseAmount > 0 ? currencyFormatter.format(purchaseAmount) : '—'}
-                </p>
-                <p className="mt-4 text-sm text-muted-foreground">Puntos a generar</p>
-                <p className="mt-1 font-mono text-3xl font-semibold text-accent">+{purchasePoints}</p>
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-2 md:inline-grid md:w-auto">
                 <button
                   type="button"
-                  onClick={handlePurchase}
-                  disabled={isPending || purchasePoints <= 0}
-                  className="mt-5 min-h-12 w-full bg-foreground px-4 text-xs font-semibold tracking-widest text-background disabled:opacity-40"
+                  onClick={() => {
+                    setPurchaseMode('poster')
+                    setActionError(null)
+                  }}
+                  className={`min-h-11 border px-4 text-xs font-semibold tracking-widest ${
+                    purchaseMode === 'poster'
+                      ? 'border-accent bg-accent text-background'
+                      : 'border-foreground/15 text-foreground/60 hover:border-foreground/40 hover:text-foreground'
+                  }`}
                 >
-                  {isPending ? 'GUARDANDO…' : 'CONFIRMAR COMPRA'}
+                  POSTER
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPurchaseMode('manual')
+                    setActionError(null)
+                  }}
+                  className={`min-h-11 border px-4 text-xs font-semibold tracking-widest ${
+                    purchaseMode === 'manual'
+                      ? 'border-accent bg-accent text-background'
+                      : 'border-foreground/15 text-foreground/60 hover:border-foreground/40 hover:text-foreground'
+                  }`}
+                >
+                  MANUAL
                 </button>
               </div>
+
+              {purchaseMode === 'poster' ? (
+                <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
+                  <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
+                      <Field
+                        label="ID DE TICKET POSTER"
+                        required
+                        value={posterPurchaseForm.transaction_id}
+                        onChange={(value) => {
+                          setPosterPurchaseForm({ transaction_id: value })
+                          setPosterPreview(null)
+                        }}
+                        placeholder="Ej. 12345"
+                        inputMode="numeric"
+                      />
+                      <button
+                        type="button"
+                        onClick={handlePosterPreview}
+                        disabled={isPending || !posterPurchaseForm.transaction_id.trim()}
+                        className="min-h-12 self-end border border-foreground/20 px-5 text-xs font-semibold tracking-widest text-foreground hover:border-foreground disabled:opacity-40 md:min-h-11"
+                      >
+                        {isPending ? 'CONSULTANDO…' : 'CALCULAR'}
+                      </button>
+                    </div>
+
+                    {posterPreview ? (
+                      <div className="border border-foreground/10">
+                        <div className="grid gap-3 border-b border-foreground/10 p-4 text-sm md:grid-cols-3">
+                          <Info label="Ticket" value={posterPreview.transactionId} mono />
+                          <Info label="Sucursal Poster" value={posterPreview.spotName ?? posterPreview.spotId ?? '—'} />
+                          <Info label="Fecha cierre" value={posterPreview.closedAt ? formatDateTime(posterPreview.closedAt) : '—'} />
+                        </div>
+                        <div className="divide-y divide-foreground/10">
+                          {posterPreview.eligibleItems.map((item, index) => (
+                            <div key={`${item.productId ?? item.productName}-${index}`} className="grid gap-2 p-4 text-xs md:grid-cols-[minmax(0,1fr)_7rem_5rem] md:items-start">
+                              <div>
+                                <p className="font-semibold text-foreground">{item.productName}</p>
+                                <p className="mt-1 text-foreground/45">
+                                  {item.rootCategoryName ?? 'Sin categoría'} · {percentFormatter.format(item.pointsRate)}
+                                </p>
+                              </div>
+                              <p className="font-mono text-foreground/70 md:text-right">{currencyFormatter.format(item.eligibleAmount)}</p>
+                              <p className="font-mono font-semibold text-emerald-300 md:text-right">+{item.points}</p>
+                            </div>
+                          ))}
+                          {posterPreview.eligibleItems.length === 0 ? (
+                            <div className="p-4 text-sm text-muted-foreground">No hay productos elegibles en este ticket.</div>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border border-foreground/10 p-4 text-sm text-muted-foreground">
+                        Consulta un ticket cerrado de Poster para calcular automáticamente los puntos por cerveza.
+                      </div>
+                    )}
+                  </div>
+                  <div className="border border-foreground/10 p-4">
+                    <p className="text-sm text-muted-foreground">Total ticket</p>
+                    <p className="mt-1 font-mono text-xl text-foreground">
+                      {posterPreview ? currencyFormatter.format(posterPreview.totalPaid) : '—'}
+                    </p>
+                    <p className="mt-4 text-sm text-muted-foreground">Compra elegible</p>
+                    <p className="mt-1 font-mono text-xl text-foreground">
+                      {posterPreview ? currencyFormatter.format(posterPreview.eligibleAmount) : '—'}
+                    </p>
+                    <p className="mt-4 text-sm text-muted-foreground">Puntos a generar</p>
+                    <p className="mt-1 font-mono text-3xl font-semibold text-accent">+{posterPreview?.points ?? 0}</p>
+                    {posterPreview?.alreadyRegistered ? (
+                      <p className="mt-3 text-xs text-accent">Este ticket ya fue registrado.</p>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={handlePosterPurchase}
+                      disabled={isPending || !posterPreview || posterPreview.alreadyRegistered || posterPreview.points <= 0}
+                      className="mt-5 min-h-12 w-full bg-foreground px-4 text-xs font-semibold tracking-widest text-background disabled:opacity-40"
+                    >
+                      {isPending ? 'GUARDANDO…' : 'CONFIRMAR TICKET POSTER'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field
+                      label="COMPRA ELEGIBLE"
+                      required
+                      value={purchaseForm.eligible_purchase_amount}
+                      onChange={(value) => setPurchaseForm((prev) => ({ ...prev, eligible_purchase_amount: value }))}
+                      placeholder="500"
+                      inputMode="decimal"
+                    />
+                    <Field
+                      label="REFERENCIA"
+                      value={purchaseForm.reference_id}
+                      onChange={(value) => setPurchaseForm((prev) => ({ ...prev, reference_id: value }))}
+                      placeholder="Ticket / referencia opcional"
+                    />
+                    <label className="flex flex-col gap-1 md:col-span-2">
+                      <span className="label-xs text-foreground/60">NOTA</span>
+                      <textarea
+                        value={purchaseForm.note}
+                        onChange={(event) => setPurchaseForm((prev) => ({ ...prev, note: event.target.value }))}
+                        rows={3}
+                        placeholder="Opcional"
+                        className="border border-foreground/20 bg-transparent px-4 py-3 text-base text-foreground placeholder:text-foreground/25 focus:border-foreground focus:outline-none md:text-sm"
+                      />
+                    </label>
+                  </div>
+                  <div className="border border-foreground/10 p-4">
+                    <p className="text-sm text-muted-foreground">Compra elegible</p>
+                    <p className="mt-1 font-mono text-xl text-foreground">
+                      {Number.isFinite(purchaseAmount) && purchaseAmount > 0 ? currencyFormatter.format(purchaseAmount) : '—'}
+                    </p>
+                    <p className="mt-4 text-sm text-muted-foreground">Puntos a generar</p>
+                    <p className="mt-1 font-mono text-3xl font-semibold text-accent">+{purchasePoints}</p>
+                    <button
+                      type="button"
+                      onClick={handlePurchase}
+                      disabled={isPending || purchasePoints <= 0}
+                      className="mt-5 min-h-12 w-full bg-foreground px-4 text-xs font-semibold tracking-widest text-background disabled:opacity-40"
+                    >
+                      {isPending ? 'GUARDANDO…' : 'CONFIRMAR COMPRA'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : null}
 

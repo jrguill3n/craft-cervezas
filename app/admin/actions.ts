@@ -6,6 +6,7 @@ import { canManageClubCraft, getManageableLocationIds } from '@/lib/admin-scope'
 import { calculateClubCraftEarnPoints } from '@/lib/club-craft-points'
 import { createClubCraftQrPayload, parseClubCraftQrPayload } from '@/lib/club-craft-qr'
 import { isCanonicalInstagramPostUrl, normalizeInstagramUrl } from '@/lib/instagram'
+import { getPosterPurchasePreview } from '@/lib/poster'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -466,6 +467,75 @@ export async function registerClubPurchase(memberId: string, formData: FormData)
     p_metadata: {
       eligible_purchase_amount: eligiblePurchaseAmount,
       note,
+    },
+  })
+
+  if (error) handlePointsRpcError(error)
+
+  revalidatePath('/admin/club/members')
+  revalidatePath(`/admin/club/members/${memberId}`)
+  revalidatePath('/admin/club/points-transactions')
+
+  return parseRpcRow(data)
+}
+
+export async function previewClubPosterPurchase(transactionId: string) {
+  const { supabase } = await requireClubCraftAdmin()
+
+  const { data: rates, error: ratesError } = await supabase
+    .from('poster_category_point_rates')
+    .select('poster_category_id, poster_category_name, root_category_id, root_category_name, points_rate, active')
+    .eq('active', true)
+
+  if (ratesError) throw new Error(ratesError.message)
+
+  const preview = await getPosterPurchasePreview(transactionId, rates ?? [])
+
+  const { data: existing, error: existingError } = await supabase
+    .from('points_transactions')
+    .select('id')
+    .eq('transaction_type', 'earn')
+    .eq('reference_type', 'poster_transaction')
+    .eq('reference_id', preview.transactionId)
+    .maybeSingle()
+
+  if (existingError) throw new Error(existingError.message)
+
+  return {
+    ...preview,
+    alreadyRegistered: Boolean(existing),
+  }
+}
+
+export async function registerClubPosterPurchase(memberId: string, transactionId: string) {
+  const { supabase } = await requireClubCraftAdmin()
+  if (!memberId) throw new Error('Falta el miembro.')
+
+  const preview = await previewClubPosterPurchase(transactionId)
+
+  if (preview.alreadyRegistered) {
+    throw new Error('Este ticket de Poster ya fue registrado en Club Craft.')
+  }
+  if (preview.points <= 0 || preview.eligibleAmount <= 0) {
+    throw new Error('Este ticket no tiene productos elegibles para acumular puntos.')
+  }
+
+  const { data, error } = await supabase.rpc('create_club_points_transaction', {
+    p_member_id: memberId,
+    p_transaction_type: 'earn',
+    p_points: preview.points,
+    p_reference_type: 'poster_transaction',
+    p_reference_id: preview.transactionId,
+    p_reason: 'Compra Poster',
+    p_metadata: {
+      poster_transaction_id: preview.transactionId,
+      poster_spot_id: preview.spotId,
+      poster_spot_name: preview.spotName,
+      poster_closed_at: preview.closedAt,
+      poster_total_paid: preview.totalPaid,
+      eligible_purchase_amount: preview.eligibleAmount,
+      eligible_items: preview.eligibleItems,
+      ineligible_items: preview.ineligibleItems,
     },
   })
 

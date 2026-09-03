@@ -130,6 +130,19 @@ export type RedemptionRow = {
   created_at: string
 }
 
+export type PosterCategoryPointRateRow = {
+  id: string
+  poster_category_id: string
+  poster_category_name: string
+  parent_category_id: string | null
+  root_category_id: string
+  root_category_name: string
+  points_rate: number
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
 // Joined shapes used in the UI
 export type TapListItemFull = TapListItemRow & {
   beers: BeerRow
