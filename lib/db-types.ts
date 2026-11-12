@@ -55,6 +55,25 @@ export type TapListItemRow = {
   updated_at: string
 }
 
+export type KegConnectionRow = {
+  id: string
+  location_id: string
+  tap_number: number
+  beer_id: string
+  connected_at: string
+  connected_by: string | null
+  disconnected_at: string | null
+  disconnected_by: string | null
+  created_at: string
+}
+
+export type KegConnectionFull = KegConnectionRow & {
+  locations: Pick<LocationRow, 'id' | 'name' | 'slug'>
+  beers: Pick<BeerRow, 'id' | 'name' | 'brewery' | 'style'>
+  connected_by_profile: Pick<ProfileRow, 'id' | 'full_name'> | null
+  disconnected_by_profile: Pick<ProfileRow, 'id' | 'full_name'> | null
+}
+
 export type ServingOptionRow = {
   id: string
   beer_id: string

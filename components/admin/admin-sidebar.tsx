@@ -22,6 +22,7 @@ type Props = {
 
 const navItems = [
   { label: 'TAP LIST', href: '/admin' },
+  { label: 'HISTORIAL DE BARRILES', href: '/admin/keg-history' },
   { label: 'CERVEZAS', href: '/admin/beers' },
   { label: 'PROMOCIONES', href: '/admin/promotions', superAdminOnly: true },
 ]
