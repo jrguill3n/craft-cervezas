@@ -7,15 +7,15 @@ import { siteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'Insurgente GDL | Tap List & Soul Burger Lab',
+    absolute: 'Insurgente GDL | Tap List & YUM! YUM!',
   },
-  description: 'Tap List actual de Insurgente GDL y menú de Soul Burger Lab.',
+  description: 'Tap List actual de Insurgente GDL y menú de pizza YUM! YUM!.',
   alternates: {
     canonical: '/taplist-insurgente-gdl',
   },
   openGraph: {
-    title: 'Insurgente GDL | Tap List & Soul Burger Lab',
-    description: 'Tap List actual de Insurgente GDL y menú de Soul Burger Lab.',
+    title: 'Insurgente GDL | Tap List & YUM! YUM!',
+    description: 'Tap List actual de Insurgente GDL y menú de pizza YUM! YUM!.',
     url: `${siteUrl}/taplist-insurgente-gdl`,
     siteName: 'Insurgente GDL',
     locale: 'es_MX',
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Insurgente GDL | Tap List & Soul Burger Lab',
-    description: 'Tap List actual de Insurgente GDL y menú de Soul Burger Lab.',
+    title: 'Insurgente GDL | Tap List & YUM! YUM!',
+    description: 'Tap List actual de Insurgente GDL y menú de pizza YUM! YUM!.',
     images: ['/brand/insurgente/insurgente-owl.png'],
   },
   robots: {
@@ -44,7 +44,6 @@ export const dynamic = 'force-dynamic'
 const INSTAGRAM_URL = normalizeInstagramUrl('https://www.instagram.com/insurgentebrew_gdl/')
 const INSURGENTE_LOGO = '/brand/insurgente/insurgente-logo.svg'
 const INSURGENTE_OWL = '/brand/insurgente/insurgente-owl.png'
-const SOUL_BURGER_LOGO = '/brand/insurgente/soul-fried-chicken-logo.png'
 
 const mexicoCityDate = new Intl.DateTimeFormat('es-MX', {
   dateStyle: 'medium',
@@ -62,111 +61,39 @@ type MenuSection = {
   items: MenuItem[]
 }
 
-const soulBurgerMenu: MenuSection[] = [
+const yumYumMenu: MenuSection[] = [
   {
-    title: 'BURGERS',
+    title: 'PIZZA',
     items: [
       {
-        name: 'THE BIG ASS BURGER',
+        name: 'PEPPERONI',
+        price: '220',
+      },
+      {
+        name: 'QUESO',
+        price: '200',
+      },
+      {
+        name: 'CARNES',
         price: '250',
-        description: '220 gr Black Angus, brioche, spicy mayo, doble tocino, americano + muenster.',
       },
       {
-        name: 'TRUFFLE BURGER',
-        price: '300',
-        description: '220 gr Black Angus, Monterey Jack, tocino, mayo trufada, aceite de trufa.',
-      },
-      {
-        name: 'BUFFALO BURGER',
+        name: 'PESTO, SALAMI Y QUESO DE CABRA',
         price: '250',
-        description: '220 gr Black Angus, Monterey Jack, buffalo, blue cheese, sauerkraut.',
-      },
-      {
-        name: 'THE SOUL BURGER',
-        price: '250',
-        description: '220 gr Black Angus, Monterey Jack, alioli ajo negro + ponzu, tocino.',
-      },
-      {
-        name: 'MAPLE MONEY',
-        price: '255',
-        description: '220 gr Black Angus, Queso americano, Noisette butter Maple y tocino.',
       },
     ],
   },
   {
-    title: 'SANDOS',
+    title: 'PARA COMPARTIR',
     items: [
       {
-        name: 'SANDO BUFFALO',
-        price: '195',
-        description: '175 gr de Pechuga crujiente, Monterey Jack, buffalo, blue cheese, sauerkraut.',
+        name: 'CECINA',
+        price: '125',
       },
       {
-        name: 'BRISKET SANDO',
-        price: '320',
-        description: '200 gr de Brisket ahumado, queso americano, BBQ, aros de cebolla.',
-      },
-    ],
-  },
-  {
-    title: 'FRIED CHICKEN',
-    items: [
-      {
-        name: 'BONELESS',
-        price: '205',
-        description: '175 gr de Pierna muslo deshuesado fritos, 2 salsas.',
-      },
-      {
-        name: 'TENDERS',
-        price: '195',
-        description: '4 pzas pechuga crujiente, chips + 2 salsas.',
-      },
-    ],
-  },
-  {
-    title: 'SIDES',
-    items: [
-      {
-        name: 'JUST FRIES (200 gr)',
-        price: '80',
-      },
-      {
-        name: 'TRUFFLE FRIES',
-        price: '135',
-        description: 'Tartufata, grana padano, aceite de trufa y cebollín.',
-      },
-      {
-        name: 'SOUL CHIPS',
-        price: '80',
-        description: 'Alioli, grana padano, pimentón.',
-      },
-      {
-        name: 'IBÉRICO CHIPS',
-        price: '145',
-        description: 'Alioli, idiazábal, jamón ibérico.',
-      },
-    ],
-  },
-  {
-    title: 'DESSERTS',
-    items: [
-      {
-        name: 'TARTA DE CHOCOLATE',
-        price: '130',
-        description: 'Tarta de chocolate, cremoso de vainilla, coulis.',
-      },
-      {
-        name: 'NOT FRIED CHICKEN',
-        price: '95',
-        description: '????????',
-      },
-    ],
-  },
-  {
-    title: 'SAUCES',
-    items: [
-      {
-        name: 'BUFFALO - BLUE CHEESE - ALIOLI - HONEY MUSTARD - ALIOLI AJO NEGRO - BBQ - K BBQ - SPICY MAYO',
+        name: 'CHIPS',
+        price: '75',
+        description: 'Naturales, Lemon Pepper o Ponzoña.',
       },
     ],
   },
@@ -259,28 +186,22 @@ function TapListSection({
   )
 }
 
-function SoulBurgerSection() {
+function YumYumSection() {
   return (
     <section className="border-t-2 border-black bg-[#f3f1ec] px-5 py-12 text-black md:px-10 md:py-16">
       <div className="mx-auto max-w-4xl">
         <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <div>
-            <p className="font-serif text-sm italic text-black/60">NOT JUST A BURGER</p>
+            <p className="font-serif text-sm italic text-black/60">PIZZA PARA ACOMPAÑAR LA CERVEZA</p>
             <h2 className="mt-3 text-4xl font-black leading-none tracking-[0.04em] md:text-6xl">
-              SOUL BURGER LAB
+              YUM! YUM!
             </h2>
           </div>
-          <div className="flex justify-start sm:justify-end">
-            <img
-              src={SOUL_BURGER_LOGO}
-              alt="Soul Fried Chicken"
-              className="max-h-20 max-w-56 border border-black/10 object-contain opacity-95"
-            />
-          </div>
+          <p className="text-5xl font-black leading-none tracking-[-0.08em] sm:text-6xl">PIZZA</p>
         </div>
 
         <div className="mt-10 grid gap-10 md:grid-cols-2">
-          {soulBurgerMenu.map((section) => (
+          {yumYumMenu.map((section) => (
             <section key={section.title}>
               <h3 className="border-b-2 border-black pb-3 text-sm font-black uppercase tracking-[0.22em] text-black">
                 {section.title}
@@ -302,12 +223,6 @@ function SoulBurgerSection() {
           ))}
         </div>
 
-        <div className="mt-10 space-y-3 border-t-2 border-black pt-6 text-center">
-          <p className="text-sm text-black/65">
-            Todas las burgers y sandos incluyen una porción de 25 gr de chips.
-          </p>
-          <p className="text-3xl font-black tracking-[0.04em] text-black md:text-5xl">DINE IN ONLY</p>
-        </div>
       </div>
     </section>
   )
@@ -367,7 +282,7 @@ export default function InsurgenteGdlPage() {
       <Suspense fallback={<TapListFallback />}>
         <PublishedTapListSection />
       </Suspense>
-      <SoulBurgerSection />
+      <YumYumSection />
 
       <footer className="bg-black px-5 py-5 text-[#f3f1ec] md:px-10">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-5 text-xs text-white/60">
