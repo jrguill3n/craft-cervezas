@@ -44,6 +44,7 @@ export const dynamic = 'force-dynamic'
 const INSTAGRAM_URL = normalizeInstagramUrl('https://www.instagram.com/insurgentebrew_gdl/')
 const INSURGENTE_LOGO = '/brand/insurgente/insurgente-logo.svg'
 const INSURGENTE_OWL = '/brand/insurgente/insurgente-owl.png'
+const INSURGENTE_PIZZA_LOGO = '/brand/insurgente/insurgente-pizza-logo.png'
 
 const mexicoCityDate = new Intl.DateTimeFormat('es-MX', {
   dateStyle: 'medium',
@@ -193,11 +194,15 @@ function YumYumSection() {
         <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <div>
             <p className="font-serif text-sm italic text-black/60">PIZZA PARA ACOMPAÑAR LA CERVEZA</p>
-            <h2 className="mt-3 text-4xl font-black leading-none tracking-[0.04em] md:text-6xl">
-              YUM! YUM!
-            </h2>
           </div>
-          <p className="text-5xl font-black leading-none tracking-[-0.08em] sm:text-6xl">PIZZA</p>
+          <div className="flex flex-col items-center sm:items-end">
+            <img
+              src={INSURGENTE_PIZZA_LOGO}
+              alt="Insurgente Pizza"
+              className="h-auto w-full max-w-[19rem] mix-blend-multiply"
+            />
+            <p className="mt-2 text-4xl font-black leading-none tracking-[0.04em] sm:text-5xl">YUM! YUM!</p>
+          </div>
         </div>
 
         <div className="mt-10 grid gap-10 md:grid-cols-2">
