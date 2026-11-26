@@ -191,17 +191,15 @@ function YumYumSection() {
   return (
     <section className="border-t-2 border-black bg-[#f3f1ec] px-5 py-12 text-black md:px-10 md:py-16">
       <div className="mx-auto max-w-4xl">
-        <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <div>
-            <p className="font-serif text-sm italic text-black/60">PIZZA PARA ACOMPAÑAR LA CERVEZA</p>
-          </div>
-          <div className="flex flex-col items-center sm:items-end">
-            <img
-              src={INSURGENTE_PIZZA_LOGO}
-              alt="Insurgente Pizza"
-              className="h-auto w-full max-w-[19rem] mix-blend-multiply"
-            />
-          </div>
+        <div className="flex justify-center">
+          <img
+            src={INSURGENTE_PIZZA_LOGO}
+            alt="Insurgente Pizza"
+            className="mx-auto h-auto w-full max-w-[19rem] mix-blend-multiply"
+          />
+        </div>
+        <div className="mt-8">
+          <p className="font-serif text-sm italic text-black/60">PIZZA PARA ACOMPAÑAR LA CERVEZA</p>
         </div>
 
         <div className="mt-10 grid gap-10 md:grid-cols-2">
