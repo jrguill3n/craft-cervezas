@@ -201,7 +201,6 @@ function YumYumSection() {
               alt="Insurgente Pizza"
               className="h-auto w-full max-w-[19rem] mix-blend-multiply"
             />
-            <p className="mt-2 text-4xl font-black leading-none tracking-[0.04em] sm:text-5xl">YUM! YUM!</p>
           </div>
         </div>
 
@@ -226,6 +225,10 @@ function YumYumSection() {
               </div>
             </section>
           ))}
+        </div>
+
+        <div className="mt-10 border-t-2 border-black pt-6 text-center">
+          <p className="text-4xl font-black leading-none tracking-[0.04em] sm:text-5xl">YUM! YUM!</p>
         </div>
 
       </div>
